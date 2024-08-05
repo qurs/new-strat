@@ -87,40 +87,9 @@ end
 
 -- Hooks
 
-local function drawMask(clr, provincesImgData)
-	local provincesImg = provincesImgData.img
-	local provincesW, provincesH = unpack(provincesImgData.size)
-
-	local ratio = ScrH() / provincesH
-	local w, h = provincesW * ratio, provincesH * ratio
-	local x = ScrW() / 2 - w / 2
-
-	local shader = shaders.get('draw_province')
-	shader:sendColor('targetColor', clr)
-
-	love.graphics.setShader(shader)
-		love.graphics.setColor(1, 1, 1)
-		love.graphics.draw(provincesImg, 0, 0, 0, ratio)
-	love.graphics.setShader()
-end
-
 function Region:Draw()
-	local country = self:GetCountry()
-	if not country then return end
-
-	local imgData = map._img
-	if not imgData then return end
-
-	local provincesImgData = imgData.provinces
-	local mapW, mapH = unpack(imgData.size)
-
 	local provinces = self:GetProvinces()
 	for id, province in pairs(provinces) do
-		local rgb = {province:GetRGB()}
-
-		love.graphics.stencil(function() drawMask(rgb, provincesImgData) end)
-		love.graphics.setStencilTest('greater', 0)
-			province:Draw(mapW, mapH, {country:GetColor()})
-		love.graphics.setStencilTest()
+		province:Draw()
 	end
 end

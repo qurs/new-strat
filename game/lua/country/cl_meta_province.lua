@@ -82,14 +82,42 @@ end
 
 -- Hooks
 
-function Province:Draw(mapW, mapH, clr)
-	local r, g, b = self:GetRGB()
-	if clr then
-		r, g, b = unpack(clr)
+local function drawMask(clr, provincesImgData)
+	local provincesImg = provincesImgData.img
+	local provincesW, provincesH = unpack(provincesImgData.size)
+
+	local ratio = ScrH() / provincesH
+	local w, h = provincesW * ratio, provincesH * ratio
+	local x = ScrW() / 2 - w / 2
+
+	local shader = shaders.get('draw_province')
+	shader:sendColor('targetColor', clr)
+
+	love.graphics.setShader(shader)
+		love.graphics.setColor(1, 1, 1)
+		love.graphics.draw(provincesImg, 0, 0, 0, ratio)
+	love.graphics.setShader()
+end
+
+function Province:Draw()
+	local imgData = map._img
+	if not imgData then return end
+
+	local provincesImgData = imgData.provinces
+	local mapW, mapH = unpack(imgData.size)
+
+	local rgb = {self:GetRGB()}
+	local r, g, b = unpack(rgb)
+	local country = self:GetCountry()
+	if country then
+		r, g, b = country:GetColor()
 	end
 
-	love.graphics.setColor(r, g, b)
-	love.graphics.rectangle('fill', 0, 0, mapW, mapH)
+	love.graphics.stencil(function() drawMask(rgb, provincesImgData) end)
+	love.graphics.setStencilTest('greater', 0)
+		love.graphics.setColor(r, g, b)
+		love.graphics.rectangle('fill', 0, 0, mapW, mapH)
+	love.graphics.setStencilTest()
 end
 
 function Province:OnClick(button)
