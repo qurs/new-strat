@@ -189,7 +189,7 @@ hook.Add('DrawUI', 'map', function()
 end)
 
 hook.Add('MouseDown', 'map', function(x, y, button)
-	if button ~= 1 then return end
+	if button == 3 then return end
 	if not map._provincesMap then return end
 
 	local bmp = map._provincesBMP
