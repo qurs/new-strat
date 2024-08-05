@@ -11,7 +11,6 @@ function Province:__init(id, clr)
 	self.clr = clr
 
 	--[[ OPTIONAL FIELDS
-		self.countryOwner = nil
 		self.regionOwner = nil
 	]]
 end
@@ -49,12 +48,15 @@ function Province:GetHEX()
 	return clr.hex
 end
 
-function Province:GetCountry()
-	return self.countryOwner
-end
-
 function Province:GetRegion()
 	return self.regionOwner
+end
+
+function Province:GetCountry()
+	local region = self:GetRegion()
+	if not region then return end
+
+	return region:GetCountry()
 end
 
 -- SETTERS
