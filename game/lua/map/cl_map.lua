@@ -134,6 +134,12 @@ hook.Add('AssetsLoaded', 'map', function()
 end)
 
 hook.Add('WindowResized', 'map', function()
+	for id, country in pairs(country._countries) do
+		for id, reg in pairs(country:GetRegions()) do
+			reg:CreateCanvas()
+		end
+	end
+
 	map.createCanvas()
 end)
 

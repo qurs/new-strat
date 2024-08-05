@@ -6,14 +6,13 @@ local Region = country._regionMeta
 Region.__type = 'region'
 Region.__index = Region
 
-function Region:__init(id, name, provinces, country)
+function Region:__init(id, name, provinces)
 	if not id then return print( ('Ошибка при создании региона %s! Не хватает свойства: id'):format(id) ) end
 	if not name then return print( ('Ошибка при создании региона %s! Не хватает свойства: name'):format(id) ) end
 
 	self.id = id
 	self.name = name
 	self.provinces = provinces or {}
-	self.country = country
 
 	--[[ OPTIONAL FIELDS
 		
@@ -62,6 +61,7 @@ function Region:ChangeCountry(country)
 
 	country:AddRegion(self)
 
+	self:CreateCanvas()
 	map.createCanvas()
 end
 
@@ -72,6 +72,7 @@ function Region:AddProvince(province)
 	province:_SetRegion(self)
 	self.provinces[id] = province
 
+	self:CreateCanvas()
 	map.createCanvas()
 end
 
@@ -82,14 +83,48 @@ function Region:RemoveProvince(id)
 	province:_SetRegion()
 	self.provinces[id] = nil
 
+	self:CreateCanvas()
 	map.createCanvas()
 end
 
 -- Hooks
 
+function Region:CreateCanvas()
+	local imgData = map._img
+	if not imgData then return end
+
+	local mapW, mapH = unpack(imgData.size)
+
+	local ratio = ScrH() / mapH
+	local w, h = mapW * ratio, mapH * ratio
+
+	self.canvas = love.graphics.newCanvas(w, ScrH())
+	-- self.canvas:setFilter('linear', 'nearest')
+
+	love.graphics.setCanvas({self.canvas, stencil = true})
+		love.graphics.clear(0, 0, 0, 0)
+		love.graphics.setColor(1, 1, 1)
+
+		local provinces = self:GetProvinces()
+		for id, province in pairs(provinces) do
+			province:Draw()
+		end
+	love.graphics.setCanvas()
+end
+
 function Region:Draw()
-	local provinces = self:GetProvinces()
-	for id, province in pairs(provinces) do
-		province:Draw()
-	end
+	local canvas = self.canvas
+	if not canvas then return end
+
+	local w, h = canvas:getWidth(), canvas:getHeight()
+
+	local shader = shaders.get('outline_mul')
+	shader:send('coordStep', {1 / w, 1 / h})
+	shader:send('size', 3)
+	shader:send('mul', 0.8)
+
+	love.graphics.setShader(shader)
+		love.graphics.setColor(1, 1, 1)
+		love.graphics.draw(canvas)
+	love.graphics.setShader()
 end

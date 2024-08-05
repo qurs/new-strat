@@ -77,6 +77,7 @@ function Province:ChangeRegion(region)
 
 	region:AddProvince(self)
 
+	region:CreateCanvas()
 	map.createCanvas()
 end
 
