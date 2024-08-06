@@ -73,6 +73,7 @@ end
 function Region:AddProvince(province)
 	local id = province:GetID()
 	if self.provinces[id] then return end
+	if province:GetRegion() then return end
 
 	province:_SetRegion(self)
 	province:CreateCanvas()

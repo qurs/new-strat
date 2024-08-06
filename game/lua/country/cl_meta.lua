@@ -48,6 +48,7 @@ end
 function Country:AddRegion(region)
 	local id = region:GetID()
 	if self.regions[id] then return end
+	if region:GetCountry() then return end
 
 	region:_SetCountry(self)
 	self.regions[id] = region
