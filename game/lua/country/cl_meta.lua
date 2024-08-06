@@ -12,6 +12,8 @@ function Country:__init(id, name, rgb)
 	self.clr = rgb
 	self.regions = {}
 
+	self.stability = 50
+
 	--[[ OPTIONAL FIELDS
 
 	]]
@@ -39,10 +41,36 @@ function Country:GetRegions()
 	return self.regions
 end
 
+function Country:GetStability()
+	return self.stability
+end
+
 -- SETTERS
 
 function Country:SetName(name)
 	self.name = name
+end
+
+function Country:SetStability(stab)
+	self.stability = math.Clamp(stab, 0, 100)
+
+	if self.stability == 0 then
+		self:Destroy()
+	end
+end
+
+-- OTHER
+
+function Country:AddStability(add)
+	self:SetStability(self:GetStability() + add)
+end
+
+function Country:Destroy()
+	for id in pairs(self:GetRegions()) do
+		self:RemoveRegion(id)
+	end
+
+	country.removeCountry(self:GetID())
 end
 
 function Country:AddRegion(region)
@@ -77,8 +105,6 @@ function Country:RemoveRegion(id)
 	region:CreateCanvas()
 	map.createCanvas()
 end
-
--- OTHER
 
 -- Hooks
 
