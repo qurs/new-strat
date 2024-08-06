@@ -17,13 +17,17 @@ end
 function camera.setPos(pos)
 	camera._pos = pos
 
-	local minW = (map._minX or -ScrW()) / 2
-	local maxW = (map._maxX or ScrW()) * 2
+	if map._mapSize then
+		local w, h = unpack(map._mapSize.new)
 
-	if pos.x < minW then
-		camera._pos.x = (camera._pos.x - minW) + maxW
-	elseif pos.x > maxW then
-		camera._pos.x = (camera._pos.x - maxW) + minW
+		local minX = map._centerX - (w / 2)
+		local maxX = map._centerX + (w * 1.5)
+	
+		if pos.x < minX then
+			camera._pos.x = (camera._pos.x - minX) + maxX
+		elseif pos.x > maxX then
+			camera._pos.x = (camera._pos.x - maxX) + minX
+		end
 	end
 
 	-- camera._pos.x = math.Clamp(camera._pos.x, minW, maxW)
