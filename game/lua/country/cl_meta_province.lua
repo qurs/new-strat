@@ -159,6 +159,11 @@ function Province:OnClick(button)
 		local country = country.get(1)
 		local reg = country:GetRegions()[1]
 	
-		reg:AddProvince(self)
+		self:ChangeRegion(reg)
+	elseif button == 4 then
+		local country = country.get(2)
+		local reg = country:GetRegions()[2]
+	
+		self:ChangeRegion(reg)
 	end
 end
