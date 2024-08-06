@@ -3,6 +3,7 @@ map._provinces = map._provinces or {}
 map._provincesMap = map._provincesMap or {}
 
 map.debugProvinces = false
+map.debugRecursiveMap = false
 
 local vector_origin = Vector()
 
@@ -120,13 +121,10 @@ hook.Add('AssetsLoaded', 'map', function()
 
 	do
 		local c = country.newCountry(1, 'Test Country', {1, 0, 0})
+		c:AddRegion(country.newRegion(1, 'Region 1'))
 
-		local r = country.newRegion(1, 'Region 1')
-		for i = 1, 10 do
-			r:AddProvince(map._provinces[i])
-		end
-
-		c:AddRegion(r)
+		local c = country.newCountry(2, 'Test Country 2', {0, 1, 0})
+		c:AddRegion(country.newRegion(2, 'Region 2'))
 	end
 	
 	for _, province in ipairs(map._provinces) do
@@ -178,6 +176,17 @@ hook.Add('Draw', 'map', function()
 			love.graphics.translate(map._maxX, 0)
 			province:Draw(true)
 		love.graphics.pop()
+	end
+
+	if map.debugRecursiveMap then
+		love.graphics.setColor(1, 1, 1, 0.8)
+		love.graphics.rectangle('fill', map._centerX, 0, map._canvas:getWidth(), map._canvas:getHeight())
+	
+		love.graphics.setColor(0, 0, 1, 0.5)
+		love.graphics.rectangle('fill', map._minX, 0, map._canvas:getWidth(), map._canvas:getHeight())
+	
+		love.graphics.setColor(1, 0, 0, 0.5)
+		love.graphics.rectangle('fill', map._maxX, 0, map._canvas:getWidth(), map._canvas:getHeight())
 	end
 end)
 
