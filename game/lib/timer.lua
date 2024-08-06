@@ -16,6 +16,10 @@ function timer.Simple(time, callback)
 	timer.Create(id, time, 1, callback)
 end
 
+function timer.Remove(id)
+	timer._timers[id] = nil
+end
+
 hook.Add('Think', 'timer', function()
 	for id, data in pairs(timer._timers) do
 		if data.endTime <= os.clock() then
