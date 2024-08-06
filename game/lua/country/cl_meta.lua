@@ -52,6 +52,11 @@ function Country:AddRegion(region)
 	region:_SetCountry(self)
 	self.regions[id] = region
 
+	local provinces = region:GetProvinces()
+	for id, province in pairs(provinces) do
+		province:CreateCanvas()
+	end
+
 	region:CreateCanvas()
 	map.createCanvas()
 end
@@ -62,6 +67,11 @@ function Country:RemoveRegion(id)
 
 	region:_SetCountry()
 	self.regions[id] = nil
+
+	local provinces = region:GetProvinces()
+	for id, province in pairs(provinces) do
+		province:CreateCanvas()
+	end
 
 	region:CreateCanvas()
 	map.createCanvas()

@@ -129,11 +129,18 @@ hook.Add('AssetsLoaded', 'map', function()
 		c:AddRegion(r)
 	end
 	
+	for _, province in ipairs(map._provinces) do
+		province:CreateCanvas()
+	end
 
 	map.createCanvas()
 end)
 
 hook.Add('WindowResized', 'map', function()
+	for _, province in ipairs(map._provinces) do
+		province:CreateCanvas()
+	end
+
 	for id, country in pairs(country._countries) do
 		for id, reg in pairs(country:GetRegions()) do
 			reg:CreateCanvas()
@@ -154,6 +161,24 @@ hook.Add('Draw', 'map', function()
 
 	love.graphics.setColor(1, 1, 1)
 	love.graphics.draw(map._canvas, map._maxX)
+
+	local province = map._selectedProvince
+	if province then
+		love.graphics.push()
+			love.graphics.translate(map._centerX, 0)
+			province:Draw(true)
+		love.graphics.pop()
+
+		love.graphics.push()
+			love.graphics.translate(map._minX, 0)
+			province:Draw(true)
+		love.graphics.pop()
+
+		love.graphics.push()
+			love.graphics.translate(map._maxX, 0)
+			province:Draw(true)
+		love.graphics.pop()
+	end
 end)
 
 hook.Add('DrawUI', 'map', function()
@@ -211,7 +236,12 @@ hook.Add('MouseDown', 'map', function(x, y, button)
 	local hex = nuklear.colorRGBA(r, g, b)
 
 	local id = map._provincesMap[hex]
-	if not id then return end
+	if not id then
+		if button == 1 and map._selectedProvince then
+			map._selectedProvince = nil
+		end
+		return
+	end
 
 	local province = map._provinces[id]
 	if not province then return end

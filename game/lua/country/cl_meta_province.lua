@@ -77,6 +77,7 @@ function Province:ChangeRegion(region)
 
 	region:AddProvince(self)
 
+	self:CreateCanvas()
 	region:CreateCanvas()
 	map.createCanvas()
 end
@@ -100,30 +101,64 @@ local function drawMask(clr, provincesImgData)
 	love.graphics.setShader()
 end
 
-function Province:Draw()
+function Province:CreateCanvas()
 	local imgData = map._img
 	if not imgData then return end
 
 	local provincesImgData = imgData.provinces
 	local mapW, mapH = unpack(imgData.size)
 
-	local rgb = {self:GetRGB()}
-	local r, g, b = unpack(rgb)
+	local ratio = ScrH() / mapH
+	local w, h = mapW * ratio, mapH * ratio
+
+	local r, g, b = 1, 1, 1
+
 	local country = self:GetCountry()
 	if country then
 		r, g, b = country:GetColor()
 	end
 
-	love.graphics.stencil(function() drawMask(rgb, provincesImgData) end)
-	love.graphics.setStencilTest('greater', 0)
-		love.graphics.setColor(r, g, b)
-		love.graphics.rectangle('fill', 0, 0, mapW, mapH)
-	love.graphics.setStencilTest()
+	self.canvas = love.graphics.newCanvas(w, ScrH())
+
+	love.graphics.setCanvas({self.canvas, stencil = true})
+		love.graphics.stencil(function() drawMask({self:GetRGB()}, provincesImgData) end)
+		love.graphics.setStencilTest('greater', 0)
+			love.graphics.setColor(r, g, b)
+			love.graphics.rectangle('fill', 0, 0, mapW, mapH)
+		love.graphics.setStencilTest()
+	love.graphics.setCanvas()
+end
+
+function Province:Draw(outlined)
+	local canvas = self.canvas
+	if not canvas then return end
+
+	local w, h = canvas:getWidth(), canvas:getHeight()
+
+	local shader = shaders.get('outline_mul')
+	shader:send('coordStep', {1 / w, 1 / h})
+	shader:send('size', 2)
+	shader:send('mul', 0.65)
+
+	if outlined then
+		love.graphics.setShader(shader)
+	end
+
+	love.graphics.setColor(1, 1, 1)
+	love.graphics.draw(canvas)
+
+	if outlined then
+		love.graphics.setShader()
+	end
 end
 
 function Province:OnClick(button)
-	local country = country.get(1)
-	local reg = country:GetRegions()[1]
-
-	reg:AddProvince(self)
+	if button == 1 then
+		map._selectedProvince = self
+	elseif button == 2 then
+		local country = country.get(1)
+		local reg = country:GetRegions()[1]
+	
+		reg:AddProvince(self)
+	end
 end
