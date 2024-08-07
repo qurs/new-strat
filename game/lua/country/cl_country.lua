@@ -1,7 +1,12 @@
 country = country or {}
 country._countries = country._countries or {}
 
-function country.newCountry(id, ...)
+country.lastRegionID = country.lastRegionID or 0
+country.lastCountryID = country.lastCountryID or 0
+
+function country.newCountry(...)
+	local id = country.lastCountryID + 1
+
 	local meta = setmetatable({}, country._countryMeta)
 	meta:__init(id, ...)
 
@@ -17,9 +22,9 @@ function country.get(id)
 	return country._countries[id]
 end
 
-function country.newRegion(id, ...)
+function country.newRegion(...)
 	local meta = setmetatable({}, country._regionMeta)
-	meta:__init(id, ...)
+	meta:__init(country.lastRegionID + 1, ...)
 
 	return meta
 end

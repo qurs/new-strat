@@ -120,11 +120,11 @@ hook.Add('AssetsLoaded', 'map', function()
 	}
 
 	do
-		local c = country.newCountry(1, 'Test Country', {1, 0, 0})
-		c:AddRegion(country.newRegion(1, 'Region 1'))
+		local c = country.newCountry('Test Country', {1, 0, 0})
+		c:AddRegion(country.newRegion('Region 1'))
 
-		local c = country.newCountry(2, 'Test Country 2', {0, 1, 0})
-		c:AddRegion(country.newRegion(2, 'Region 2'))
+		local c = country.newCountry('Test Country 2', {0, 1, 0})
+		c:AddRegion(country.newRegion('Region 2'))
 	end
 	
 	for _, province in ipairs(map._provinces) do
