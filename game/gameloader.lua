@@ -1,7 +1,7 @@
 local gameloader = {}
 
-function gameloader.loadFile(moduleName, fileName)
-	local path = 'lua/'
+function gameloader.loadFile(dir, moduleName, fileName)
+	local path = dir .. '/'
 	if moduleName then
 		path = path .. moduleName .. '/' .. fileName
 	else
@@ -23,20 +23,22 @@ function gameloader.loadFile(moduleName, fileName)
 	MODULE_NAME = nil
 end
 
-function gameloader.loadDir(dirName)
-	local files = love.filesystem.getDirectoryItems('lua/' .. dirName)
+function gameloader.loadDir(dir, dirName)
+	local files = love.filesystem.getDirectoryItems(dir .. '/' .. dirName)
 	for _, fileName in SortedPairs(files) do
-		gameloader.loadFile(dirName, fileName)
+		gameloader.loadFile(dir, dirName, fileName)
 	end
 end
 
-function gameloader.load()
-	local files = love.filesystem.getDirectoryItems('lua')
+function gameloader.load(dir)
+	dir = dir or 'lua'
+
+	local files = love.filesystem.getDirectoryItems(dir)
 	for _, fileName in SortedPairs(files) do
 		if fileName:sub(-4) == '.lua' then
-			gameloader.loadFile(nil, fileName)
+			gameloader.loadFile(dir, nil, fileName)
 		else
-			gameloader.loadDir(fileName)
+			gameloader.loadDir(dir, fileName)
 		end
 	end
 end

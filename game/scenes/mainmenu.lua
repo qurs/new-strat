@@ -25,6 +25,14 @@ function curScene:Think(dt)
 		if ui:windowBegin('STRAT', x, y, w, h) then
 			ui:layoutSpaceBegin('dynamic', 30, 1)
 				ui:layoutSpacePush(0, 0, 1, 1)
+					if ui:button('Создать сервер') then
+						gameloader.load('server')
+						net.OpenServer(1337)
+					end
+					if ui:button('Присоединиться') then
+						gameloader.load('client')
+						net.Connect('127.0.0.1:1337')
+					end
 					if ui:button('Начать игру') then
 						scene.change('map', true)
 					end

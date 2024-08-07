@@ -5,7 +5,7 @@ end
 Bmp = require('bmp')
 
 local libloader = require('libloader')
-local gameloader = require('gameloader')
+gameloader = require('gameloader')
 nuklear = require('nuklear')
 
 function love.load()
