@@ -67,7 +67,7 @@ hook.Add('Think', 'net', function()
 			NET_CONNECTED = true
 
 			net.Send('_validate', {
-				nickname = 'test',
+				nickname = net.settings.Get('nickname', 'fat'),
 			})
 
 			hook.Run('ServerConnected')

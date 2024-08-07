@@ -1,12 +1,11 @@
 local curScene = {}
 local style = {}
 
-gui.registerFont('mainmenu', {
-	font = 'Montserrat-Medium',
-	size = 15,
-})
+local nameEntry = {value = ''}
 
 function curScene:Initialize()
+	gameloader.load('client')
+	
 	style = {
 		font = gui.getFont('mainmenu'),
 		window = {
@@ -25,15 +24,14 @@ function curScene:Think(dt)
 		if ui:windowBegin('STRAT', x, y, w, h) then
 			ui:layoutSpaceBegin('dynamic', 30, 1)
 				ui:layoutSpacePush(0, 0, 1, 1)
-					if ui:button('Создать сервер') then
-						gameloader.load('server')
-						net.OpenServer(1337)
-					end
+					ui:layoutRow('dynamic', 40, 2)
+					ui:label('Имя игрока:')
+					ui:edit('simple', nameEntry)
+
 					if ui:button('Присоединиться') then
-						scene.change('connect_menu')
-					end
-					if ui:button('Начать игру') then
-						scene.change('map', true)
+						if utf8.len(nameEntry.value) < 3 then return notify.show('error', 2, 'Нужно ввести ник! (Хотя бы 3 символа)') end
+						net.settings.Set('nickname', nameEntry.value)
+						net.Connect('127.0.0.1:1337')
 					end
 				ui:layoutSpaceEnd()
 			ui:layoutSpaceEnd()

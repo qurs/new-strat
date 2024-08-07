@@ -46,6 +46,8 @@ end
 function net.Validate(peer, ip, port, validateData)
 	if not validateData then return end
 	if not validateData.nickname then return end
+	if type(validateData.nickname) ~= 'string' then return end
+	if utf8.len(validateData.nickname) < 3 then return end
 
 	timer.Remove(tostring(peer) .. 'validate')
 
