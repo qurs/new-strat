@@ -4,8 +4,6 @@ local style = {}
 local nameEntry = {value = ''}
 
 function curScene:Initialize()
-	gameloader.load('client')
-	
 	style = {
 		font = gui.getFont('mainmenu'),
 		window = {
@@ -28,10 +26,24 @@ function curScene:Think(dt)
 					ui:label('Имя игрока:')
 					ui:edit('simple', nameEntry)
 
+					if ui:button('Создать сервер') then
+						if utf8.len(nameEntry.value) < 3 then return notify.show('error', 2, 'Нужно ввести ник! (Хотя бы 3 символа)') end
+
+						gameloader.load('client')
+						gameloader.load('server')
+						net.settings.Set('nickname', nameEntry.value)
+						net.server.OpenServer(1337)
+					end
 					if ui:button('Присоединиться') then
 						if utf8.len(nameEntry.value) < 3 then return notify.show('error', 2, 'Нужно ввести ник! (Хотя бы 3 символа)') end
+
+						gameloader.load('client')
 						net.settings.Set('nickname', nameEntry.value)
 						net.Connect('127.0.0.1:1337')
+					end
+
+					if ui:button('Назад') then
+						scene.change('mainmenu')
 					end
 				ui:layoutSpaceEnd()
 			ui:layoutSpaceEnd()

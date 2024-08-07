@@ -1,20 +1,16 @@
-local enet = require('enet')
-
 net = net or {}
-
 net.host = net.host or enet.host_create()
-net.socket = net.socket or require('socket')
 
 net._receives = net._receives or {}
 
 function net.Connect(address)
-	if net.server then return notify.show('error', 3, 'Невозможно подключиться: уже подключен') end
+	if net.connectedServer then return notify.show('error', 3, 'Невозможно подключиться: уже подключен') end
 
 	local host = net.host
 	local ok, val = pcall(host.connect, host, address)
 	
 	if ok then
-		net.server = val
+		net.connectedServer = val
 	else
 		print('Cannot connect! Error: ' .. val)
 	end
@@ -25,7 +21,7 @@ function net.Receive(name, callback)
 end
 
 function net.Send(name, data)
-	if not net.server then return end
+	if not net.connectedServer then return end
 
 	local dataToSend = {}
 	dataToSend.name = name
@@ -33,15 +29,15 @@ function net.Send(name, data)
 
 	local dataToSend = json.encode(dataToSend)
 
-	net.server:send(dataToSend)
+	net.connectedServer:send(dataToSend)
 end
 
 function net.GetPing()
-	return net.server and net.server:round_trip_time() or -1
+	return net.connectedServer and net.connectedServer:round_trip_time() or -1
 end
 
 hook.Add('Think', 'net', function()
-	if not net.server then return end
+	if not net.connectedServer then return end
 
 	local event = net.host:service()
 	if not event then return end

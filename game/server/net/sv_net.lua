@@ -1,20 +1,19 @@
-local enet = require('enet')
-
 net = net or {}
-net.socket = require('socket')
+net.server = net.server or {}
 
-function net.OpenServer(port)
-	net.host = enet.host_create('0.0.0.0:' .. port)
+function net.server.OpenServer(port)
+	if net.server.host then return notify.show('error', 3, 'Невозможно создать сервер: уже создан!') end
+	net.server.host = enet.host_create('0.0.0.0:' .. port)
 end
 
 local _receives = {}
 
-function net.Receive(name, callback)
+function net.server.Receive(name, callback)
 	_receives[name] = callback
 end
 
-function net.Send(receivers, name, data)
-	if not net.host then return end
+function net.server.Send(receivers, name, data)
+	if not net.server.host then return end
 
 	local dataToSend = {}
 	dataToSend.name = name
@@ -31,8 +30,8 @@ function net.Send(receivers, name, data)
 	end
 end
 
-function net.Broadcast(name, data)
-	if not net.host then return end
+function net.server.Broadcast(name, data)
+	if not net.server.host then return end
 
 	local dataToSend = {}
 	dataToSend.name = name
@@ -40,10 +39,10 @@ function net.Broadcast(name, data)
 
 	local dataToSend = json.encode(dataToSend)
 
-	net.host:broadcast(dataToSend)
+	net.server.host:broadcast(dataToSend)
 end
 
-function net.Validate(peer, ip, port, validateData)
+function net.server.Validate(peer, ip, port, validateData)
 	if not validateData then return end
 	if not validateData.nickname then return end
 	if type(validateData.nickname) ~= 'string' then return end
@@ -65,8 +64,8 @@ function net.Validate(peer, ip, port, validateData)
 	hook.Run('PlayerConnected', ply)
 end
 
-hook.Add('Think', 'net', function()
-	local host = net.host
+hook.Add('Think', 'net.server', function()
+	local host = net.server.host
 	if not host then return end
 
 	local event = host:service()
@@ -87,7 +86,7 @@ hook.Add('Think', 'net', function()
 		
 		local name = info.name
 		if name == '_validate' then
-			return net.Validate(peer, ip, port, info.data)
+			return net.server.Validate(peer, ip, port, info.data)
 		end
 
 		local func = _receives[name]

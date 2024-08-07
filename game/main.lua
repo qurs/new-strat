@@ -3,6 +3,7 @@ if os.getenv('LOCAL_LUA_DEBUGGER_VSCODE') == '1' then
 end
 
 Bmp = require('bmp')
+enet = require('enet')
 
 local libloader = require('libloader')
 gameloader = require('gameloader')
