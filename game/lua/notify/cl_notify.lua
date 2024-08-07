@@ -2,8 +2,8 @@ notify = notify or {}
 notify._notifies = notify._notifies or {}
 
 local defaultNotifyFont = gui.registerFont('notify.default', {
-	font = 'Montserrat-Black',
-	size = 24,
+	font = 'Montserrat-Medium',
+	size = 18,
 })
 
 notify.types = {
