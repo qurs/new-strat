@@ -26,7 +26,7 @@ function curScene:Think(dt)
 			ui:layoutSpaceBegin('dynamic', 30, 1)
 				ui:layoutSpacePush(0, 0, 1, 1)
 					if ui:button('Начать игру') then
-						scene.change('map', true)
+						scene.change('start_game')
 					end
 
 					if ui:button('Сетевая игра') then

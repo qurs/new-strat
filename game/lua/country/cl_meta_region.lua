@@ -53,6 +53,23 @@ end
 
 -- OTHER
 
+function Region:GetBounds()
+	local provinces = self:GetProvinces()
+	if table.IsEmpty(provinces) then return end
+
+	local minX, minY = math.huge, math.huge
+	local maxX, maxY = -math.huge, -math.huge
+
+	for id, province in pairs(provinces) do
+		local minPos, maxPos = province:GetBounds()
+
+		minX, minY = math.min(minX, minPos.x), math.min(minY, minPos.y)
+		maxX, maxY = math.max(maxX, maxPos.x), math.max(maxY, maxPos.y)
+	end
+
+	return Vector(minX, minY), Vector(maxX, maxY)
+end
+
 function Region:ChangeCountry(country)
 	local oldCountry = self:GetCountry()
 	if oldCountry then

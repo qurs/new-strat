@@ -81,11 +81,42 @@ local function parseProvinces(path)
 		local r, g, b = tonumber(data[2]), tonumber(data[3]), tonumber(data[4])
 		local hex = nuklear.colorRGBA(r, g, b)
 
+		local pixels = {}
+		local minX, minY = math.huge, math.huge
+		local maxX, maxY = -math.huge, -math.huge
+
+		do
+			local imgData = assetloader.get('map_provinces').data
+			local w, h = imgData:getWidth(), imgData:getHeight()
+			local pixelCount = w * h
+
+			local pointer = require('ffi').cast('uint8_t*', imgData:getFFIPointer())
+
+			for i = 0, (4 * pixelCount) - 1, 4 do
+				local pr, pg, pb = pointer[i], pointer[i + 1], pointer[i + 2]
+
+				if pr == r and pg == g and pb == b then
+					local pos = i / 4
+					local y = math.floor(math.max(pos - 1, 0) / w)
+					local x = pos - (w * y)
+
+					minX, minY = math.min(minX, x), math.min(minY, y)
+					maxX, maxY = math.max(maxX, x), math.max(maxY, y)
+
+					pixels[#pixels + 1] = {x, y}
+				end
+			end
+		end
+
 		local meta = country.newProvince(id, {
-			rgb255 = {r, g, b},
-			rgb = {r / 255, g / 255, b / 255},
-			hex = hex,
-		})
+				rgb255 = {r, g, b},
+				rgb = { love.math.colorFromBytes(r, g, b) },
+				hex = hex,
+			},
+			pixels,
+			Vector(minX, minY),
+			Vector(maxX, maxY)
+		)
 
 		tbl[id] = meta
 		map[hex] = id
@@ -99,14 +130,14 @@ end
 hook.Add('AssetsLoaded', 'map', function()
 	camera.setPos(vector_origin)
 
+	local provincesImg = assetloader.get('map_provinces').img
+	provincesImg:setFilter('nearest', 'nearest')
+
 	map._provincesBMP = Bmp.from_file('game/assets/provinces.bmp')
 	map._provinces, map._provincesMap = parseProvinces('game/assets/provinces.csv')
 
-	local img = assetloader.get('map')
+	local img = assetloader.get('map').img
 	local w, h = img:getWidth(), img:getHeight()
-
-	local provincesImg = assetloader.get('map_provinces')
-	provincesImg:setFilter('nearest', 'nearest')
 
 	local pw, ph = provincesImg:getWidth(), provincesImg:getHeight()
 
@@ -118,14 +149,6 @@ hook.Add('AssetsLoaded', 'map', function()
 			size = {pw, ph},
 		},
 	}
-
-	do
-		local c = country.newCountry('Test Country', {1, 0, 0})
-		c:AddRegion(country.newRegion('Region 1'))
-
-		local c = country.newCountry('Test Country 2', {0, 1, 0})
-		c:AddRegion(country.newRegion('Region 2'))
-	end
 	
 	for _, province in ipairs(map._provinces) do
 		province:CreateCanvas()
@@ -149,7 +172,7 @@ hook.Add('WindowResized', 'map', function()
 end)
 
 hook.Add('Draw', 'map', function()
-	if scene.getName() ~= 'map' then return end
+	if scene.getName() ~= 'map' and scene.getName() ~= 'start_game' then return end
 
 	love.graphics.setColor(1, 1, 1)
 	love.graphics.draw(map._canvas, map._centerX)
@@ -176,6 +199,12 @@ hook.Add('Draw', 'map', function()
 			love.graphics.translate(map._maxX, 0)
 			province:Draw(true)
 		love.graphics.pop()
+	end
+
+	for id, country in pairs(country._countries) do
+		country:DrawName(map._centerX)
+		country:DrawName(map._minX)
+		country:DrawName(map._maxX)
 	end
 
 	if map.debugRecursiveMap then
@@ -245,15 +274,16 @@ hook.Add('MouseDown', 'map', function(x, y, button)
 	local hex = nuklear.colorRGBA(r, g, b)
 
 	local id = map._provincesMap[hex]
-	if not id then
-		if button == 1 and map._selectedProvince then
-			map._selectedProvince = nil
-		end
-		return
-	end
+	if not id then return end
 
 	local province = map._provinces[id]
 	if not province then return end
 
 	province:OnClick(button)
+end)
+
+hook.Add('KeyDown', 'map', function(button)
+	if button == 'escape' and map._selectedProvince then
+		map._selectedProvince = nil
+	end
 end)

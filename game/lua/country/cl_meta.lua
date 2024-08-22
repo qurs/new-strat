@@ -1,3 +1,8 @@
+gui.registerFont('country.name', {
+	font = 'Montserrat-Medium',
+	size = 64,
+})
+
 country = country or {}
 country._countryMeta = country._countryMeta or {}
 
@@ -13,6 +18,10 @@ function Country:__init(id, name, rgb)
 	self.regions = {}
 
 	self.stability = 50
+
+	self.text = love.graphics.newText(gui.getFont('country.name'), name)
+
+	self.textRatio = self.text:getWidth() / self.text:getHeight()
 
 	--[[ OPTIONAL FIELDS
 
@@ -61,6 +70,23 @@ end
 
 -- OTHER
 
+function Country:GetBounds()
+	local regions = self:GetRegions()
+	if table.IsEmpty(regions) then return end
+
+	local minX, minY = math.huge, math.huge
+	local maxX, maxY = -math.huge, -math.huge
+
+	for id, region in pairs(regions) do
+		local minPos, maxPos = region:GetBounds()
+
+		minX, minY = math.min(minX, minPos.x), math.min(minY, minPos.y)
+		maxX, maxY = math.max(maxX, maxPos.x), math.max(maxY, maxPos.y)
+	end
+
+	return Vector(minX, minY), Vector(maxX, maxY)
+end
+
 function Country:AddStability(add)
 	self:SetStability(self:GetStability() + add)
 end
@@ -107,6 +133,49 @@ function Country:RemoveRegion(id)
 end
 
 -- Hooks
+
+function Country:DrawName(offset)
+	offset = offset or 0
+
+	if camera._scale > 2 then
+		if self.nameAlpha and self.nameAlpha <= 0 then return end
+
+		self.nameAlpha = Lerp(0.01, self.nameAlpha or 1, 0)
+
+		if self.nameAlpha < 0.05 then
+			self.nameAlpha = 0
+		end
+	elseif self.nameAlpha then
+		self.nameAlpha = Lerp(0.01, self.nameAlpha, 1)
+
+		if self.nameAlpha > 0.95 then
+			self.nameAlpha = nil
+		end
+	end
+
+	local minPos, maxPos = self:GetBounds()
+	if minPos then
+		local imgData = map._img
+		if not imgData then return end
+
+		local provincesImgData = imgData.provinces
+		local mapW, mapH = unpack(imgData.size)
+
+		local ratio = ScrH() / mapH
+
+		minPos, maxPos = minPos * ratio, maxPos * ratio
+		local size = maxPos - minPos
+
+		local text = self.text
+		local tw, th = text:getWidth(), text:getHeight()
+		local sx = size.x / tw
+
+		local x, y = minPos.x + offset, minPos.y + (size.y / 2 - (th * sx) / 2)
+
+		love.graphics.setColor(1, 1, 1, self.nameAlpha or 1)
+		love.graphics.draw(text, x, y, 0, sx)
+	end
+end
 
 function Country:Draw()
 	local regions = self:GetRegions()

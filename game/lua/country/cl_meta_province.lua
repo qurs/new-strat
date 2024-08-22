@@ -6,9 +6,13 @@ local Province = country._provinceMeta
 Province.__type = 'province'
 Province.__index = Province
 
-function Province:__init(id, clr)
+function Province:__init(id, clr, pixels, minPos, maxPos)
 	self.id = id
 	self.clr = clr
+
+	self.pixels = pixels
+	self.minPos = minPos
+	self.maxPos = maxPos
 
 	--[[ OPTIONAL FIELDS
 		self.regionOwner = nil
@@ -46,6 +50,22 @@ function Province:GetHEX()
 	local clr = self:GetColorData()
 
 	return clr.hex
+end
+
+function Province:GetPixelsList()
+	return self.pixels
+end
+
+function Province:GetMinPos()
+	return self.minPos
+end
+
+function Province:GetMaxPos()
+	return self.maxPos
+end
+
+function Province:GetBounds()
+	return self:GetMinPos(), self:GetMaxPos()
 end
 
 function Province:GetRegion()
