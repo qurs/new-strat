@@ -1,3 +1,7 @@
+function table.IsEmpty( tab )
+	return next( tab ) == nil
+end
+
 function table.GetKeys( tab )
 
 	local keys = {}
