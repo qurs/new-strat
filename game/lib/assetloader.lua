@@ -229,9 +229,9 @@ hook.Add('Think', '_assetloader', function()
 		local content = loadedFile.content
 
 		if loadedFile.type == 'img' then
-			content = love.graphics.newImage(content)
+			content = {img = love.graphics.newImage(content), data = content}
 		elseif loadedFile.type == 'array_img' then
-			content = love.graphics.newArrayImage(content)
+			content = {img = love.graphics.newArrayImage(content), data = content}
 		end
 
 		assetloader._cache[loadedFile.name] = content
