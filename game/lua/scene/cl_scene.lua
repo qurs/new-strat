@@ -52,9 +52,58 @@ function scene.getName()
 	return current and current.name
 end
 
+hook.Add('WindowResized', 'scene', function(w, h)
+	local current = scene.get()
+	if not current or not current.meta or not current.meta.WindowResized then return end
+
+	current.meta:WindowResized(w, h)
+end)
+
 hook.Add('Think', 'scene', function(dt)
 	local current = scene.get()
 	if not current or not current.meta or not current.meta.Think then return end
 
 	current.meta:Think(dt)
+end)
+
+hook.Add('PreDraw', 'scene', function()
+	local current = scene.get()
+	if not current or not current.meta or not current.meta.PreDraw then return end
+
+	return current.meta:PreDraw()
+end)
+
+hook.Add('Draw', 'scene', function()
+	local current = scene.get()
+	if not current or not current.meta or not current.meta.Draw then return end
+
+	current.meta:Draw()
+end)
+
+hook.Add('PostDraw', 'scene', function()
+	local current = scene.get()
+	if not current or not current.meta or not current.meta.PostDraw then return end
+
+	current.meta:PostDraw()
+end)
+
+hook.Add('PreDrawUI', 'scene', function()
+	local current = scene.get()
+	if not current or not current.meta or not current.meta.PreDrawUI then return end
+
+	return current.meta:PreDrawUI()
+end)
+
+hook.Add('DrawUI', 'scene', function()
+	local current = scene.get()
+	if not current or not current.meta or not current.meta.DrawUI then return end
+
+	current.meta:DrawUI()
+end)
+
+hook.Add('PostDrawUI', 'scene', function()
+	local current = scene.get()
+	if not current or not current.meta or not current.meta.PostDrawUI then return end
+
+	current.meta:PostDrawUI()
 end)
