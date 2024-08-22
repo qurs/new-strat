@@ -10,6 +10,8 @@ gameloader = require('gameloader')
 nuklear = require('nuklear')
 
 function love.load()
+	love.keyboard.setKeyRepeat(true)
+
 	libloader.load()
 	gameloader.load()
 
