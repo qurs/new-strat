@@ -63,13 +63,15 @@ function love.resize(w, h)
 end
 
 function love.mousepressed(x, y, button, istouch, presses)
+	if ui:mousepressed(x, y, button, istouch, presses) then return end
+
 	hook.Run('MouseDown', x, y, button, istouch, presses)
-	ui:mousepressed(x, y, button, istouch, presses)
 end
 
 function love.mousereleased(x, y, button, istouch, presses)
+	if ui:mousereleased(x, y, button, istouch, presses) then return end
+
 	hook.Run('MouseUp', x, y, button, istouch, presses)
-	ui:mousereleased(x, y, button, istouch, presses)
 end
 
 function love.mousemoved(x, y, dx, dy, istouch)
