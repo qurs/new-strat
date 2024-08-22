@@ -3,20 +3,20 @@ notify._notifies = notify._notifies or {}
 
 local defaultNotifyFont = gui.registerFont('notify.default', {
 	font = 'Montserrat-Medium',
-	size = 18,
+	size = 16,
 })
 
 notify.types = {
 	generic = {
-		color = {224, 187, 92},
+		color = {255, 255, 255},
 		font = defaultNotifyFont,
 	},
 	error = {
-		color = {201, 20, 20},
+		color = {255, 115, 115},
 		font = defaultNotifyFont,
 	},
 	warn = {
-		color = {219, 58, 13},
+		color = {252, 149, 88},
 		font = defaultNotifyFont,
 	},
 }
@@ -54,14 +54,14 @@ end
 hook.Add('PostDrawUI', 'notifies', function()
 	local shSize = 0
 	for k, v in ipairs( notify._notifies ) do
-		love.graphics.setColor(6 / 255, 34 / 255, 43 / 255, 1)
+		love.graphics.setColor( love.math.colorFromBytes(20, 20, 20, 255) )
 		love.graphics.rectangle('fill', v.pos[1], v.pos[2], v.size[1], v.size[2])
 
 		if not v.textObj then
 			v.textObj = love.graphics.newText(v.font, v.text)
 		end
 
-		love.graphics.setColor(v.color[1] / 255, v.color[2] / 255, v.color[3] / 255, 1)
+		love.graphics.setColor( love.math.colorFromBytes(v.color[1], v.color[2], v.color[3], 255) )
 		love.graphics.draw(v.textObj, v.pos[1] + ( v.size[1] / 2 - v.textSize[1] / 2 ), v.pos[2] + ( v.size[2] / 2 - v.textSize[2] / 2 ))
 
 		shSize = shSize + v.size[2]
