@@ -2,7 +2,7 @@ gamecycle = gamecycle or {}
 
 gamecycle.speed = 1
 
-gamecycle.speeds = {1, 2, 4, 8}
+gamecycle.speeds = {1, 4, 8, 16}
 gamecycle._currentSpeedIndex = 1
 
 function gamecycle.start()
@@ -64,4 +64,6 @@ hook.Add('Think', 'gamecycle', function(dt)
 
 	gamecycle._time = gamecycle._time + 1
 	gamecycle._nextStep = os.clock() + (1 / gamecycle.speed)
+
+	hook.Run('gamecycle.step')
 end)
