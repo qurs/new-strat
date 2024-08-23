@@ -54,16 +54,16 @@ function gamecycle.ui(dt)
 			end
 
 			ui:layoutRow('dynamic', 6, 4)
-			if ui:button(nil, '#66ff63' .. (gamecycle.speed == 1 and 'ff' or '30')) then
+			if ui:button(nil, '#66ff63' .. (gamecycle.speed == gamecycle.speeds[1] and 'ff' or '30')) then
 				gamecycle.setSpeed(1)
 			end
-			if ui:button(nil, '#efff63' .. (gamecycle.speed == 2 and 'ff' or '30')) then
+			if ui:button(nil, '#efff63' .. (gamecycle.speed == gamecycle.speeds[2] and 'ff' or '30')) then
 				gamecycle.setSpeed(2)
 			end
-			if ui:button(nil, '#ff8a63' .. (gamecycle.speed == 4 and 'ff' or '30')) then
+			if ui:button(nil, '#ff8a63' .. (gamecycle.speed == gamecycle.speeds[3] and 'ff' or '30')) then
 				gamecycle.setSpeed(3)
 			end
-			if ui:button(nil, '#ff6363' .. (gamecycle.speed == 8 and 'ff' or '30')) then
+			if ui:button(nil, '#ff6363' .. (gamecycle.speed == gamecycle.speeds[4] and 'ff' or '30')) then
 				gamecycle.setSpeed(4)
 			end
 		end
