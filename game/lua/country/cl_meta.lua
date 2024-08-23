@@ -137,7 +137,7 @@ end
 function Country:DrawName(offset)
 	offset = offset or 0
 
-	if camera._scale > 2 then
+	if camera._scale > 2.5 then
 		if self.nameAlpha and self.nameAlpha <= 0 then return end
 
 		self.nameAlpha = Lerp(0.01, self.nameAlpha or 1, 0)
@@ -168,9 +168,9 @@ function Country:DrawName(offset)
 
 		local text = self.text
 		local tw, th = text:getWidth(), text:getHeight()
-		local sx = size.x / tw
+		local sx = (size.x * 0.7) / tw
 
-		local x, y = minPos.x + offset, minPos.y + (size.y / 2 - (th * sx) / 2)
+		local x, y = minPos.x + offset + (size.x / 2 - (tw * sx) / 2), minPos.y + (size.y / 2 - (th * sx) / 2)
 
 		love.graphics.setColor(1, 1, 1, self.nameAlpha or 1)
 		love.graphics.draw(text, x, y, 0, sx)
