@@ -119,12 +119,11 @@ function curScene:Think(dt)
 		if ui:windowBegin('start_game', x, y, w, h) then
 			ui:layoutSpaceBegin('static', h, 1)
 				ui:layoutSpacePush(w - buttonW - 10, 0, buttonW, buttonH)
-					if ui:button('Начать') then
-						if not map._selectedProvince then return notify.show('error', 2, 'Нужно выбрать провинцию!') end
+				if ui:button('Начать') then
+					if not map._selectedProvince then return notify.show('error', 2, 'Нужно выбрать провинцию!') end
 
-						popupClosed = nil
-					end
-				ui:layoutSpaceEnd()
+					popupClosed = nil
+				end
 			ui:layoutSpaceEnd()
 		end
 		ui:windowEnd()
