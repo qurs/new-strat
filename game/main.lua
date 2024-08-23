@@ -26,6 +26,12 @@ function love.load()
 					{path = 'assets/provinces.bmp', name = 'map_provinces', type = 'img'},
 				},
 			},
+			{
+				name = 'Textures',
+				files = {
+					{path = 'assets/pause.png', name = 'pause_img', type = 'img'},
+				},
+			},
 		},
 	}, function()
 		hook.Run('AssetsLoaded')
