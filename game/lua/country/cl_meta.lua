@@ -97,6 +97,20 @@ function Country:Destroy()
 	end
 
 	country.removeCountry(self:GetID())
+
+	-- тут когда-нибудь будет проверку на локального игрока
+
+	gamecycle._blocked = true
+	gamecycle.pause()
+
+	gamecycle.event.ui.showWindow('Страна погрязла в бунтах и восстаниях из-за политической нестабильности. На этом история заканчивается...', {
+		{
+			text = 'Закончить игру',
+			callback = function()
+				game.endGame()
+			end
+		},
+	})
 end
 
 function Country:AddRegion(region)
