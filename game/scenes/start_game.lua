@@ -105,6 +105,7 @@ function curScene:Think(dt)
 					c:AddRegion(r)
 
 					scene.change('map', true)
+					hook.Run('GameStarted')
 				end
 				
 				::continue::
