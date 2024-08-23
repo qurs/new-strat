@@ -39,7 +39,6 @@ function gamecycle.ui(dt)
 
 	local x, y = ScrW() - padW, 0
 
-	ui:frameBegin()
 	ui:stylePush(style)
 		if ui:windowBegin('gamecycle', x, y, padW, padH) then
 			ui:layoutRow('static', padH - 6, {16, padW - 32, 16})
@@ -69,7 +68,6 @@ function gamecycle.ui(dt)
 		end
 		ui:windowEnd()
 	ui:stylePop()
-	ui:frameEnd()
 end
 
 hook.Add('AssetsLoaded', 'gamecycle', function()

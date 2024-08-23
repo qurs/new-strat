@@ -44,6 +44,10 @@ end
 
 function love.update(dt)
 	hook.Run('Think', dt)
+
+	ui:frameBegin()
+		hook.Run('UI', dt)
+	ui:frameEnd()
 end
 
 function love.draw()

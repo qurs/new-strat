@@ -6,6 +6,8 @@ gamecycle.speeds = {1, 4, 8, 16}
 gamecycle._currentSpeedIndex = 1
 
 function gamecycle.start()
+	if gamecycle._blocked then return end
+
 	gamecycle._started = true
 	gamecycle._time = gamecycle._time or 1
 end
@@ -57,7 +59,7 @@ function gamecycle.getDate()
 	}
 end
 
-hook.Add('Think', 'gamecycle', function(dt)
+hook.Add('UI', 'gamecycle', function(dt)
 	if gamecycle.ui then gamecycle.ui(dt) end
 	if not gamecycle._started then return end
 	if gamecycle._nextStep and gamecycle._nextStep > os.clock() then return end

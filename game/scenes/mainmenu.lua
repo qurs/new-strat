@@ -16,11 +16,10 @@ function curScene:Initialize()
 	}
 end
 
-function curScene:Think(dt)
+function curScene:UI(dt)
 	local w, h = ScrW() / 2, ScrH() / 2
 	local x, y = ScrW() / 2 - w / 2, ScrH() / 2 - h / 2
 
-	ui:frameBegin()
 	ui:stylePush(style)
 		if ui:windowBegin('STRAT', x, y, w, h) then
 			ui:layoutSpaceBegin('dynamic', 30, 1)
@@ -37,7 +36,6 @@ function curScene:Think(dt)
 		end
 		ui:windowEnd()
 	ui:stylePop()
-	ui:frameEnd()
 end
 
 return curScene

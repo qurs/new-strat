@@ -51,7 +51,7 @@ function curScene:DrawUI()
 	love.graphics.draw(hintText, 0, padH / 2 - hintText:getHeight() / 2)
 end
 
-function curScene:Think(dt)
+function curScene:UI(dt)
 	local w, h = ScrW(), 32 + 10
 	local x, y = 0, ScrH() - h
 
@@ -60,7 +60,6 @@ function curScene:Think(dt)
 	local popupW, popupH = ScrW() / 2, ScrH() / 2
 	local popupX, popupY = ScrW() / 2 - popupW / 2, ScrH() / 2 - popupH / 2
 
-	ui:frameBegin()
 	ui:stylePush(style[1])
 		if not popupClosed and ui:windowBegin('start_game_popups', 0, 0, ScrW(), ScrH(), 'background') then
 			if not popupClosed and ui:popupBegin('dynamic', 'Создание страны', popupX, popupY, popupW, popupH, 'title', 'closable') then
@@ -128,7 +127,6 @@ function curScene:Think(dt)
 		end
 		ui:windowEnd()
 	ui:stylePop()
-	ui:frameEnd()
 end
 
 return curScene

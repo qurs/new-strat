@@ -66,6 +66,13 @@ hook.Add('Think', 'scene', function(dt)
 	current.meta:Think(dt)
 end)
 
+hook.Add('UI', 'scene', function(dt)
+	local current = scene.get()
+	if not current or not current.meta or not current.meta.UI then return end
+
+	current.meta:UI(dt)
+end)
+
 hook.Add('PreDraw', 'scene', function()
 	local current = scene.get()
 	if not current or not current.meta or not current.meta.PreDraw then return end

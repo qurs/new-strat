@@ -26,7 +26,7 @@ hook.Add('AssetsLoaded', 'gamecycle.event.ui', function()
 	style.font = gui.getFont('gamecycle.event.ui')
 end)
 
-hook.Add('Think', 'gamecycle.event.ui', function(dt)
+hook.Add('UI', 'gamecycle.event.ui', function(dt)
 	if not style.font then return end
 
 	local window = gamecycle.event.ui._window
@@ -38,7 +38,6 @@ hook.Add('Think', 'gamecycle.event.ui', function(dt)
 	local _, wrapLimit = style.font:getWrap( window.text, popupW - 40 )
 	local th = #wrapLimit * style.font:getHeight()
 
-	ui:frameBegin()
 	ui:stylePush(style)
 		if ui:windowBegin('gamecycle_event_ui', popupX, popupY, popupW, popupH, 'background') then
 			if ui:popupBegin('dynamic', 'Событие', 0, 0, popupW, popupH, 'title', 'scrollbar') then
@@ -60,5 +59,4 @@ hook.Add('Think', 'gamecycle.event.ui', function(dt)
 		end
 		ui:windowEnd()
 	ui:stylePop()
-	ui:frameEnd()
 end)
