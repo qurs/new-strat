@@ -23,7 +23,7 @@ function curScene:Initialize()
 		font = gui.getFont('start_game'),
 		window = {
 			['fixed background'] = '#00000000',
-			['background'] = '#00000000',
+			-- ['background'] = '#00000000',
 			padding = {x = 0, y = 0},
 		},
 	}
