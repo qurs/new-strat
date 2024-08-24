@@ -105,6 +105,7 @@ function love.textinput(text)
 end
 
 function love.wheelmoved(x, y)
+	if ui:wheelmoved(x, y) then return end
+
 	hook.Run('WheelMoved', x, y)
-	ui:wheelmoved(x, y)
 end
