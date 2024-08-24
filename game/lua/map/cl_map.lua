@@ -205,6 +205,12 @@ hook.Add('Draw', 'map', function()
 		country:DrawName(map._centerX)
 		country:DrawName(map._minX)
 		country:DrawName(map._maxX)
+
+		for id, region in pairs(country:GetRegions()) do
+			region:DrawCapital(map._centerX)
+			region:DrawCapital(map._minX)
+			region:DrawCapital(map._maxX)
+		end
 	end
 
 	if map.debugRecursiveMap then

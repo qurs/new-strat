@@ -1,3 +1,8 @@
+gui.registerFont('region.capitalName', {
+	font = 'Montserrat-Medium',
+	size = 20,
+})
+
 country = country or {}
 country._regionMeta = country._regionMeta or {}
 
@@ -6,13 +11,17 @@ local Region = country._regionMeta
 Region.__type = 'region'
 Region.__index = Region
 
-function Region:__init(id, name, provinces)
+function Region:__init(id, name, capitalName, provinces)
 	if not id then return print( ('Ошибка при создании региона %s! Не хватает свойства: id'):format(id) ) end
 	if not name then return print( ('Ошибка при создании региона %s! Не хватает свойства: name'):format(id) ) end
+	if not capitalName then return print( ('Ошибка при создании региона %s! Не хватает свойства: capitalName'):format(id) ) end
 
 	self.id = id
 	self.name = name
+	self.capitalName = capitalName
 	self.provinces = provinces or {}
+
+	self.capitalText = love.graphics.newText(gui.getFont('region.capitalName'), capitalName)
 
 	--[[ OPTIONAL FIELDS
 		
@@ -33,6 +42,10 @@ function Region:GetName()
 	return self.name
 end
 
+function Region:GetCapitalName()
+	return self.capitalName
+end
+
 function Region:GetProvinces()
 	return self.provinces
 end
@@ -41,14 +54,26 @@ function Region:GetCountry()
 	return self.country
 end
 
+function Region:GetCapitalProvince()
+	return self.capitalProvince
+end
+
 -- SETTERS
 
 function Region:SetName(name)
 	self.name = name
 end
 
+function Region:SetCapitalName(name)
+	self.capitalName = name
+end
+
 function Region:_SetCountry(country)
 	self.country = country
+end
+
+function Region:SetCapitalProvince(province)
+	self.capitalProvince = province
 end
 
 -- OTHER
@@ -96,6 +121,10 @@ function Region:AddProvince(province)
 	province:CreateCanvas()
 	self.provinces[id] = province
 
+	if not self:GetCapitalProvince() then
+		self:SetCapitalProvince(id)
+	end
+
 	self:CreateCanvas()
 	map.createCanvas()
 end
@@ -107,6 +136,14 @@ function Region:RemoveProvince(id)
 	province:_SetRegion()
 	province:CreateCanvas()
 	self.provinces[id] = nil
+
+	if self:GetCapitalProvince() == id then
+		local keys = table.GetKeys(self.provinces)
+		local newID = keys[#math.random(keys)]
+		if newID then
+			self:SetCapitalProvince(newID)
+		end
+	end
 
 	self:CreateCanvas()
 	map.createCanvas()
@@ -135,6 +172,38 @@ function Region:CreateCanvas()
 			province:Draw()
 		end
 	love.graphics.setCanvas()
+end
+
+function Region:DrawCapital(offset)
+	local id = self:GetCapitalProvince()
+	if not id then return end
+
+	local text = self.capitalText
+	if not text then return end
+
+	local imgData = map._img
+	if not imgData then return end
+
+	local mapW, mapH = unpack(imgData.size)
+	local ratio = ScrH() / mapH
+
+	local province = self.provinces[id]
+	if not province then return end
+
+	local minPos, maxPos = province:GetBounds()
+	minPos, maxPos = minPos * ratio, maxPos * ratio
+
+	local centerPos = (minPos + maxPos) / 2
+
+	local pointSize = 2
+
+	love.graphics.setColor(1, 1, 1)
+	love.graphics.rectangle('fill', offset + centerPos.x - pointSize / 2, centerPos.y, pointSize, pointSize)
+
+	local sx = 0.2
+
+	love.graphics.setColor(1, 1, 1)
+	love.graphics.draw(text, offset + centerPos.x - (text:getWidth() * sx) / 2, centerPos.y - (text:getHeight() * sx), 0, sx)
 end
 
 function Region:Draw()

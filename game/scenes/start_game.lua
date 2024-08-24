@@ -3,6 +3,7 @@ local style = {}
 local countryEntry = {
 	name = {value = ''},
 	regionName = {value = ''},
+	capitalName = {value = ''},
 	color = {value = '#ff0000'},
 }
 
@@ -71,19 +72,27 @@ function curScene:UI(dt)
 				ui:label('Название столичного региона:')
 				ui:edit('simple', countryEntry.regionName)
 
+				ui:layoutRow('dynamic', 26, 2)
+				ui:label('Название столицы:')
+				ui:edit('simple', countryEntry.capitalName)
+
 				ui:layoutRow('dynamic', 128, 2)
 				ui:label('Цвет страны:')
 				ui:colorPicker(countryEntry.color, 'RGB')
 
 				ui:layoutRow('dynamic', 28, 1)
 				if ui:button('Создать') then
-					local name, regionName, colorHex = countryEntry.name.value, countryEntry.regionName.value, countryEntry.color.value
+					local name, regionName, capitalName, colorHex = countryEntry.name.value, countryEntry.regionName.value, countryEntry.capitalName.value, countryEntry.color.value
 					if utf8.len(name) < 3 or utf8.len(name) > 64 then
 						notify.show('error', 2.5, 'Название страны должно быть не короче 3-х и не длиннее 64-х символов!')
 						goto continue
 					end
 					if utf8.len(regionName) < 3 or utf8.len(regionName) > 32 then
 						notify.show('error', 2.5, 'Название столичного региона должно быть не короче 3-х и не длиннее 32-х символов!')
+						goto continue
+					end
+					if utf8.len(capitalName) < 3 or utf8.len(capitalName) > 32 then
+						notify.show('error', 2.5, 'Название столицы должно быть не короче 3-х и не длиннее 32-х символов!')
 						goto continue
 					end
 
@@ -98,7 +107,7 @@ function curScene:UI(dt)
 					if not r then return end
 
 					local c = country.newCountry(name, {r, g, b})
-					local r = country.newRegion(regionName)
+					local r = country.newRegion(regionName, capitalName)
 					r:AddProvince(map._selectedProvince)
 
 					c:AddRegion(r)
