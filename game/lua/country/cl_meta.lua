@@ -169,7 +169,7 @@ function Country:DrawName(offset)
 	local tw, th = text:getWidth(), text:getHeight()
 	local sx = (size.x * 0.7) / tw
 
-	if camera._scale > math.max(2, 64 / (tw * sx)) then
+	if camera._scale > math.max(1.5, 64 / (tw * sx)) then
 		if self.nameAlpha and self.nameAlpha <= 0 then return end
 
 		self.nameAlpha = Lerp(0.01, self.nameAlpha or 1, 0)
