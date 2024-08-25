@@ -91,10 +91,20 @@ hook.Add('UI', 'uiLib.popup', function(dt)
 								contentH = contentH + font:getHeight() + curStyle.window.spacing.y
 							end
 						elseif widget.type == 'edit' then
-							ui:layoutRow('dynamic', 28, 1)
+							local h = 28
+							
+							if widget.tooltip then
+								h = math.max(h, font:getHeight())
+
+								ui:layoutRow('dynamic', h, 2)
+								ui:label(widget.tooltip)
+							else
+								ui:layoutRow('dynamic', h, 1)
+							end
+
 							ui:edit(widget.editType or 'simple', widget.entry)
 		
-							contentH = contentH + 28 + curStyle.window.spacing.y
+							contentH = contentH + h + curStyle.window.spacing.y
 						elseif widget.type == 'button' then
 							ui:layoutRow('dynamic', 28, 1)
 							if ui:button(widget.text) then
