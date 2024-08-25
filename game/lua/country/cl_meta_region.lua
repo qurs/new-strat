@@ -20,8 +20,16 @@ function Region:__init(id, name, capitalName, provinces)
 	self.name = name
 	self.capitalName = capitalName
 
+	local i = 0
+	if provinces then
+		for id, province in pairs(provinces) do
+			i = i + 1
+			province:_SetRegion(self)
+		end
+	end
+
 	self.provinces = provinces or {}
-	self.provinceCount = table.Count(self.provinces)
+	self.provinceCount = i
 
 	self.capitalText = love.graphics.newText(gui.getFont('region.capitalName'), capitalName)
 
@@ -137,6 +145,40 @@ function Region:AddProvince(province)
 	map.createCanvas()
 end
 
+function Region:SetProvinces(provinces)
+	self:SetCapitalProvince()
+
+	for id, province in pairs(self:GetProvinces()) do
+		province:_SetRegion()
+		province:CreateCanvas()
+
+		self.provinces[id] = nil
+	end
+
+	self.provinceCount = 0
+
+	for _, province in ipairs(provinces) do
+		local id = province:GetID()
+		if self.provinces[id] then goto continue end
+		if province:GetRegion() then goto continue end
+	
+		province:_SetRegion(self)
+		province:CreateCanvas()
+
+		self.provinces[id] = province
+		self.provinceCount = self.provinceCount + 1
+
+		if not self:GetCapitalProvince() then
+			self:SetCapitalProvince(id)
+		end
+
+		::continue::
+	end
+
+	self:CreateCanvas()
+	map.createCanvas()
+end
+
 function Region:RemoveProvince(id)
 	local province = self.provinces[id]
 	if not province then return end
@@ -153,6 +195,58 @@ function Region:RemoveProvince(id)
 		if newID then
 			self:SetCapitalProvince(newID)
 		end
+	end
+
+	self:CreateCanvas()
+	map.createCanvas()
+end
+
+function Region:AddProvinces(tbl)
+	for _, provOrID in ipairs(tbl) do
+		local id = type(provOrID) == 'string' and provOrID or provOrID:GetID()
+
+		if self.provinces[id] then goto continue end
+		if province:GetRegion() then goto continue end
+
+		province:_SetRegion(self)
+		province:CreateCanvas()
+
+		self.provinces[id] = province
+		self.provinceCount = self.provinceCount + 1
+
+		if not self:GetCapitalProvince() then
+			self:SetCapitalProvince(id)
+		end
+
+		::continue::
+	end
+
+	self:CreateCanvas()
+	map.createCanvas()
+end
+
+function Region:RemoveProvinces(tbl)
+	for k, provOrID in ipairs(tbl) do
+		local id = type(provOrID) == 'number' and provOrID or provOrID:GetID()
+
+		local province = self.provinces[id]
+		if not province then goto continue end
+
+		province:_SetRegion()
+		province:CreateCanvas()
+
+		self.provinces[id] = nil
+		self.provinceCount = self.provinceCount - 1
+
+		if self:GetCapitalProvince() == id then
+			local keys = table.GetKeys(self.provinces)
+			local newID = keys[#math.random(keys)]
+			if newID then
+				self:SetCapitalProvince(newID)
+			end
+		end
+
+		::continue::
 	end
 
 	self:CreateCanvas()
