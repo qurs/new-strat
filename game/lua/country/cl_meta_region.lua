@@ -173,7 +173,7 @@ function Region:CreateCanvas()
 	self.canvas = love.graphics.newCanvas(w, ScrH())
 	-- self.canvas:setFilter('linear', 'nearest')
 
-	love.graphics.setCanvas({self.canvas, stencil = true})
+	love.graphics.setCanvas(self.canvas)
 		love.graphics.clear(0, 0, 0, 0)
 		love.graphics.setColor(1, 1, 1)
 
