@@ -19,7 +19,9 @@ function Region:__init(id, name, capitalName, provinces)
 	self.id = id
 	self.name = name
 	self.capitalName = capitalName
+
 	self.provinces = provinces or {}
+	self.provinceCount = table.Count(self.provinces)
 
 	self.capitalText = love.graphics.newText(gui.getFont('region.capitalName'), capitalName)
 
@@ -48,6 +50,10 @@ end
 
 function Region:GetProvinces()
 	return self.provinces
+end
+
+function Region:GetProvinceCount()
+	return self.provinceCount
 end
 
 function Region:GetCountry()
@@ -121,6 +127,8 @@ function Region:AddProvince(province)
 	province:CreateCanvas()
 	self.provinces[id] = province
 
+	self.provinceCount = self.provinceCount + 1
+
 	if not self:GetCapitalProvince() then
 		self:SetCapitalProvince(id)
 	end
@@ -136,6 +144,8 @@ function Region:RemoveProvince(id)
 	province:_SetRegion()
 	province:CreateCanvas()
 	self.provinces[id] = nil
+
+	self.provinceCount = self.provinceCount - 1
 
 	if self:GetCapitalProvince() == id then
 		local keys = table.GetKeys(self.provinces)
