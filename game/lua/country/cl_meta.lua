@@ -194,6 +194,6 @@ end
 function Country:Draw()
 	local regions = self:GetRegions()
 	for id, region in pairs(regions) do
-		region:Draw(mapW, mapH)
+		region:Draw()
 	end
 end
