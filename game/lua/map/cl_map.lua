@@ -59,7 +59,7 @@ function map.createCanvas()
 	map._canvas = love.graphics.newCanvas(w, ScrH())
 	map._canvas:setFilter('linear', 'nearest')
 
-	love.graphics.setCanvas({map._canvas, stencil = true})
+	love.graphics.setCanvas(map._canvas)
 		love.graphics.clear(0, 0, 0, 0)
 		love.graphics.setColor(1, 1, 1)
 		love.graphics.draw(mapImg, 0, 0, 0, ratio)
@@ -173,6 +173,24 @@ end)
 
 hook.Add('Draw', 'map', function()
 	if scene.getName() ~= 'map' and scene.getName() ~= 'start_game' then return end
+	if regionEditor._editing then
+		local imgData = map._img
+		if not imgData then return end
+	
+		local mapImg = imgData.img
+		local mapH = imgData.size[2]
+		local ratio = ScrH() / mapH
+
+		love.graphics.setColor(1, 1, 1)
+		love.graphics.draw(mapImg, map._centerX, 0, 0, ratio)
+
+		love.graphics.setColor(1, 1, 1)
+		love.graphics.draw(mapImg, map._minX, 0, 0, ratio)
+
+		love.graphics.setColor(1, 1, 1)
+		love.graphics.draw(mapImg, map._maxX, 0, 0, ratio)
+		return
+	end
 
 	love.graphics.setColor(1, 1, 1)
 	love.graphics.draw(map._canvas, map._centerX)
@@ -187,16 +205,19 @@ hook.Add('Draw', 'map', function()
 	if province then
 		love.graphics.push()
 			love.graphics.translate(map._centerX, 0)
+			love.graphics.setColor(1, 1, 1)
 			province:Draw(true)
 		love.graphics.pop()
 
 		love.graphics.push()
 			love.graphics.translate(map._minX, 0)
+			love.graphics.setColor(1, 1, 1)
 			province:Draw(true)
 		love.graphics.pop()
 
 		love.graphics.push()
 			love.graphics.translate(map._maxX, 0)
+			love.graphics.setColor(1, 1, 1)
 			province:Draw(true)
 		love.graphics.pop()
 	end

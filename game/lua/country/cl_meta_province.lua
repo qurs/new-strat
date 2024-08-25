@@ -174,8 +174,33 @@ end
 
 function Province:OnClick(button)
 	if button == 1 then
+		if regionEditor._editing then
+			local id = self:GetID()
+			local region = self:GetRegion()
+			if region:GetCapitalProvince() == id then return end
+
+			if regionEditor._selectedProvinces[id] then
+				regionEditor._selectedProvinces[id] = nil
+			else
+				regionEditor._selectedProvinces[id] = self
+			end
+
+			return
+		end
+
 		map._selectedProvince = self
 	elseif button == 2 then
+		if regionEditor._editing then
+			local id = self:GetID()
+			local region = self:GetRegion()
+			if region:GetCapitalProvince() == id then return end
+			if not regionEditor._selectedProvinces[id] then return notify.show('error', 2, 'Нужно сначала выделить эту провинцию!') end
+
+			regionEditor._selectedCapital = id
+
+			return
+		end
+
 		local country = country.get(1)
 		local reg = country:GetRegions()[1]
 	

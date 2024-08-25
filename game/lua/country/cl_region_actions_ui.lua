@@ -18,6 +18,7 @@ end)
 
 hook.Add('UI', 'country.regionActions', function(dt)
 	if scene.getName() ~= 'map' then return end
+	if regionEditor._editing then return end
 
 	local province = map._selectedProvince
 	if not province then return end
@@ -43,6 +44,7 @@ end)
 
 hook.Add('PostDrawUI', 'country.regionActions', function()
 	if scene.getName() ~= 'map' then return end
+	if regionEditor._editing then return end
 
 	local province = map._selectedProvince
 	if not province then return end

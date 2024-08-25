@@ -36,6 +36,7 @@ local padW, padH = 220, 40
 
 function gamecycle.ui(dt)
 	if scene.getName() ~= 'map' then return end
+	if regionEditor._editing then return end
 
 	local x, y = ScrW() - padW, 0
 
@@ -80,6 +81,7 @@ end)
 
 hook.Add('DrawUI', 'gamecycle', function()
 	if scene.getName() ~= 'map' then return end
+	if regionEditor._editing then return end
 	if not text then return end
 
 	local date = gamecycle.getDate()
@@ -111,6 +113,7 @@ end)
 
 hook.Add('PostDrawUI', 'gamecycle', function()
 	if scene.getName() ~= 'map' then return end
+	if regionEditor._editing then return end
 	if not text then return end
 
 	local x, y = ScrW() - padW, 0
