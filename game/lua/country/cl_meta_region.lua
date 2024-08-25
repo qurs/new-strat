@@ -33,6 +33,8 @@ function Region:__init(id, name, capitalName, provinces)
 
 	self.capitalText = love.graphics.newText(gui.getFont('region.capitalName'), capitalName)
 
+	self.population = 1000
+
 	--[[ OPTIONAL FIELDS
 		
 	]]
@@ -72,6 +74,10 @@ function Region:GetCapitalProvince()
 	return self.capitalProvince
 end
 
+function Region:GetPopulation()
+	return self.population
+end
+
 -- SETTERS
 
 function Region:SetName(name)
@@ -90,7 +96,15 @@ function Region:SetCapitalProvince(province)
 	self.capitalProvince = province
 end
 
+function Region:SetPopulation(population)
+	self.population = population
+end
+
 -- OTHER
+
+function Region:AddPopulation(add)
+	self:SetPopulation( self:GetPopulation() + add )
+end
 
 function Region:GetBounds()
 	local provinces = self:GetProvinces()

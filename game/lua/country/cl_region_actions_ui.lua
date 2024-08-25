@@ -29,8 +29,17 @@ hook.Add('UI', 'country.regionActions', function(dt)
 	local w, h = padW, padH
 	local x, y = 0, ScrH() - h
 
+	local font = style.font
+
+	local _, wrapLimit = font:getWrap( ('Население: %s'):format(region:GetPopulation()), w )
+
 	ui:stylePush(style)
 		if ui:windowBegin('region_actions', x, y, w, h, 'scrollbar') then
+			for _, v in ipairs(wrapLimit) do
+				ui:layoutRow('dynamic', font:getHeight(), 1)
+				ui:label(v)
+			end
+
 			for _, action in ipairs(country.actions.list) do
 				ui:layoutRow('dynamic', 28, 1)
 				if ui:button(action.name) then
