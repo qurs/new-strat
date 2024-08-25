@@ -2,6 +2,16 @@ function table.IsEmpty( tab )
 	return next( tab ) == nil
 end
 
+function table.Count(tbl)
+	local i = 0
+
+	for k, v in pairs(tbl) do
+		i = i + 1
+	end
+
+	return i
+end
+
 function table.GetKeys( tab )
 
 	local keys = {}
