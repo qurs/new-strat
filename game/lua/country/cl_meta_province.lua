@@ -164,7 +164,7 @@ function Province:Draw(outlined)
 		love.graphics.setShader(shader)
 	end
 
-	love.graphics.setColor(1, 1, 1)
+	-- love.graphics.setColor(1, 1, 1)
 	love.graphics.draw(canvas)
 
 	if outlined then

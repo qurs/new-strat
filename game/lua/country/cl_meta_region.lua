@@ -179,6 +179,7 @@ function Region:CreateCanvas()
 
 		local provinces = self:GetProvinces()
 		for id, province in pairs(provinces) do
+			love.graphics.setColor(1, 1, 1)
 			province:Draw()
 		end
 	love.graphics.setCanvas()
