@@ -1,3 +1,23 @@
+function table.HasMemberValue(tbl, key, val)
+	for _, v in ipairs(tbl) do
+		if v[key] == val then
+			return true
+		end
+	end
+
+	return false
+end
+
+function table.HasValue(tbl, val)
+	for _, v in ipairs(tbl) do
+		if v == val then
+			return true
+		end
+	end
+
+	return false
+end
+
 function table.IsEmpty( tab )
 	return next( tab ) == nil
 end
