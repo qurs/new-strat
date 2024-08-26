@@ -2,7 +2,6 @@ if os.getenv('LOCAL_LUA_DEBUGGER_VSCODE') == '1' then
 	require('lldebugger').start()
 end
 
-Bmp = require('bmp')
 enet = require('enet')
 
 local libloader = require('libloader')

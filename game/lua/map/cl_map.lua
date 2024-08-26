@@ -70,13 +70,35 @@ function map.createCanvas()
 	love.graphics.setCanvas()
 end
 
+function map.getProvinceByPos(x, y)
+	local data = assetloader.get('map_provinces').data
+
+	local r, g, b = data:getPixel(x, y)
+	if not r then return end
+
+	r, g, b = love.math.colorToBytes(r, g, b)
+
+	local hex = nuklear.colorRGBA(r, g, b)
+
+	local id = map._provincesMap[hex]
+	if not id then return end
+
+	local province = map._provinces[id]
+	if not province then return end
+
+	return province
+end
+
+function map.getProvinceByScreenPos(x, y)
+	local imgX, imgY = map.worldToImage(x, y)
+	return map.getProvinceByPos(imgX, imgY)
+end
+
 hook.Add('AssetsLoaded', 'map', function()
 	camera.setPos(vector_origin)
 
 	local provincesImg = assetloader.get('map_provinces').img
 	provincesImg:setFilter('nearest', 'nearest')
-
-	map._provincesBMP = Bmp.from_file('game/assets/provinces.bmp')
 
 	local img = assetloader.get('map').img
 	local w, h = img:getWidth(), img:getHeight()
@@ -224,9 +246,6 @@ hook.Add('MouseDown', 'map', function(x, y, button)
 	if button == 3 then return end
 	if not map._provincesMap then return end
 
-	local bmp = map._provincesBMP
-	if not bmp then return end
-
 	local imgX, imgY = map.worldToImage(x, y)
 
 	if map.debugProvinces then
@@ -237,15 +256,7 @@ hook.Add('MouseDown', 'map', function(x, y, button)
 		}
 	end
 
-	local r, g, b = bmp:get_pixel(imgX, imgY)
-	if not r then return end
-
-	local hex = nuklear.colorRGBA(r, g, b)
-
-	local id = map._provincesMap[hex]
-	if not id then return end
-
-	local province = map._provinces[id]
+	local province = map.getProvinceByPos(imgX, imgY)
 	if not province then return end
 
 	province:OnClick(button)
