@@ -6,11 +6,12 @@ local Province = country._provinceMeta
 Province.__type = 'province'
 Province.__index = Province
 
-function Province:__init(id, clr, pixels, minPos, maxPos)
+function Province:__init(id, clr, pixels, pixelsMap, minPos, maxPos)
 	self.id = id
 	self.clr = clr
 
 	self.pixels = pixels
+	self.pixelsMap = pixelsMap
 	self.minPos = minPos
 	self.maxPos = maxPos
 
@@ -56,6 +57,10 @@ function Province:GetPixelsList()
 	return self.pixels
 end
 
+function Province:GetPixelsMap()
+	return self.pixelsMap
+end
+
 function Province:GetMinPos()
 	return self.minPos
 end
@@ -86,6 +91,10 @@ function Province:_SetRegion(region)
 end
 
 -- OTHER
+
+function Province:GetPixel(x, y)
+	return self:GetPixelsMap()[x .. '|' .. y]
+end
 
 function Province:ChangeRegion(region)
 	local oldRegion = self:GetRegion()
