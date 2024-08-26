@@ -98,6 +98,10 @@ end
 
 -- OTHER
 
+function Province:HasNeighbor(province)
+	return table.HasMemberValue(self:GetNeighbors(), 'id', province:GetID())
+end
+
 function Province:GetPixel(x, y)
 	return self:GetPixelsMap()[x .. '|' .. y]
 end
