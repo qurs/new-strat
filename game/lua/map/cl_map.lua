@@ -196,6 +196,13 @@ hook.Add('Draw', 'map', function()
 			region:DrawCapital(map._minX)
 			region:DrawCapital(map._maxX)
 		end
+
+		local units = country:GetUnits()
+		for _, unit in ipairs(units) do
+			unit:Draw(map._centerX)
+			unit:Draw(map._minX)
+			unit:Draw(map._maxX)
+		end
 	end
 
 	if map.debugRecursiveMap then

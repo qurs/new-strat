@@ -18,6 +18,7 @@ function Country:__init(id, name, rgb)
 	self.regions = {}
 
 	self.stability = 50
+	self.units = {}
 
 	self.text = love.graphics.newText(gui.getFont('country.name'), name)
 
@@ -52,6 +53,10 @@ end
 
 function Country:GetStability()
 	return self.stability
+end
+
+function Country:GetUnits()
+	return self.units
 end
 
 -- SETTERS
@@ -144,6 +149,25 @@ function Country:RemoveRegion(id)
 
 	region:CreateCanvas()
 	map.createCanvas()
+end
+
+function Country:AddUnit(unit)
+	self.units[#self.units + 1] = unit
+end
+
+function Country:RemoveUnit(unitOrID)
+	local id = type(unitOrID) == 'string' and unitOrID or unitOrID:GetID()
+
+	local i
+	for k, v in ipairs(self:GetUnits()) do
+		if id == v:GetID() then
+			i = k
+			break
+		end
+	end
+	if not i then return end
+
+	table.remove(self.units, i)
 end
 
 -- Hooks
