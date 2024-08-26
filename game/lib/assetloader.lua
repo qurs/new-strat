@@ -95,12 +95,31 @@ function assetloader.nextStage(bFirst)
 		return
 	end
 
+	curStage.type = newStage.type
 	curStage.step = 0
 	curStage.name = newStage.name
-	curStage.maxStep = #newStage.files
-	curStage.files = newStage.files
 
-	thread:start(curStage.files)
+	if curStage.type == 'custom' then
+		curStage.handler = newStage.handler
+		curStage.maxStep = newStage.maxStep
+
+		local newThread = love.thread.newThread(newStage.code)
+
+		if newStage.args then
+			if type(newStage.args) == 'table' then
+				newThread:start(unpack(newStage.args))
+			else
+				newThread:start( newStage.args() )
+			end
+		else
+			newThread:start()
+		end
+	else
+		curStage.maxStep = #newStage.files
+		curStage.files = newStage.files
+
+		thread:start(curStage.files)
+	end
 end
 
 --[[ Example:
@@ -123,90 +142,7 @@ function assetloader.load(queue, callback)
 	curLoading.callback = callback
 	stages = queue.stages
 
-	if love.system.getOS():lower() ~= 'web' then
-		assetloader.nextStage(true)
-	else
-		assetloader._web = true
-		assetloader.nextStageSingleThread(true)
-	end
-end
-
-function assetloader.nextStageSingleThread(bFirst)
-	if not stages then return end
-	if not bFirst then table.remove(stages, 1) end
-
-	local newStage = stages[1]
-	if not newStage then
-		curLoading.bLoading = false
-		curStage = {}
-
-		if curLoading.callback then
-			curLoading.callback()
-			curLoading.callback = nil
-		end
-
-		return
-	end
-
-	curStage.step = 0
-	curStage.name = newStage.name
-	curStage.maxStep = #newStage.files
-	curStage.files = newStage.files
-
-	assetloader.mainThreadLoad(curStage.files, function(loadedFile)
-		if not loadedFile then return end
-
-		if loadedFile.err then
-			print('Ошибка при попытке загрузить файл-ассет:', loadedFile.err)
-		elseif loadedFile.content then
-			local content = loadedFile.content
-
-			if loadedFile.type == 'img' then
-				content = love.graphics.newImage(content)
-			elseif loadedFile.type == 'array_img' then
-				content = love.graphics.newArrayImage(content)
-			end
-
-			assetloader._cache[loadedFile.name] = content
-		end
-
-		curStage.step = curStage.step + 1
-
-		if curStage.step >= curStage.maxStep then
-			assetloader.nextStageSingleThread()
-		end
-	end)
-end
-
-function assetloader.mainThreadLoad(files, callback)
-	for _, v in ipairs(files) do
-		local ans = {
-			name = v.name,
-			type = v.type,
-		}
-
-		if v.type == 'img' then
-			ans.content = v.compressed and love.image.newCompressedData(v.path) or love.image.newImageData(v.path)
-		elseif v.type == 'array_img' then
-			local arrayImgData = {}
-			for _, path in ipairs(v.path) do
-				arrayImgData[#arrayImgData + 1] = v.compressed and love.image.newCompressedData(path) or love.image.newImageData(path)
-			end
-
-			ans.content = arrayImgData
-		elseif v.type == 'sound' then
-			ans.content = love.sound.newDecoder(v.path)
-		else
-			local read, err = love.filesystem.read(v.path)
-			if read then
-				ans.content = read
-			else
-				ans.err = err
-			end
-		end
-
-		callback(ans)
-	end
+	assetloader.nextStage(true)
 end
 
 hook.Add('Think', '_assetloader', function()
@@ -219,6 +155,17 @@ hook.Add('Think', '_assetloader', function()
 
 	local channel = love.thread.getChannel('assetloader')
 	if not channel then return end
+
+	if curStage.type == 'custom' then
+		local handler = curStage.handler
+		local result = channel:pop()
+		if not result then return end
+
+		handler(result)
+		curStage.step = curStage.step + 1
+
+		return
+	end
 
 	local loadedFile = channel:pop()
 	if not loadedFile then return end
