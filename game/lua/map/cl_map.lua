@@ -70,63 +70,6 @@ function map.createCanvas()
 	love.graphics.setCanvas()
 end
 
-local function parseProvinces(path)
-	local file = io.open(path, 'r')
-	local tbl = {}
-	local map = {}
-
-	for line in file:lines() do
-		local data = string.Split(line, ';')
-		local id = tonumber(data[1])
-		local r, g, b = tonumber(data[2]), tonumber(data[3]), tonumber(data[4])
-		local hex = nuklear.colorRGBA(r, g, b)
-
-		local pixels = {}
-		local minX, minY = math.huge, math.huge
-		local maxX, maxY = -math.huge, -math.huge
-
-		do
-			local imgData = assetloader.get('map_provinces').data
-			local w, h = imgData:getWidth(), imgData:getHeight()
-			local pixelCount = w * h
-
-			local pointer = require('ffi').cast('uint8_t*', imgData:getFFIPointer())
-
-			for i = 0, (4 * pixelCount) - 1, 4 do
-				local pr, pg, pb = pointer[i], pointer[i + 1], pointer[i + 2]
-
-				if pr == r and pg == g and pb == b then
-					local pos = i / 4
-					local y = math.floor(math.max(pos - 1, 0) / w)
-					local x = pos - (w * y)
-
-					minX, minY = math.min(minX, x), math.min(minY, y)
-					maxX, maxY = math.max(maxX, x), math.max(maxY, y)
-
-					pixels[#pixels + 1] = {x, y}
-				end
-			end
-		end
-
-		local meta = country.newProvince(id, {
-				rgb255 = {r, g, b},
-				rgb = { love.math.colorFromBytes(r, g, b) },
-				hex = hex,
-			},
-			pixels,
-			Vector(minX, minY),
-			Vector(maxX, maxY)
-		)
-
-		tbl[id] = meta
-		map[hex] = id
-	end
-
-	file:close()
-
-	return tbl, map
-end
-
 hook.Add('AssetsLoaded', 'map', function()
 	camera.setPos(vector_origin)
 
@@ -134,7 +77,6 @@ hook.Add('AssetsLoaded', 'map', function()
 	provincesImg:setFilter('nearest', 'nearest')
 
 	map._provincesBMP = Bmp.from_file('game/assets/provinces.bmp')
-	map._provinces, map._provincesMap = parseProvinces('game/assets/provinces.csv')
 
 	local img = assetloader.get('map').img
 	local w, h = img:getWidth(), img:getHeight()

@@ -15,6 +15,8 @@ function Province:__init(id, clr, pixels, pixelsMap, minPos, maxPos)
 	self.minPos = minPos
 	self.maxPos = maxPos
 
+	self.neighbors = {}
+
 	--[[ OPTIONAL FIELDS
 		self.regionOwner = nil
 	]]
@@ -82,6 +84,10 @@ function Province:GetCountry()
 	if not region then return end
 
 	return region:GetCountry()
+end
+
+function Province:GetNeighbors()
+	return self.neighbors
 end
 
 -- SETTERS
