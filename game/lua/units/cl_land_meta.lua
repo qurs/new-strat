@@ -134,6 +134,10 @@ function Unit:Move(province)
 	local curProvince = self:GetProvince()
 	if not curProvince:HasNeighbor(province) then return end
 
+	if self.state == 'attacking' then
+		self.attackTarget:Idle()
+	end
+
 	self.movingEndTime = gamecycle._time + ( (1 / self:GetSpeed()) * 24 )
 	self.moveTarget = province
 	self.state = 'moving'
@@ -171,6 +175,8 @@ end
 
 function Unit:CycleStep()
 	if self.state == 'moving' then
+		self:AddCapability( (1 / 24) * (self:GetCapability() * (-0.05)) )
+
 		if gamecycle._time >= self.movingEndTime then
 			self:SetProvince(self.moveTarget)
 			self:Idle()
