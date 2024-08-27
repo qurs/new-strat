@@ -50,7 +50,7 @@ hook.Add('GameStarted', 'test', function()
 
 		local unit2 = units.create(c, p, 1, 10, 1.5, 1, 0, 0)
 
-		unit1:Fight(unit2)
+		-- unit1:Fight(unit2)
 	end
 end)
 
@@ -70,4 +70,80 @@ hook.Add('gamecycle.step', 'units', function(dt)
 			unit:CycleStep(dt)
 		end
 	end
+end)
+
+hook.Add('MouseDown', 'units', function(mx, my, button)
+	if button ~= 1 then return end
+	if scene.getName() ~= 'map' then return end
+
+	local c = game.myCountry
+	if not c then return end
+
+	units._selectedUnits = {}
+
+	local imgX, imgY = map.screenToImage(mx, my)
+	local scale = camera._scale or 1
+
+	local unitList = c:GetUnits()
+	for _, unit in ipairs(unitList) do
+		local pos = unit.screenPos
+		if pos then
+			local startX, startY, endX, endY = unpack(pos)
+			if (imgX >= startX and imgX <= endX) and (imgY >= startY and imgY <= endY) then
+				units._selectedUnits[unit] = true
+				return
+			end
+		end
+	end
+
+	if table.IsEmpty(units._selectedUnits) then
+		units._selectedUnits = nil
+	end
+
+	units._mouseDown = {imgX, imgY, mx, my}
+end)
+
+hook.Add('MouseUp', 'units', function(mx, my)
+	if not units._mouseDown then return end
+
+	local startX, startY = unpack(units._mouseDown)
+	units._mouseDown = nil
+
+	local imgX, imgY = map.screenToImage(mx, my)
+
+	local minX, minY = math.min(imgX, startX), math.min(imgY, startY)
+	local maxX, maxY = math.max(imgX, startX), math.max(imgY, startY)
+
+	local c = game.myCountry
+	if not c then return end
+
+	units._selectedUnits = {}
+
+	local unitList = c:GetUnits()
+	for _, unit in ipairs(unitList) do
+		local pos = unit.screenPos
+		if pos then
+			local startX, startY, endX, endY = unpack(pos)
+			if (startX >= minX and endX <= maxX) and (startY >= minY and endY <= maxY) then
+				units._selectedUnits[unit] = true
+			end
+		end
+	end
+
+	if table.IsEmpty(units._selectedUnits) then
+		units._selectedUnits = nil
+	end
+end)
+
+hook.Add('DrawUI', 'units.mouseArea', function()
+	if not units._mouseDown then return end
+
+	local _, _, startX, startY = unpack(units._mouseDown)
+	local x, y = love.mouse.getPosition()
+
+	local minX, minY = math.min(x, startX), math.min(y, startY)
+	local maxX, maxY = math.max(x, startX), math.max(y, startY)
+
+	love.graphics.setColor(0.8, 0.8, 0.8)
+	love.graphics.rectangle('line', minX, minY, maxX - minX, maxY - minY)
 end)

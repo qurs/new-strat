@@ -191,6 +191,8 @@ function Unit:CycleStep()
 			-- позже надо сделать отступление
 			self:Idle()
 			target:Idle()
+
+			hook.Run('units.wonFight', target, self)
 			return
 		end
 
@@ -198,6 +200,8 @@ function Unit:CycleStep()
 			-- позже надо сделать отступление
 			self:Idle()
 			target:Idle()
+
+			hook.Run('units.wonFight', self, target)
 			return
 		end
 
@@ -239,6 +243,19 @@ function Unit:Draw(offset)
 	local cx, cy = camera._pos:Unpack()
 	local scale = camera._scale or 1
 
+	if self.state == 'moving' then
+		local target = self.moveTarget
+
+		local minPos, maxPos = target:GetBounds()
+		minPos, maxPos = minPos * ratio, maxPos * ratio
+
+		local endPos = (minPos + maxPos) / 2
+
+		love.graphics.setLineWidth(1)
+		love.graphics.setColor(1, 1, 1)
+		love.graphics.line(offset + centerPos.x, centerPos.y, offset + endPos.x, endPos.y)
+	end
+
 	love.graphics.push()
 		love.graphics.translate(cx, cy)
 		love.graphics.scale(1 / scale)
@@ -248,6 +265,17 @@ function Unit:Draw(offset)
 		offset = offset * scale
 
 		local x, y = centerX - w / 2, centerY - h / 2
+
+		local screenX, screenY = offset + x + ScrW() / 2 - cx * scale, y + ScrH() / 2 - cy * scale
+		local startX, startY = map.screenToImage(screenX, screenY)
+		local endX, endY = map.screenToImage(screenX + w, screenY + h)
+
+		self.screenPos = {startX, startY, endX, endY}
+
+		if units._selectedUnits and units._selectedUnits[self] then
+			love.graphics.setColor(0.6, 0.6, 0.6)
+			love.graphics.rectangle('fill', offset + x - 2, y - 2, w + 4, h + 4)
+		end
 
 		love.graphics.setColor(0.25, 0.25, 0.25)
 		love.graphics.rectangle('fill', offset + x, y, w, h)

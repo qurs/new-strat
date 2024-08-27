@@ -220,13 +220,14 @@ function Province:OnClick(button)
 			return
 		end
 
+		if units._selectedUnits then
+			for unit in pairs(units._selectedUnits) do
+				unit:Move(self)
+			end
+		end
+	elseif button == 4 then
 		local country = country.get(1)
 		local reg = country:GetRegions()[1]
-	
-		self:ChangeRegion(reg)
-	elseif button == 4 then
-		local country = country.get(2)
-		local reg = country:GetRegions()[2]
 	
 		self:ChangeRegion(reg)
 	end
