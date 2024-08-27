@@ -112,6 +112,7 @@ function curScene:UI(dt)
 
 					c:AddRegion(r)
 
+					game.myCountry = c
 					scene.change('map', true)
 					hook.Run('GameStarted')
 				end
