@@ -39,7 +39,7 @@ function camera.move(offset)
 end
 
 function camera.mouseToWorld(x, y)
-	local scale = camera._scale
+	local scale = camera._scale or 1
 	local camX, camY = camera.getPos()
 
 	return (x - ScrW() / 2) / scale + camX, (y - ScrH() / 2) / scale + camY
