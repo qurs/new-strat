@@ -160,6 +160,10 @@ function Unit:Idle()
 	self.moveTarget = nil
 end
 
+function Unit:Remove()
+	self:GetCountry():RemoveUnit(self)
+end
+
 -- Hooks
 
 function Unit:Think(dt)
@@ -188,7 +192,6 @@ function Unit:CycleStep()
 		target:AddCapability(defenderCapLost)
 
 		if self:GetCapability() == 0 then
-			-- позже надо сделать отступление
 			self:Idle()
 			target:Idle()
 
@@ -197,9 +200,24 @@ function Unit:CycleStep()
 		end
 
 		if target:GetCapability() == 0 then
-			-- позже надо сделать отступление
 			self:Idle()
-			target:Idle()
+
+			local prov = target:GetProvince()
+			local neighbors = prov:GetNeighbors()
+
+			local neighbor
+			for _, v in ipairs(neighbors) do
+				if v:GetCountry() == prov:GetCountry() then
+					neighbor = v
+					break
+				end
+			end
+
+			if neighbor then
+				target:Move( neighbors[math.random(#neighbors)] )
+			else
+				target:Remove()
+			end
 
 			hook.Run('units.wonFight', self, target)
 			return
