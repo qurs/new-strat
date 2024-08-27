@@ -254,6 +254,7 @@ hook.Add('MouseDown', 'map', function(x, y, button)
 	if not map._provincesMap then return end
 
 	local imgX, imgY = map.worldToImage(x, y)
+	if not imgX then return end
 
 	if map.debugProvinces then
 		map._debugProvincesLastClick = {
