@@ -7,7 +7,7 @@ map.debugRecursiveMap = false
 
 local vector_origin = Vector()
 
-function map.worldToImage(x, y)
+function map.screenToImage(x, y)
 	if not map._img then return end
 
 	local img = map._img.provinces
@@ -90,7 +90,7 @@ function map.getProvinceByPos(x, y)
 end
 
 function map.getProvinceByScreenPos(x, y)
-	local imgX, imgY = map.worldToImage(x, y)
+	local imgX, imgY = map.screenToImage(x, y)
 	return map.getProvinceByPos(imgX, imgY)
 end
 
@@ -253,7 +253,7 @@ hook.Add('MouseDown', 'map', function(x, y, button)
 	if button == 3 then return end
 	if not map._provincesMap then return end
 
-	local imgX, imgY = map.worldToImage(x, y)
+	local imgX, imgY = map.screenToImage(x, y)
 	if not imgX then return end
 
 	if map.debugProvinces then
