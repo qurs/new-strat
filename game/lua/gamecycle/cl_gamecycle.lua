@@ -5,11 +5,12 @@ gamecycle.speed = 1
 gamecycle.speeds = {1, 4, 8, 16}
 gamecycle._currentSpeedIndex = 1
 
+gamecycle._time = gamecycle._time or 1
+
 function gamecycle.start()
 	if gamecycle._blocked then return end
 
 	gamecycle._started = true
-	gamecycle._time = gamecycle._time or 1
 end
 
 function gamecycle.pause()
