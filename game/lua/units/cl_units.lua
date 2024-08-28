@@ -1,4 +1,5 @@
 units = units or {}
+units._fights = units._fights or {}
 
 units.lastLandID = units.lastLandID or 0
 
@@ -22,6 +23,35 @@ function units.calculateArmorFine(pierce, armor)
 	end
 end
 
+function units.calculateCapabilityLost(attack, defence, pierce, armor)
+	local attackFine, defenceFine = units.calculateArmorFine(pierce, armor)
+	local newAttack, newDefence = attack * ( (100 + attackFine) / 100 ), defence * ( (100 + defenceFine) / 100 )
+
+	local attackerCapFine, defenderCapFine = units.calculateCapabilityFine(newAttack, newDefence)
+	return (-1 / 24) * ( (100 + attackerCapFine) / 100 ), (-1 / 24) * ( (100 + defenderCapFine) / 100 )
+end
+
+function units.fight(attackerTeam, defenderTeam, prov)
+	for _, unit in ipairs(attackerTeam) do
+		unit.targetAttack = prov
+	end
+
+	units._fights[#units._fights + 1] = {
+		attackerTeam = attackerTeam,
+		defenderTeam = defenderTeam,
+		prov = prov,
+	}
+end
+
+function units.getFightByProv(prov)
+	for i, fight in ipairs(units._fights) do
+		local fightProv = fight.prov
+		if fightProv:GetID() == prov:GetID() then
+			return fight, i
+		end
+	end
+end
+
 function units.create(...)
 	local id = units.lastLandID + 1
 
@@ -38,19 +68,18 @@ hook.Add('GameStarted', 'test', function()
 	local r = c:GetRegions()[1]
 	local p = r:GetProvinces()[ r:GetCapitalProvince() ]
 
-	local unit1 = units.create(c, p, 1, 10, 1.5, 1, 0, 0)
+	local unit1 = units.create(c, p, 1, 10, 0.5, 1, 0, 0)
+	units.create(c, p, 1, 10, 1, 1, 0, 0)
 
 	do
-		local c = country.newCountry('Test 2', {0, 1, 0})
 		local r = country.newRegion('Мордор', 'Мордор')
 		local p = p:GetNeighbors()[math.random(#p:GetNeighbors())]
 		r:AddProvince(p)
 
+		local c = country.newCountry('Test 2', {0, 1, 0}, r)
 		c:AddRegion(r)
 
 		local unit2 = units.create(c, p, 1, 10, 1.5, 1, 0, 0)
-
-		-- unit1:Fight(unit2)
 	end
 end)
 
@@ -64,10 +93,148 @@ hook.Add('Think', 'units', function(dt)
 end)
 
 hook.Add('gamecycle.step', 'units', function(dt)
+	local toRemove = {}
+
+	for i, fight in ipairs(units._fights) do
+		local prov = fight.prov
+
+		local attackerStrength, defenderStrength = 0, 0
+		local attackerPierce, defenderArmor = 0, 0
+
+		for _, unit in ipairs(fight.defenderTeam) do
+			if unit:GetState() ~= 'defending' then unit:SetState('defending') end
+
+			defenderStrength = defenderStrength + unit:GetDefence()
+			defenderArmor = defenderArmor + unit:GetArmor()
+		end
+
+		for _, unit in ipairs(fight.attackerTeam) do
+			if unit:GetState() ~= 'attacking' then unit:SetState('attacking') end
+
+			attackerStrength = attackerStrength + unit:GetAttack()
+			attackerPierce = attackerPierce + unit:GetArmorPierce()
+		end
+
+		local attackerCapLost, defenderCapLost = units.calculateCapabilityLost(attackerStrength, defenderStrength, attackerPierce, defenderArmor)
+
+		for _, unit in ipairs(fight.defenderTeam) do
+			unit:AddCapability( defenderCapLost / #fight.defenderTeam )
+
+			if unit:GetCapability() == 0 then
+				local neighbors = prov:GetNeighbors()
+	
+				local neighbor
+				for _, v in ipairs(neighbors) do
+					if v:GetCountry() == prov:GetCountry() then
+						neighbor = v
+						break
+					end
+				end
+	
+				if neighbor then
+					unit:Move( neighbors[math.random(#neighbors)] )
+				else
+					unit:Remove()
+				end
+	
+				table.RemoveByValue(fight.defenderTeam, unit)
+
+				if #fight.defenderTeam < 1 then
+					for _, unit in ipairs(fight.attackerTeam) do
+						unit:Move(prov)
+					end
+
+					hook.Run('units.wonFight', fight.attackerTeam, prov)
+					toRemove[#toRemove + 1] = i
+
+					break
+				end
+			end
+		end
+
+		for _, unit in ipairs(fight.attackerTeam) do
+			unit:AddCapability( attackerCapLost / #fight.attackerTeam )
+
+			if unit:GetCapability() == 0 then
+				unit:Idle()
+				table.RemoveByValue(fight.attackerTeam, unit)
+
+				if #fight.attackerTeam < 1 then
+					for _, unit in ipairs(fight.defenderTeam) do
+						unit:Idle()
+					end
+
+					hook.Run('units.wonFight', fight.defenderTeam, prov)
+					toRemove[#toRemove + 1] = i
+
+					break
+				end
+			end
+		end
+	end
+
+	for i = #toRemove, 1, -1 do
+		table.remove(units._fights, toRemove[i])
+	end
+
 	for id, country in pairs(country._countries) do
 		local units = country:GetUnits()
 		for _, unit in ipairs(units) do
 			unit:CycleStep(dt)
+		end
+	end
+end)
+
+hook.Add('units.movedToProvince', 'units', function(unit, prov)
+	local fight = units.getFightByProv(prov)
+	if not fight then return end
+
+	fight.defenderTeam[#fight.defenderTeam + 1] = unit
+end)
+
+hook.Add('Draw', 'units.fight', function()
+	local r, g, b = love.math.colorFromBytes(207, 58, 58)
+	local offsets = {map._centerX, map._minX, map._maxX}
+
+	local imgData = map._img
+	if not imgData then return end
+
+	local mapW, mapH = unpack(imgData.size)
+	local ratio = ScrH() / mapH
+
+	local drawnProvs = {}
+
+	for _, fight in ipairs(units._fights) do
+		local prov = fight.prov
+
+		local minPos, maxPos = prov:GetBounds()
+		minPos, maxPos = minPos * ratio, maxPos * ratio
+
+		local endPos = (minPos + maxPos) / 2
+
+		for _, unit in ipairs(fight.attackerTeam) do
+			local province = unit:GetProvince()
+			local provID = province:GetID()
+
+			if drawnProvs[provID] then goto continue end
+			drawnProvs[provID] = true
+
+			local minPos, maxPos = province:GetBounds()
+			minPos, maxPos = minPos * ratio, maxPos * ratio
+
+			local centerPos = (minPos + maxPos) / 2
+
+			for _, offset in ipairs(offsets) do
+				love.graphics.setLineWidth(2)
+				love.graphics.setColor(0, 0, 0)
+				love.graphics.line(offset + centerPos.x, centerPos.y, offset + endPos.x, endPos.y)
+
+				love.graphics.setLineWidth(1)
+				love.graphics.setColor(r, g, b)
+				love.graphics.line(offset + centerPos.x, centerPos.y, offset + endPos.x, endPos.y)
+			end
+
+			::continue::
 		end
 	end
 end)

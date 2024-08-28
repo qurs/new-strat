@@ -28,6 +28,7 @@ function Unit:__init(id, country, startProvince, speed, capability, attack, defe
 	self.text = love.graphics.newText(gui.getFont('units'), self.capability)
 
 	country:AddUnit(self)
+	startProvince:AddUnit(self)
 
 	--[[ OPTIONAL FIELDS
 
@@ -80,6 +81,10 @@ function Unit:GetProvince()
 	return self.province
 end
 
+function Unit:GetState()
+	return self.state
+end
+
 -- SETTERS
 
 function Unit:SetCountry(country)
@@ -125,55 +130,71 @@ function Unit:SetProvince(province)
 	province:AddUnit(self)
 end
 
+function Unit:SetState(state)
+	local old = self:GetState()
+	if old == state then return end
+
+	self:OnChangeState(old, new)
+	self.state = state
+end
+
 -- OTHER
 
 function Unit:AddCapability(add)
 	self:SetCapability( self:GetCapability() + add )
 end
 
-function Unit:CalculateCapabilityLost(otherUnit)
-	local attackFine, defenceFine = units.calculateArmorFine(self:GetArmorPierce(), otherUnit:GetArmor())
-	local newAttack, newDefence = self:GetAttack() * ( (100 + attackFine) / 100 ), otherUnit:GetDefence() * ( (100 + defenceFine) / 100 )
-
-	local attackerCapFine, defenderCapFine = units.calculateCapabilityFine(newAttack, newDefence)
-	return (-1 / 24) * ( (100 + attackerCapFine) / 100 ), (-1 / 24) * ( (100 + defenderCapFine) / 100 )
-end
-
 function Unit:Move(province)
+	if self:GetState() == 'moving' and self:GetCapability() < 1 then
+		return
+	end
+
 	local provCountry = province:GetCountry()
 	if provCountry ~= self:GetCountry() and province:HasAnyUnit() then return end -- Добавить потом проверку на наличие войны между государствами
 
 	local curProvince = self:GetProvince()
 	if not curProvince:HasNeighbor(province) then return end
 
-	if self.state == 'attacking' then
-		self.attackTarget:Idle()
+	if self:GetState() == 'attacking' and self.targetAttack and self.targetAttack ~= province then
+		local prov = self.targetAttack
+		local fight, i = units.getFightByProv(prov)
+		if fight then
+			table.RemoveByValue(fight.attackerTeam, self)
+
+			if #fight.attackerTeam < 1 then
+				for _, unit in ipairs(fight.defenderTeam) do
+					unit:Idle()
+				end
+
+				hook.Run('units.wonFight', fight.defenderTeam, prov)
+				table.remove(units._fights, i)
+			end
+		end
+	elseif self:GetState() == 'defending' then
+		local prov = self:GetProvince()
+		local fight, i = units.getFightByProv(prov)
+		if fight then
+			table.RemoveByValue(fight.derenderTeam, unit)
+
+			if #fight.derenderTeam < 1 then
+				for _, unit in ipairs(fight.attackerTeam) do
+					unit:Move(prov)
+				end
+
+				hook.Run('units.wonFight', fight.defenderTeam, prov)
+				table.remove(units._fights, i)
+			end
+		end
 	end
 
 	self.movingEndTime = gamecycle._time + ( (1 / self:GetSpeed()) * 24 )
 	self.moveTarget = province
-	self.state = 'moving'
-end
-
-function Unit:Fight(otherUnit)
-	if self.state == 'defending' then return end
-	if self:GetCapability() == 0 then return end
-
-	self.attackTarget = otherUnit
-	self.fightStartTime = gamecycle._time
-
-	self.state = 'attacking'
+	self:SetState('moving')
 end
 
 function Unit:Idle()
-	if self.state == 'idle' then return end
-	self.state = 'idle'
-
-	self.attackTarget = nil
-	self.fightStartTime = nil
-
-	self.movingEndTime = nil
-	self.moveTarget = nil
+	if self:GetState() == 'idle' then return end
+	self:SetState('idle')
 end
 
 function Unit:Remove()
@@ -183,11 +204,22 @@ end
 
 -- Hooks
 
+function Unit:OnChangeState(old, new)
+	if old == 'attacking' then
+		self.targetAttack = nil
+	end
+
+	if old == 'moving' then
+		self.movingEndTime = nil
+		self.moveTarget = nil
+	end
+end
+
 function Unit:Think(dt)
 end
 
 function Unit:CycleStep()
-	if self.state == 'moving' then
+	if self:GetState() == 'moving' then
 		self:AddCapability( (1 / 24) * (self:GetCapability() * (-0.05)) )
 
 		if gamecycle._time >= self.movingEndTime then
@@ -200,60 +232,13 @@ function Unit:CycleStep()
 		return
 	end
 
-	if self.state == 'attacking' then
-		local target = self.attackTarget
-
-		if target.state ~= 'defending' then
-			target.state = 'defending'
-		end
-
-		local attackerCapLost, defenderCapLost = self:CalculateCapabilityLost(target)
-
-		self:AddCapability(attackerCapLost)
-		target:AddCapability(defenderCapLost)
-
-		if self:GetCapability() == 0 then
-			self:Idle()
-			target:Idle()
-
-			hook.Run('units.wonFight', target, self)
-			return
-		end
-
-		if target:GetCapability() == 0 then
-			local prov = target:GetProvince()
-			local neighbors = prov:GetNeighbors()
-
-			local neighbor
-			for _, v in ipairs(neighbors) do
-				if v:GetCountry() == prov:GetCountry() then
-					neighbor = v
-					break
-				end
-			end
-
-			if neighbor then
-				target:Move( neighbors[math.random(#neighbors)] )
-			else
-				target:Remove()
-			end
-
-			self:Move(prov)
-
-			hook.Run('units.wonFight', self, target)
-			return
-		end
-
-		return
-	end
-
-	if self.state == 'idle' then
+	if self:GetState() == 'idle' then
 		self:AddCapability(1 / 24)
 		return
 	end
 end
 
-function Unit:Draw(offset)
+function Unit:Draw(i, offset)
 	if camera._scale < 2 then return end
 
 	local province = self:GetProvince()
@@ -282,14 +267,10 @@ function Unit:Draw(offset)
 	local cx, cy = camera._pos:Unpack()
 	local scale = camera._scale or 1
 
-	if self.state == 'moving' or self.state == 'attacking' then
+	if self:GetState() == 'moving' then
 		local r, g, b = 1, 1, 1
 
 		local target = self.moveTarget
-		if self.state == 'attacking' then
-			target = self.attackTarget:GetProvince()
-			r, g, b = love.math.colorFromBytes(207, 58, 58)
-		end
 
 		local minPos, maxPos = target:GetBounds()
 		minPos, maxPos = minPos * ratio, maxPos * ratio
@@ -314,6 +295,18 @@ function Unit:Draw(offset)
 		offset = offset * scale
 
 		local x, y = centerX - w / 2, centerY - h / 2
+
+		local unitCount = province.unitsCount
+		if unitCount > 1 then
+			local totalH = unitCount * h + ( (unitCount - 1) * 5 )
+			y = centerY - totalH / 2
+
+			y = y + (i - 1) * h
+
+			if i > 1 then
+				y = y + 5
+			end
+		end
 
 		local screenX, screenY = offset + x + ScrW() / 2 - cx * scale, y + ScrH() / 2 - cy * scale
 		local startX, startY = map.screenToImage(screenX, screenY)

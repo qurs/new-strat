@@ -198,10 +198,15 @@ hook.Add('Draw', 'map', function()
 		end
 
 		local units = country:GetUnits()
-		for _, unit in ipairs(units) do
-			unit:Draw(map._centerX)
-			unit:Draw(map._minX)
-			unit:Draw(map._maxX)
+		local provIndexes = {}
+		for i, unit in ipairs(units) do
+			local prov = unit:GetProvince()
+			local id = prov:GetID()
+			provIndexes[id] = (provIndexes[id] or 0) + 1
+
+			unit:Draw(provIndexes[id], map._centerX)
+			unit:Draw(provIndexes[id], map._minX)
+			unit:Draw(provIndexes[id], map._maxX)
 		end
 	end
 

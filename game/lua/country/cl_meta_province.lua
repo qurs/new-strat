@@ -93,6 +93,10 @@ function Province:GetNeighbors()
 	return self.neighbors
 end
 
+function Province:GetUnits()
+	return self.units
+end
+
 -- SETTERS
 
 function Province:_SetRegion(region)
@@ -125,12 +129,16 @@ function Province:ChangeRegion(region)
 end
 
 function Province:AddUnit(unit)
+	if self.units[unit:GetID()] then return end
+
 	self.units[unit:GetID()] = unit
 	self.unitsCount = self.unitsCount + 1
 end
 
 function Province:RemoveUnit(unitOrID)
 	local id = type(unitOrID) == 'string' and unitOrID or unitOrID:GetID()
+	if not self.units[id] then return end
+
 	self.units[id] = nil
 
 	self.unitsCount = self.unitsCount - 1
@@ -243,9 +251,40 @@ function Province:OnClick(button)
 			return
 		end
 
-		if units._selectedUnits then
-			for unit in pairs(units._selectedUnits) do
-				unit:Move(self)
+		if units._selectedUnits and self:GetCountry() then
+			local firstUnit = next(units._selectedUnits)
+
+			if self:GetCountry() == firstUnit:GetCountry() or not self:HasAnyUnit() then
+				for unit in pairs(units._selectedUnits) do
+					unit:Move(self)
+				end
+			else
+				local fight = units.getFightByProv(self)
+				if fight then
+					for unit in pairs(units._selectedUnits) do
+						local curProvince = unit:GetProvince()
+						if curProvince:HasNeighbor(self) then
+							unit.targetAttack = self
+							fight.attackerTeam[#fight.attackerTeam + 1] = unit
+						end
+					end
+					return
+				end
+
+				local unitList = {}
+				for id, unit in pairs(self:GetUnits()) do
+					unitList[#unitList + 1] = unit
+				end
+
+				local attackList = {}
+				for unit in pairs(units._selectedUnits) do
+					local curProvince = unit:GetProvince()
+					if curProvince:HasNeighbor(self) then
+						attackList[#attackList + 1] = unit
+					end
+				end
+
+				units.fight(attackList, unitList, self)
 			end
 		end
 	elseif button == 4 then
