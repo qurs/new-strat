@@ -16,6 +16,7 @@ function Province:__init(id, clr, pixels, pixelsMap, minPos, maxPos)
 	self.maxPos = maxPos
 
 	self.neighbors = {}
+	self.units = {}
 
 	--[[ OPTIONAL FIELDS
 		self.regionOwner = nil
@@ -119,6 +120,23 @@ function Province:ChangeRegion(region)
 	self:CreateCanvas()
 	region:CreateCanvas()
 	map.createCanvas()
+end
+
+function Province:AddUnit(unit)
+	self.units[unit:GetID()] = true
+end
+
+function Province:RemoveUnit(unitOrID)
+	local id = type(unitOrID) == 'string' and unitOrID or unitOrID:GetID()
+	self.units[id] = nil
+end
+
+function Province:HasUnit(id)
+	return self.units[id]
+end
+
+function Province:HasAnyUnit()
+	return not table.IsEmpty(self.units)
 end
 
 -- Hooks
