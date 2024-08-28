@@ -69,7 +69,7 @@ function Country:SetStability(stab)
 	self.stability = math.Clamp(stab, 0, 100)
 
 	if self.stability == 0 then
-		self:Destroy()
+		self:Destroy('Страна погрязла в бунтах и восстаниях из-за политической нестабильности. На этом история заканчивается...')
 	end
 end
 
@@ -96,7 +96,7 @@ function Country:AddStability(add)
 	self:SetStability(self:GetStability() + add)
 end
 
-function Country:Destroy()
+function Country:Destroy(reason)
 	for id in pairs(self:GetRegions()) do
 		self:RemoveRegion(id)
 	end
@@ -108,7 +108,7 @@ function Country:Destroy()
 	gamecycle._blocked = true
 	gamecycle.pause()
 
-	gamecycle.event.ui.showWindow('Страна погрязла в бунтах и восстаниях из-за политической нестабильности. На этом история заканчивается...', {
+	gamecycle.event.ui.showWindow(reason, {
 		{
 			text = 'Закончить игру',
 			callback = function()
