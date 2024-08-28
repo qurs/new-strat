@@ -304,7 +304,7 @@ function Unit:Draw(i, offset)
 			y = y + (i - 1) * h
 
 			if i > 1 then
-				y = y + 5
+				y = y + (5 * (i - 1))
 			end
 		end
 
