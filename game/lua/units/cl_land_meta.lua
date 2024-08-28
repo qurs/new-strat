@@ -111,7 +111,18 @@ function Unit:SetArmorPierce(armorPierce)
 end
 
 function Unit:SetProvince(province)
+	local oldProv = self.province
+	if oldProv then
+		oldProv:RemoveUnit(self)
+	end
+
+	local c = self:GetCountry()
+	if province:GetCountry() ~= c then
+		province:ChangeRegion( c:GetCapitalRegion() )
+	end
+
 	self.province = province
+	province:AddUnit(self)
 end
 
 -- OTHER
@@ -129,7 +140,8 @@ function Unit:CalculateCapabilityLost(otherUnit)
 end
 
 function Unit:Move(province)
-	if province:GetCountry() ~= self:GetCountry() then return end
+	local provCountry = province:GetCountry()
+	if provCountry ~= self:GetCountry() and province:HasAnyUnit() then return end -- Добавить потом проверку на наличие войны между государствами
 
 	local curProvince = self:GetProvince()
 	if not curProvince:HasNeighbor(province) then return end
@@ -166,6 +178,7 @@ end
 
 function Unit:Remove()
 	self:GetCountry():RemoveUnit(self)
+	self:GetProvince():RemoveUnit(self)
 end
 
 -- Hooks
@@ -179,6 +192,8 @@ function Unit:CycleStep()
 
 		if gamecycle._time >= self.movingEndTime then
 			self:SetProvince(self.moveTarget)
+			hook.Run('units.movedToProvince', self, self.moveTarget)
+
 			self:Idle()
 		end
 
@@ -206,8 +221,6 @@ function Unit:CycleStep()
 		end
 
 		if target:GetCapability() == 0 then
-			self:Idle()
-
 			local prov = target:GetProvince()
 			local neighbors = prov:GetNeighbors()
 
@@ -224,6 +237,8 @@ function Unit:CycleStep()
 			else
 				target:Remove()
 			end
+
+			self:Move(prov)
 
 			hook.Run('units.wonFight', self, target)
 			return
@@ -267,16 +282,26 @@ function Unit:Draw(offset)
 	local cx, cy = camera._pos:Unpack()
 	local scale = camera._scale or 1
 
-	if self.state == 'moving' then
+	if self.state == 'moving' or self.state == 'attacking' then
+		local r, g, b = 1, 1, 1
+
 		local target = self.moveTarget
+		if self.state == 'attacking' then
+			target = self.attackTarget:GetProvince()
+			r, g, b = love.math.colorFromBytes(207, 58, 58)
+		end
 
 		local minPos, maxPos = target:GetBounds()
 		minPos, maxPos = minPos * ratio, maxPos * ratio
 
 		local endPos = (minPos + maxPos) / 2
 
+		love.graphics.setLineWidth(2)
+		love.graphics.setColor(0, 0, 0)
+		love.graphics.line(offset + centerPos.x, centerPos.y, offset + endPos.x, endPos.y)
+
 		love.graphics.setLineWidth(1)
-		love.graphics.setColor(1, 1, 1)
+		love.graphics.setColor(r, g, b)
 		love.graphics.line(offset + centerPos.x, centerPos.y, offset + endPos.x, endPos.y)
 	end
 
