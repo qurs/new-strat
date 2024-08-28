@@ -106,10 +106,10 @@ function curScene:UI(dt)
 					r, g, b = love.math.colorFromBytes(r, g, b)
 					if not r then return end
 
-					local c = country.newCountry(name, {r, g, b})
 					local r = country.newRegion(regionName, capitalName)
 					r:AddProvince(map._selectedProvince)
 
+					local c = country.newCountry(name, {r, g, b}, r)
 					c:AddRegion(r)
 
 					game.myCountry = c

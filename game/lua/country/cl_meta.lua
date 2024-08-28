@@ -11,10 +11,11 @@ local Country = country._countryMeta
 Country.__type = 'country'
 Country.__index = Country
 
-function Country:__init(id, name, rgb)
+function Country:__init(id, name, rgb, capitalRegion)
 	self.id = id
 	self.name = name
 	self.clr = rgb
+	self.capitalRegion = capitalRegion
 	self.regions = {}
 
 	self.stability = 50
@@ -51,6 +52,10 @@ function Country:GetRegions()
 	return self.regions
 end
 
+function Country:GetCapitalRegion()
+	return self.capitalRegion
+end
+
 function Country:GetStability()
 	return self.stability
 end
@@ -63,6 +68,12 @@ end
 
 function Country:SetName(name)
 	self.name = name
+end
+
+function Country:SetCapitalRegion(reg)
+	if not self:GetRegions()[reg:GetID()] then return end
+
+	self.capitalRegion = reg
 end
 
 function Country:SetStability(stab)
@@ -145,6 +156,10 @@ function Country:RemoveRegion(id)
 	local provinces = region:GetProvinces()
 	for id, province in pairs(provinces) do
 		province:CreateCanvas()
+	end
+
+	if table.IsEmpty( self:GetRegions() ) then
+		self:Destroy('Последний субъект государства был потерян. На этом история страны заканчивается...')
 	end
 
 	region:CreateCanvas()
