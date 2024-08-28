@@ -63,26 +63,6 @@ function units.create(...)
 	return meta
 end
 
-hook.Add('GameStarted', 'test', function()
-	local c = country.get(1)
-	local r = c:GetRegions()[1]
-	local p = r:GetProvinces()[ r:GetCapitalProvince() ]
-
-	local unit1 = units.create(c, p, 1, 10, 0.5, 1, 0, 0)
-	units.create(c, p, 1, 10, 1, 1, 0, 0)
-
-	do
-		local r = country.newRegion('Мордор', 'Мордор')
-		local p = p:GetNeighbors()[math.random(#p:GetNeighbors())]
-		r:AddProvince(p)
-
-		local c = country.newCountry('Test 2', {0, 1, 0}, r)
-		c:AddRegion(r)
-
-		local unit2 = units.create(c, p, 1, 10, 1.5, 1, 0, 0)
-	end
-end)
-
 hook.Add('Think', 'units', function(dt)
 	for id, country in pairs(country._countries) do
 		local units = country:GetUnits()
