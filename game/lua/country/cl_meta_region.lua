@@ -203,6 +203,11 @@ function Region:RemoveProvince(id)
 
 	self.provinceCount = self.provinceCount - 1
 
+	if self.provinceCount < 1 then
+		self:GetCountry():RemoveRegion(self:GetID())
+		return map.createCanvas()
+	end
+
 	if self:GetCapitalProvince() == id then
 		local keys = table.GetKeys(self.provinces)
 		local newID = keys[#math.random(keys)]
