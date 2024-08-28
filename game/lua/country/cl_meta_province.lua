@@ -16,7 +16,9 @@ function Province:__init(id, clr, pixels, pixelsMap, minPos, maxPos)
 	self.maxPos = maxPos
 
 	self.neighbors = {}
+
 	self.units = {}
+	self.unitsCount = 0
 
 	--[[ OPTIONAL FIELDS
 		self.regionOwner = nil
@@ -124,11 +126,14 @@ end
 
 function Province:AddUnit(unit)
 	self.units[unit:GetID()] = true
+	self.unitsCount = self.unitsCount + 1
 end
 
 function Province:RemoveUnit(unitOrID)
 	local id = type(unitOrID) == 'string' and unitOrID or unitOrID:GetID()
 	self.units[id] = nil
+
+	self.unitsCount = self.unitsCount - 1
 end
 
 function Province:HasUnit(id)
@@ -136,7 +141,7 @@ function Province:HasUnit(id)
 end
 
 function Province:HasAnyUnit()
-	return not table.IsEmpty(self.units)
+	return self.unitsCount > 0
 end
 
 -- Hooks
