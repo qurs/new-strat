@@ -87,8 +87,12 @@ hook.Add('UI', 'regionEditor', function()
 
 						region:RemoveProvinces(table.GetKeys(regionEditor._selectedProvinces))
 
+						local population = region:GetPopulation() / 2
+						region:AddPopulation(-population)
+
 						local newRegion = country.newRegion(regionName, capitalName, regionEditor._selectedProvinces)
 						newRegion:SetCapitalProvince(regionEditor._selectedCapital)
+						newRegion:SetPopulation(population)
 
 						с:AddRegion(newRegion)
 
