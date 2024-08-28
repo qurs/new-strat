@@ -125,7 +125,7 @@ function Province:ChangeRegion(region)
 end
 
 function Province:AddUnit(unit)
-	self.units[unit:GetID()] = true
+	self.units[unit:GetID()] = unit
 	self.unitsCount = self.unitsCount + 1
 end
 
