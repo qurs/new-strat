@@ -114,19 +114,19 @@ function Country:Destroy(reason)
 
 	country.removeCountry(self:GetID())
 
-	-- тут когда-нибудь будет проверку на локального игрока
+	if self == game.myCountry then
+		gamecycle._blocked = true
+		gamecycle.pause()
 
-	gamecycle._blocked = true
-	gamecycle.pause()
-
-	gamecycle.event.ui.showWindow(reason, {
-		{
-			text = 'Закончить игру',
-			callback = function()
-				game.endGame()
-			end
-		},
-	})
+		gamecycle.event.ui.showWindow(reason, {
+			{
+				text = 'Закончить игру',
+				callback = function()
+					game.endGame()
+				end
+			},
+		})
+	end
 end
 
 function Country:AddRegion(region)
