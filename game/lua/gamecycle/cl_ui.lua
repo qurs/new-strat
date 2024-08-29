@@ -32,7 +32,7 @@ local monthNames = {
 }
 
 local text, textMinus, textPlus, pauseImg
-local padW, padH = 220, 40
+local padW, padH = 240, 40
 
 function gamecycle.ui(dt)
 	if scene.getName() ~= 'map' then return end
