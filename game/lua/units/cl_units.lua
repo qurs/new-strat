@@ -172,7 +172,7 @@ hook.Add('units.movedToProvince', 'units', function(unit, prov)
 	fight.defenderTeam[#fight.defenderTeam + 1] = unit
 end)
 
-hook.Add('Draw', 'units.fight', function()
+hook.Add('PreDrawOverCountry', 'units.fight', function()
 	local r, g, b = love.math.colorFromBytes(207, 58, 58)
 	local offsets = {map._centerX, map._minX, map._maxX}
 

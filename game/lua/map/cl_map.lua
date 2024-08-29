@@ -186,6 +186,8 @@ hook.Add('Draw', 'map', function()
 		love.graphics.pop()
 	end
 
+	hook.Run('PreDrawOverCountry')
+
 	for id, country in pairs(country._countries) do
 		country:DrawName(map._centerX)
 		country:DrawName(map._minX)
@@ -276,7 +278,9 @@ hook.Add('MouseDown', 'map', function(x, y, button)
 end)
 
 hook.Add('KeyDown', 'map', function(button)
-	if button == 'escape' and map._selectedProvince then
-		map._selectedProvince = nil
+	if button == 'escape' then
+		if map._selectedProvince then map._selectedProvince = nil end
+		if map._selectedCountry then map._selectedCountry = nil end
+		if units._selectedUnits then units._selectedUnits = nil end
 	end
 end)

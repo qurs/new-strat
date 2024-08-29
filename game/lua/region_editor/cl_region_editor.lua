@@ -15,28 +15,6 @@ local style = {
 	},
 }
 
-country.actions.addRegionAction('Выделить регион', function(region)
-	if region:GetProvinceCount() < 2 then return notify.show('error', 3, 'В регионе должно быть больше 1-й провинции, чтобы выделить еще один регион!') end
-
-	map._selectedProvince = nil
-
-	gamecycle._blocked = true
-	gamecycle.pause()
-
-	regionEditor._editing = region
-	regionEditor._selectedProvinces = {}
-end)
-
-country.actions.addRegionAction('Мобилизация войск', function(region)
-	if region:GetPopulation() < 50 then return notify.show('error', 2, 'Для мобилизации войск нужно хотя бы 50 населения в регионе!') end
-
-	local prov = region:GetProvinces()[ region:GetCapitalProvince() ]
-	local c = region:GetCountry()
-
-	region:AddPopulation(-50)
-	units.create(c, prov, 0.5, 10, 1, 1.5, 0, 0)
-end)
-
 hook.Add('AssetsLoaded', 'regionEditor', function()
 	style.font = gui.getFont('region_editor')
 

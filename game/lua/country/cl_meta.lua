@@ -112,6 +112,16 @@ function Country:Destroy(reason)
 		self:RemoveRegion(id)
 	end
 
+	local other = self.inWarWith
+	if other then
+		other.inWarWith = nil
+		self.inWarWith = nil
+
+		if other == game.myCountry then
+			uiLib.popup.showMessage('Война окончена', ('Государство %s, с которым мы воевали уничтожено! Война окончена.'):format(self:GetName()))
+		end
+	end
+
 	country.removeCountry(self:GetID())
 
 	if self == game.myCountry then
@@ -183,6 +193,10 @@ function Country:RemoveUnit(unitOrID)
 	if not i then return end
 
 	table.remove(self.units, i)
+end
+
+function Country:InWarWith(other)
+	return self.inWarWith and self.inWarWith:GetID() == other:GetID()
 end
 
 -- Hooks

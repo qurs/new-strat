@@ -19,6 +19,7 @@ end)
 hook.Add('UI', 'country.regionActions', function(dt)
 	if scene.getName() ~= 'map' then return end
 	if regionEditor._editing then return end
+	if map._selectedCountry then return end
 
 	local province = map._selectedProvince
 	if not province then return end
@@ -40,7 +41,7 @@ hook.Add('UI', 'country.regionActions', function(dt)
 				ui:label(v)
 			end
 
-			for _, action in ipairs(country.actions.list) do
+			for _, action in ipairs(country.actions.list.region) do
 				ui:layoutRow('dynamic', 28, 1)
 				if ui:button(action.name) then
 					action.callback(region)
@@ -51,9 +52,10 @@ hook.Add('UI', 'country.regionActions', function(dt)
 	ui:stylePop()
 end)
 
-hook.Add('PostDrawUI', 'country.regionActions', function()
+hook.Add('PreDrawUI', 'country.regionActions', function()
 	if scene.getName() ~= 'map' then return end
 	if regionEditor._editing then return end
+	if map._selectedCountry then return end
 
 	local province = map._selectedProvince
 	if not province then return end

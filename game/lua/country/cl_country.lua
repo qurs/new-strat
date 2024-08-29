@@ -47,3 +47,13 @@ function country.newProvince(id, ...)
 
 	return meta
 end
+
+function country.declareWar(attacker, defender)
+	attacker.inWarWith = defender
+	defender.inWarWith = attacker
+
+	attacker:AddStability(-15)
+	defender:AddStability(-10)
+
+	uiLib.popup.showMessage('Объявление войны', ('%s объявил войну %s!'):format(attacker:GetName(), defender:GetName()))
+end

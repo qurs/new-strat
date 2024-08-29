@@ -122,7 +122,7 @@ function Unit:SetProvince(province)
 	end
 
 	local c = self:GetCountry()
-	if province:GetCountry() ~= c then
+	if c:InWarWith(province:GetCountry()) then
 		province:ChangeRegion( c:GetCapitalRegion() )
 	end
 
@@ -277,8 +277,15 @@ function Unit:Draw(i, offset)
 
 		local endPos = (minPos + maxPos) / 2
 
+		local outlineColor = {0, 0, 0}
+		if self:GetState() == 'attacking' then
+			outlineColor = {0.3, 0, 0}
+		elseif self:GetState() == 'defending' then
+			outlineColor = {0, 0, 0.3}
+		end
+
 		love.graphics.setLineWidth(2)
-		love.graphics.setColor(0, 0, 0)
+		love.graphics.setColor(unpack(outlineColor))
 		love.graphics.line(offset + centerPos.x, centerPos.y, offset + endPos.x, endPos.y)
 
 		love.graphics.setLineWidth(1)

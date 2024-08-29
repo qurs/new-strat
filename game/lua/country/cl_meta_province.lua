@@ -240,6 +240,8 @@ function Province:OnClick(button)
 
 		map._selectedProvince = self
 	elseif button == 2 then
+		local myCountry = self:GetCountry()
+
 		if regionEditor._editing then
 			local id = self:GetID()
 			local region = self:GetRegion()
@@ -251,14 +253,15 @@ function Province:OnClick(button)
 			return
 		end
 
-		if units._selectedUnits and self:GetCountry() then
+		if units._selectedUnits and myCountry then
 			local firstUnit = next(units._selectedUnits)
+			local targetCountry = firstUnit:GetCountry()
 
-			if self:GetCountry() == firstUnit:GetCountry() or not self:HasAnyUnit() then
+			if myCountry == targetCountry or (myCountry:InWarWith(targetCountry) and not self:HasAnyUnit()) then
 				for unit in pairs(units._selectedUnits) do
 					unit:Move(self)
 				end
-			else
+			elseif myCountry:InWarWith(targetCountry) then
 				local fight = units.getFightByProv(self)
 				if fight then
 					for unit in pairs(units._selectedUnits) do
@@ -286,7 +289,11 @@ function Province:OnClick(button)
 
 				units.fight(attackList, unitList, self)
 			end
+
+			return
 		end
+
+		map._selectedCountry = self:GetCountry()
 	elseif button == 4 then
 		local country = country.get(1)
 		local reg = country:GetRegions()[1]
