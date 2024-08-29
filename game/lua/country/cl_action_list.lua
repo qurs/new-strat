@@ -35,5 +35,42 @@ hook.Add('AssetsLoaded', 'country.actionList', function()
 	country.actions.addCountryAction('Предложить перемирие', function(target)
 		if target == game.myCountry then return end
 		if not game.myCountry:InWarWith(target) then return end
+
+		uiLib.popup.query('Предложение мира', {
+			{
+				type = 'combo',
+				tooltip = 'Предложение',
+				items = {
+					'Статус-кво',
+					'Текущие границы',
+				},
+				entry = {value = 1},
+			},
+		},
+		function(widgets)
+			local val = widgets[1].entry.value
+			if val == 2 then
+				-- потом сделать предложение
+				game.myCountry.inWarWith = nil
+				target.inWarWith = nil
+
+				uiLib.popup.showMessage('Перемирие', ('%s принял наше предложение о перемирии с сохранением текущих границ'):format(target:GetName()))
+			end
+		end)
 	end)
+end)
+
+hook.Add('GameStarted', 'asdas', function()
+	local myCountry = game.myCountry
+	local _, reg = next( myCountry:GetRegions() )
+	local _, province = next( reg:GetProvinces() )
+	local neighbor = province:GetNeighbors()[math.random(#province:GetNeighbors())]
+
+	local reg = country.newRegion('Мордор', 'Мордор')
+	reg:AddProvince(neighbor)
+
+	local c = country.newCountry('Узбекистан', {0, 1, 0}, reg)
+	c:AddRegion(reg)
+
+	units.create(c, neighbor, 0.5, 5, 1, 5, 0, 0)
 end)
