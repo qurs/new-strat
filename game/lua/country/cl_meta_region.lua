@@ -222,7 +222,7 @@ end
 
 function Region:AddProvinces(tbl)
 	for _, provOrID in ipairs(tbl) do
-		local id = type(provOrID) == 'string' and provOrID or provOrID:GetID()
+		local id = type(provOrID) == 'number' and provOrID or provOrID:GetID()
 
 		if self.provinces[id] then goto continue end
 		if province:GetRegion() then goto continue end
