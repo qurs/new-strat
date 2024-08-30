@@ -9,8 +9,51 @@ hook.Add('AssetsLoaded', 'country.actionList', function()
 		gamecycle._blocked = true
 		gamecycle.pause()
 
-		regionEditor._editing = region
-		regionEditor._selectedProvinces = {}
+		regionEditor.open(region,
+			{
+				needProvinces = true,
+				needCapital = true,
+			},
+			function(editor)
+				uiLib.popup.query('Создание региона', {
+					{
+						type = 'edit',
+						tooltip = 'Название региона',
+						entry = {value = ''},
+					},
+					{
+						type = 'edit',
+						tooltip = 'Название столицы',
+						entry = {value = ''},
+					},
+				},
+				function(widgets)
+					local regionName, capitalName = widgets[1].entry.value, widgets[2].entry.value
+					if utf8.len(regionName) < 3 or utf8.len(regionName) > 32 then
+						return notify.show('error', 2.5, 'Название региона должно быть не короче 3-х и не длиннее 32-х символов!')
+					end
+					if utf8.len(capitalName) < 3 or utf8.len(capitalName) > 32 then
+						return notify.show('error', 2.5, 'Название столицы должно быть не короче 3-х и не длиннее 32-х символов!')
+					end
+
+					local region = editor.region
+					local с = region:GetCountry()
+
+					region:RemoveProvinces(table.GetKeys(editor._selectedProvinces))
+
+					local population = region:GetPopulation() / 2
+					region:AddPopulation(-population)
+
+					local newRegion = country.newRegion(regionName, capitalName, editor._selectedProvinces)
+					newRegion:SetCapitalProvince(editor._selectedCapital)
+					newRegion:SetPopulation(population)
+
+					с:AddRegion(newRegion)
+
+					regionEditor.close()
+				end)
+			end
+		)
 	end)
 
 	country.actions.addRegionAction('Мобилизация войск', function(region)

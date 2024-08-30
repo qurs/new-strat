@@ -15,21 +15,30 @@ local style = {
 	},
 }
 
+function regionEditor.open(region, settings, callback)
+	regionEditor._editor = {
+		region = region,
+		settings = settings,
+		callback = callback,
+
+		_selectedProvinces = {},
+	}
+end
+
+function regionEditor.close()
+	regionEditor._editor = nil
+	gamecycle._blocked = nil
+end
+
 hook.Add('AssetsLoaded', 'regionEditor', function()
 	style.font = gui.getFont('region_editor')
 
 	hintText = love.graphics.newText(gui.getFont('region_editor'))
-	hintText:setf('Выберите провинции для нового региона\nЛКМ - выделить/снять выделение ПКМ - выбрать столицу', ScrW() - 10, 'center')
-end)
-
-hook.Add('WindowResized', 'regionEditor', function(w, h)
-	if not hintText then return end
-
-	hintText:setf('Выберите провинции для нового региона\nЛКМ - выделить/снять выделение ПКМ - выбрать столицу', w - 10, 'center')
 end)
 
 hook.Add('UI', 'regionEditor', function()
-	if not regionEditor._editing then return end
+	local editor = regionEditor._editor
+	if not editor then return end
 
 	local w, h = btnW * 2 + 15, btnH
 	local x, y = ScrW() - w - 10, ScrH() - h - 10
@@ -39,66 +48,26 @@ hook.Add('UI', 'regionEditor', function()
 			ui:layoutSpaceBegin('static', h, 2)
 				ui:layoutSpacePush(w - btnW, 0, btnW, btnH)
 				if ui:button('Создать') then
-					if table.IsEmpty(regionEditor._selectedProvinces) then
+					if editor.settings.needProvinces and table.IsEmpty(editor._selectedProvinces) then
 						notify.show('error', 2, 'Нужно выбрать провинции!')
 						goto continue
 					end
 
-					if not regionEditor._selectedCapital then
+					if editor.settings.needCapital and not editor._selectedCapital then
 						notify.show('error', 2, 'Нужно выбрать столицу!')
 						goto continue
 					end
 
-					uiLib.popup.query('Создание региона', {
-						{
-							type = 'edit',
-							tooltip = 'Название региона',
-							entry = {value = ''},
-						},
-						{
-							type = 'edit',
-							tooltip = 'Название столицы',
-							entry = {value = ''},
-						},
-					},
-					function(widgets)
-						local regionName, capitalName = widgets[1].entry.value, widgets[2].entry.value
-						if utf8.len(regionName) < 3 or utf8.len(regionName) > 32 then
-							return notify.show('error', 2.5, 'Название региона должно быть не короче 3-х и не длиннее 32-х символов!')
-						end
-						if utf8.len(capitalName) < 3 or utf8.len(capitalName) > 32 then
-							return notify.show('error', 2.5, 'Название столицы должно быть не короче 3-х и не длиннее 32-х символов!')
-						end
-
-						local region = regionEditor._editing
-						local с = region:GetCountry()
-
-						region:RemoveProvinces(table.GetKeys(regionEditor._selectedProvinces))
-
-						local population = region:GetPopulation() / 2
-						region:AddPopulation(-population)
-
-						local newRegion = country.newRegion(regionName, capitalName, regionEditor._selectedProvinces)
-						newRegion:SetCapitalProvince(regionEditor._selectedCapital)
-						newRegion:SetPopulation(population)
-
-						с:AddRegion(newRegion)
-
-						regionEditor._editing = nil
-						regionEditor._selectedProvinces = nil
-						regionEditor._selectedCapital = nil
-						gamecycle._blocked = nil
-					end)
+					if editor.callback then
+						editor.callback(editor)
+					end
 
 					::continue::
 				end
 
 				ui:layoutSpacePush(0, 0, btnW, btnH)
 				if ui:button('Отмена') then
-					regionEditor._editing = nil
-					regionEditor._selectedProvinces = nil
-					regionEditor._selectedCapital = nil
-					gamecycle._blocked = nil
+					regionEditor.close()
 				end
 			ui:layoutSpaceEnd()
 		end
@@ -108,7 +77,11 @@ end)
 
 hook.Add('DrawUI', 'regionEditor', function()
 	if not hintText then return end
-	if not regionEditor._editing then return end
+
+	local editor = regionEditor._editor
+	if not editor then return end
+
+	hintText:setf(editor.settings.hint or 'Выберите провинции для нового региона\nЛКМ - выделить/снять выделение ПКМ - выбрать столицу', ScrW() - 10, 'center')
 
 	local padH = math.max(48, hintText:getHeight() + 10)
 	local buttonPadH = 32 + 20
@@ -124,15 +97,17 @@ hook.Add('DrawUI', 'regionEditor', function()
 end)
 
 hook.Add('Draw', 'regionEditor', function()
-	local region = regionEditor._editing
-	if not region then return end
+	local editor = regionEditor._editor
+	if not editor then return end
+
+	local region = editor.region
 
 	for id, province in pairs(region:GetProvinces()) do
 		local col = {0.5, 0.5, 0.5}
 
-		if regionEditor._selectedCapital == id then
+		if editor._selectedCapital == id then
 			col = {1, 1, 1}
-		elseif regionEditor._selectedProvinces[id] then
+		elseif editor._selectedProvinces[id] then
 			col = {0.8, 0.8, 0.8}
 		end
 

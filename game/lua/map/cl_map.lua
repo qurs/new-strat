@@ -137,7 +137,7 @@ end)
 
 hook.Add('Draw', 'map', function()
 	if scene.getName() ~= 'map' and scene.getName() ~= 'start_game' then return end
-	if regionEditor._editing then
+	if regionEditor._editor then
 		local imgData = map._img
 		if not imgData then return end
 	
