@@ -11,6 +11,19 @@ function table.RemoveByValue(tbl, val)
 	table.remove(tbl, i)
 end
 
+function table.RemoveByMemberValue(tbl, key, val)
+	local i
+	for k, v in ipairs(tbl) do
+		if v[key] == val then
+			i = k
+			break
+		end
+	end
+	if not i then return end
+
+	table.remove(tbl, i)
+end
+
 function table.HasMemberValue(tbl, key, val)
 	for _, v in ipairs(tbl) do
 		if v[key] == val then
