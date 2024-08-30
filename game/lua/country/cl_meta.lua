@@ -149,11 +149,11 @@ function Country:AddRegion(region)
 
 	local provinces = region:GetProvinces()
 	for id, province in pairs(provinces) do
-		province:CreateCanvas()
+		util.queuePreDrawMethodCall(province, 'CreateCanvas')
 	end
 
-	region:CreateCanvas()
-	map.createCanvas()
+	util.queuePreDrawMethodCall(region, 'CreateCanvas')
+	util.queuePreDrawFunctionCall(map.createCanvas)
 end
 
 function Country:RemoveRegion(id)
@@ -165,15 +165,15 @@ function Country:RemoveRegion(id)
 
 	local provinces = region:GetProvinces()
 	for id, province in pairs(provinces) do
-		province:CreateCanvas()
+		util.queuePreDrawMethodCall(province, 'CreateCanvas')
 	end
 
 	if table.IsEmpty( self:GetRegions() ) then
 		self:Destroy('Последний субъект государства был потерян. На этом история страны заканчивается...')
 	end
 
-	region:CreateCanvas()
-	map.createCanvas()
+	util.queuePreDrawMethodCall(region, 'CreateCanvas')
+	util.queuePreDrawFunctionCall(map.createCanvas)
 end
 
 function Country:AddUnit(unit)

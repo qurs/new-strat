@@ -7,14 +7,14 @@ function game.endGame()
 		province.regionOwner = nil
 		province.canvas = nil
 
-		province:CreateCanvas()
+		util.queuePreDrawMethodCall(province, 'CreateCanvas')
 	end
 
 	country.lastRegionID = 0
 	country.lastCountryID = 0
 
 	map._selectedProvince = nil
-	map.createCanvas()
+	util.queuePreDrawFunctionCall(map.createCanvas)
 
 	scene.change('mainmenu')
 
