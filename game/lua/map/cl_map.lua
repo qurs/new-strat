@@ -115,24 +115,24 @@ hook.Add('AssetsLoaded', 'map', function()
 	}
 	
 	for _, province in ipairs(map._provinces) do
-		util.queuePreDrawMethodCall(province, 'CreateCanvas')
+		util.queuePrioritizedPreDrawMethodCall(province, 'CreateCanvas', 1)
 	end
 
-	util.queuePreDrawFunctionCall(map.createCanvas)
+	util.queuePrioritizedPreDrawFunctionCall(map.createCanvas, 99)
 end)
 
 hook.Add('WindowResized', 'map', function()
 	for _, province in ipairs(map._provinces) do
-		util.queuePreDrawMethodCall(province, 'CreateCanvas')
+		util.queuePrioritizedPreDrawMethodCall(province, 'CreateCanvas', 1)
 	end
 
 	for id, country in pairs(country._countries) do
 		for id, reg in pairs(country:GetRegions()) do
-			util.queuePreDrawMethodCall(reg, 'CreateCanvas')
+			util.queuePrioritizedPreDrawMethodCall(reg, 'CreateCanvas', 2)
 		end
 	end
 
-	util.queuePreDrawFunctionCall(map.createCanvas)
+	util.queuePrioritizedPreDrawFunctionCall(map.createCanvas, 99)
 end)
 
 hook.Add('Draw', 'map', function()

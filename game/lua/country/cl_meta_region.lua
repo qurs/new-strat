@@ -133,11 +133,11 @@ function Region:ChangeCountry(country)
 
 	local provinces = self:GetProvinces()
 	for id, province in pairs(provinces) do
-		util.queuePreDrawMethodCall(province, 'CreateCanvas')
+		util.queuePrioritizedPreDrawMethodCall(province, 'CreateCanvas', 1)
 	end
 
-	util.queuePreDrawMethodCall(self, 'CreateCanvas')
-	util.queuePreDrawFunctionCall(map.createCanvas)
+	util.queuePrioritizedPreDrawMethodCall(self, 'CreateCanvas', 2)
+	util.queuePrioritizedPreDrawFunctionCall(map.createCanvas, 99)
 end
 
 function Region:AddProvince(province)
@@ -146,7 +146,7 @@ function Region:AddProvince(province)
 	if province:GetRegion() then return end
 
 	province:_SetRegion(self)
-	util.queuePreDrawMethodCall(province, 'CreateCanvas')
+	util.queuePrioritizedPreDrawMethodCall(province, 'CreateCanvas', 1)
 	self.provinces[id] = province
 
 	self.provinceCount = self.provinceCount + 1
@@ -155,8 +155,8 @@ function Region:AddProvince(province)
 		self:SetCapitalProvince(id)
 	end
 
-	util.queuePreDrawMethodCall(self, 'CreateCanvas')
-	util.queuePreDrawFunctionCall(map.createCanvas)
+	util.queuePrioritizedPreDrawMethodCall(self, 'CreateCanvas', 2)
+	util.queuePrioritizedPreDrawFunctionCall(map.createCanvas, 99)
 end
 
 function Region:SetProvinces(provinces)
@@ -164,7 +164,7 @@ function Region:SetProvinces(provinces)
 
 	for id, province in pairs(self:GetProvinces()) do
 		province:_SetRegion()
-		util.queuePreDrawMethodCall(province, 'CreateCanvas')
+		util.queuePrioritizedPreDrawMethodCall(province, 'CreateCanvas', 1)
 
 		self.provinces[id] = nil
 	end
@@ -177,7 +177,7 @@ function Region:SetProvinces(provinces)
 		if province:GetRegion() then goto continue end
 	
 		province:_SetRegion(self)
-		util.queuePreDrawMethodCall(province, 'CreateCanvas')
+		util.queuePrioritizedPreDrawMethodCall(province, 'CreateCanvas', 1)
 
 		self.provinces[id] = province
 		self.provinceCount = self.provinceCount + 1
@@ -189,8 +189,8 @@ function Region:SetProvinces(provinces)
 		::continue::
 	end
 
-	util.queuePreDrawMethodCall(self, 'CreateCanvas')
-	util.queuePreDrawFunctionCall(map.createCanvas)
+	util.queuePrioritizedPreDrawMethodCall(self, 'CreateCanvas', 2)
+	util.queuePrioritizedPreDrawFunctionCall(map.createCanvas, 99)
 end
 
 function Region:RemoveProvince(provOrID)
@@ -200,14 +200,14 @@ function Region:RemoveProvince(provOrID)
 	if not province then return end
 
 	province:_SetRegion()
-	util.queuePreDrawMethodCall(province, 'CreateCanvas')
+	util.queuePrioritizedPreDrawMethodCall(province, 'CreateCanvas', 1)
 	self.provinces[id] = nil
 
 	self.provinceCount = self.provinceCount - 1
 
 	if self.provinceCount < 1 then
 		self:GetCountry():RemoveRegion(self:GetID())
-		return util.queuePreDrawFunctionCall(map.createCanvas)
+		return util.queuePrioritizedPreDrawFunctionCall(map.createCanvas, 99)
 	end
 
 	if self:GetCapitalProvince() == id then
@@ -218,8 +218,8 @@ function Region:RemoveProvince(provOrID)
 		end
 	end
 
-	util.queuePreDrawMethodCall(self, 'CreateCanvas')
-	util.queuePreDrawFunctionCall(map.createCanvas)
+	util.queuePrioritizedPreDrawMethodCall(self, 'CreateCanvas', 2)
+	util.queuePrioritizedPreDrawFunctionCall(map.createCanvas, 99)
 end
 
 function Region:AddProvinces(tbl)
@@ -229,7 +229,7 @@ function Region:AddProvinces(tbl)
 		local id = province:GetID()
 
 		province:_SetRegion(self)
-		util.queuePreDrawMethodCall(province, 'CreateCanvas')
+		util.queuePrioritizedPreDrawMethodCall(province, 'CreateCanvas', 1)
 
 		self.provinces[id] = province
 		self.provinceCount = self.provinceCount + 1
@@ -241,8 +241,8 @@ function Region:AddProvinces(tbl)
 		::continue::
 	end
 
-	util.queuePreDrawMethodCall(self, 'CreateCanvas')
-	util.queuePreDrawFunctionCall(map.createCanvas)
+	util.queuePrioritizedPreDrawMethodCall(self, 'CreateCanvas', 2)
+	util.queuePrioritizedPreDrawFunctionCall(map.createCanvas, 99)
 end
 
 function Region:RemoveProvinces(tbl)
@@ -254,7 +254,7 @@ function Region:RemoveProvinces(tbl)
 		if not province:GetRegion() then goto continue end
 
 		province:_SetRegion()
-		util.queuePreDrawMethodCall(province, 'CreateCanvas')
+		util.queuePrioritizedPreDrawMethodCall(province, 'CreateCanvas', 1)
 
 		self.provinces[id] = nil
 		self.provinceCount = self.provinceCount - 1
@@ -270,8 +270,8 @@ function Region:RemoveProvinces(tbl)
 		::continue::
 	end
 
-	util.queuePreDrawMethodCall(self, 'CreateCanvas')
-	util.queuePreDrawFunctionCall(map.createCanvas)
+	util.queuePrioritizedPreDrawMethodCall(self, 'CreateCanvas', 2)
+	util.queuePrioritizedPreDrawFunctionCall(map.createCanvas, 99)
 end
 
 -- Hooks

@@ -123,9 +123,9 @@ function Province:ChangeRegion(region)
 
 	region:AddProvince(self)
 
-	util.queuePreDrawMethodCall(self, 'CreateCanvas')
-	util.queuePreDrawMethodCall(region, 'CreateCanvas')
-	util.queuePreDrawFunctionCall(map.createCanvas)
+	util.queuePrioritizedPreDrawMethodCall(self, 'CreateCanvas', 1)
+	util.queuePrioritizedPreDrawMethodCall(region, 'CreateCanvas', 2)
+	util.queuePrioritizedPreDrawFunctionCall(map.createCanvas, 99)
 end
 
 function Province:AddUnit(unit)
