@@ -68,36 +68,7 @@ function love.load()
 					return provinces
 				end,
 
-				code = [[
-					local args = {...}
-					local provinces = args[1]
-
-					for i, province in ipairs(provinces) do
-						local neighbors = {}
-						local myPixels = province.pixels
-
-						for i2, otherProvince in ipairs(provinces) do
-							if i == i2 then goto continue end
-
-							for _, pixel in ipairs(myPixels) do
-								local x, y = unpack(pixel)
-								if otherProvince.pixelsMap[(x - 1) .. '|' .. y] or otherProvince.pixelsMap[(x + 1) .. '|' .. y] or otherProvince.pixelsMap[x .. '|' .. (y - 1)] or otherProvince.pixelsMap[x .. '|' .. (y + 1)] then
-									neighbors[#neighbors + 1] = i2
-									break
-								end
-
-								::continue::
-							end
-
-							::continue::
-						end
-
-						love.thread.getChannel('assetloader'):push({
-							id = i,
-							result = neighbors,
-						})
-					end
-				]],
+				threadPath = 'threads/load_neighbors.lua',
 			}
 		end
 	end
@@ -150,67 +121,7 @@ function love.load()
 					return provincesPath, imgData, pixelCount, w
 				end,
 
-				code = [[
-					require('love.image')
-
-					require('lib/string')
-					local nuklear = require('nuklear')
-
-					local args = {...}
-					local path = args[1]
-					local imgData = args[2]
-					local pixelCount = args[3]
-					local w = args[4]
-
-					local file = io.open(path, 'r')
-
-					local ffi = require('ffi')
-
-					for line in file:lines() do
-						local data = string.Split(line, ';')
-						local id = tonumber(data[1])
-						local r, g, b = tonumber(data[2]), tonumber(data[3]), tonumber(data[4])
-						local hex = nuklear.colorRGBA(r, g, b)
-
-						local pixels = {}
-						local pixelsMap = {}
-						local minX, minY = math.huge, math.huge
-						local maxX, maxY = -math.huge, -math.huge
-
-						do
-							local pointer = ffi.cast('uint8_t*', imgData:getFFIPointer())
-
-							for i = 0, (4 * pixelCount) - 1, 4 do
-								local pr, pg, pb = pointer[i], pointer[i + 1], pointer[i + 2]
-
-								if pr == r and pg == g and pb == b then
-									local pos = i / 4
-									local y = math.floor(math.max(pos - 1, 0) / w)
-									local x = pos - (w * y)
-
-									minX, minY = math.min(minX, x), math.min(minY, y)
-									maxX, maxY = math.max(maxX, x), math.max(maxY, y)
-
-									local index = #pixels + 1
-									pixels[index] = {x, y}
-									pixelsMap[x .. '|' .. y] = index
-								end
-							end
-						end
-
-						love.thread.getChannel('assetloader'):push({
-							id = id,
-							hex = hex,
-							rgb255 = {r, g, b},
-							pixels = pixels,
-							pixelsMap = pixelsMap,
-							minPos = {minX, minY},
-							maxPos = {maxX, maxY},
-						})
-					end
-
-					file:close()
-				]],
+				threadPath = 'threads/load_provinces.lua',
 			},
 			neighborsStage,
 		},
