@@ -1,5 +1,3 @@
-util = util or {}
-
 function ScrW()
     return love.graphics.getWidth()
 end
