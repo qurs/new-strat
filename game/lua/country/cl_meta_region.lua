@@ -221,12 +221,10 @@ function Region:RemoveProvince(id)
 end
 
 function Region:AddProvinces(tbl)
-	for _, provOrID in ipairs(tbl) do
-		local id = type(provOrID) == 'number' and provOrID or provOrID:GetID()
-
-		local province = self.provinces[id]
-		if not province then goto continue end
+	for _, province in ipairs(tbl) do
 		if province:GetRegion() then goto continue end
+
+		local id = province:GetID()
 
 		province:_SetRegion(self)
 		province:CreateCanvas()
