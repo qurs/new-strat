@@ -193,7 +193,9 @@ function Region:SetProvinces(provinces)
 	map.createCanvas()
 end
 
-function Region:RemoveProvince(id)
+function Region:RemoveProvince(provOrID)
+	local id = type(provOrID) == 'number' and provOrID or provOrID:GetID()
+
 	local province = self.provinces[id]
 	if not province then return end
 
