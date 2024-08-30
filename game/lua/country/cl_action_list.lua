@@ -4,11 +4,6 @@ hook.Add('AssetsLoaded', 'country.actionList', function()
 	country.actions.addRegionAction('Выделить регион', function(region)
 		if region:GetProvinceCount() < 2 then return notify.show('error', 3, 'В регионе должно быть больше 1-й провинции, чтобы выделить еще один регион!') end
 
-		map._selectedProvince = nil
-
-		gamecycle._blocked = true
-		gamecycle.pause()
-
 		regionEditor.open(region,
 			{
 				needProvinces = true,
@@ -36,7 +31,6 @@ hook.Add('AssetsLoaded', 'country.actionList', function()
 						return notify.show('error', 2.5, 'Название столицы должно быть не короче 3-х и не длиннее 32-х символов!')
 					end
 
-					local region = editor.region
 					local с = region:GetCountry()
 
 					region:RemoveProvinces(table.GetKeys(editor._selectedProvinces))
@@ -52,6 +46,29 @@ hook.Add('AssetsLoaded', 'country.actionList', function()
 
 					regionEditor.close()
 				end)
+			end
+		)
+	end)
+
+	country.actions.addRegionAction('Расширить', function(region)
+		regionEditor.open(region,
+			{
+				needProvinces = true,
+				needCapital = false,
+				takeProvincesFromOther = true,
+				hint = 'Выберите новые провинции для региона\nЛКМ - выделить/снять выделение',
+			},
+			function(editor)
+				local tbl = {}
+				for id, province in pairs(editor._selectedProvinces) do
+					local reg = province:GetRegion()
+					reg:RemoveProvince(province)
+
+					tbl[#tbl + 1] = province
+				end
+
+				region:AddProvinces(tbl)
+				regionEditor.close()
 			end
 		)
 	end)

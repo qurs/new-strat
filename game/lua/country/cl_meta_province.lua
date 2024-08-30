@@ -225,9 +225,20 @@ end
 function Province:OnClick(button)
 	if button == 1 then
 		local editor = regionEditor._editor
-		if editor then
+		if editor and editor.settings.needProvinces then
+			if self:GetCountry() ~= editor.region:GetCountry() then return end
+
 			local id = self:GetID()
 			local region = self:GetRegion()
+			if not region then return end
+
+			if 
+				(editor.settings.takeProvincesFromOther and region:GetID() == editor.region:GetID())
+				or (not editor.settings.takeProvincesFromOther and region:GetID() ~= editor.region:GetID())
+			then
+				return
+			end
+
 			if region:GetCapitalProvince() == id then return end
 
 			if editor._selectedProvinces[id] then
@@ -244,9 +255,20 @@ function Province:OnClick(button)
 		local myCountry = self:GetCountry()
 		local editor = regionEditor._editor
 
-		if editor then
+		if editor and editor.settings.needCapital then
+			if self:GetCountry() ~= editor.region:GetCountry() then return end
+
 			local id = self:GetID()
 			local region = self:GetRegion()
+			if not region then return end
+
+			if 
+				(editor.settings.takeProvincesFromOther and region:GetID() == editor.region:GetID())
+				or (not editor.settings.takeProvincesFromOther and region:GetID() ~= editor.region:GetID())
+			then
+				return
+			end
+
 			if region:GetCapitalProvince() == id then return end
 			if not editor._selectedProvinces[id] then return notify.show('error', 2, 'Нужно сначала выделить эту провинцию!') end
 

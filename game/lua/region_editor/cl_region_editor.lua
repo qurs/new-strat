@@ -16,6 +16,11 @@ local style = {
 }
 
 function regionEditor.open(region, settings, callback)
+	map._selectedProvince = nil
+
+	gamecycle._blocked = true
+	gamecycle.pause()
+
 	regionEditor._editor = {
 		region = region,
 		settings = settings,
@@ -101,36 +106,101 @@ hook.Add('Draw', 'regionEditor', function()
 	if not editor then return end
 
 	local region = editor.region
+	local c = region:GetCountry()
 
-	for id, province in pairs(region:GetProvinces()) do
-		local col = {0.5, 0.5, 0.5}
+	if editor.settings.takeProvincesFromOther then
+		for regID, reg in pairs(c:GetRegions()) do
+			if reg:GetID() == region:GetID() then
+				for id, province in pairs(reg:GetProvinces()) do
+					local r, g, b = 0.2, 0.2, 0.2
 
-		if editor._selectedCapital == id then
-			col = {1, 1, 1}
-		elseif editor._selectedProvinces[id] then
-			col = {0.8, 0.8, 0.8}
+					love.graphics.push()
+						love.graphics.translate(map._centerX, 0)
+						love.graphics.setColor(r, g, b)
+						province:Draw()
+					love.graphics.pop()
+			
+					love.graphics.push()
+						love.graphics.translate(map._minX, 0)
+						love.graphics.setColor(r, g, b)
+						province:Draw()
+					love.graphics.pop()
+			
+					love.graphics.push()
+						love.graphics.translate(map._maxX, 0)
+						love.graphics.setColor(r, g, b)
+						province:Draw()
+					love.graphics.pop()
+				end
+
+				goto continue
+			end
+
+			for id, province in pairs(reg:GetProvinces()) do
+				local col = {0.5, 0.5, 0.5}
+		
+				if editor._selectedCapital == id then
+					col = {1, 1, 1}
+				elseif editor._selectedProvinces[id] then
+					col = {0.8, 0.8, 0.8}
+				end
+		
+				if reg:GetCapitalProvince() == id then
+					col = {0.2, 0.2, 0.2}
+				end
+		
+				love.graphics.push()
+					love.graphics.translate(map._centerX, 0)
+					love.graphics.setColor(unpack(col))
+					province:Draw()
+				love.graphics.pop()
+		
+				love.graphics.push()
+					love.graphics.translate(map._minX, 0)
+					love.graphics.setColor(unpack(col))
+					province:Draw()
+				love.graphics.pop()
+		
+				love.graphics.push()
+					love.graphics.translate(map._maxX, 0)
+					love.graphics.setColor(unpack(col))
+					province:Draw()
+				love.graphics.pop()
+			end
+
+			::continue::
 		end
-
-		if region:GetCapitalProvince() == id then
-			col = {0.2, 0.2, 0.2}
+	else
+		for id, province in pairs(region:GetProvinces()) do
+			local col = {0.5, 0.5, 0.5}
+	
+			if editor._selectedCapital == id then
+				col = {1, 1, 1}
+			elseif editor._selectedProvinces[id] then
+				col = {0.8, 0.8, 0.8}
+			end
+	
+			if region:GetCapitalProvince() == id then
+				col = {0.2, 0.2, 0.2}
+			end
+	
+			love.graphics.push()
+				love.graphics.translate(map._centerX, 0)
+				love.graphics.setColor(unpack(col))
+				province:Draw()
+			love.graphics.pop()
+	
+			love.graphics.push()
+				love.graphics.translate(map._minX, 0)
+				love.graphics.setColor(unpack(col))
+				province:Draw()
+			love.graphics.pop()
+	
+			love.graphics.push()
+				love.graphics.translate(map._maxX, 0)
+				love.graphics.setColor(unpack(col))
+				province:Draw()
+			love.graphics.pop()
 		end
-
-		love.graphics.push()
-			love.graphics.translate(map._centerX, 0)
-			love.graphics.setColor(unpack(col))
-			province:Draw()
-		love.graphics.pop()
-
-		love.graphics.push()
-			love.graphics.translate(map._minX, 0)
-			love.graphics.setColor(unpack(col))
-			province:Draw()
-		love.graphics.pop()
-
-		love.graphics.push()
-			love.graphics.translate(map._maxX, 0)
-			love.graphics.setColor(unpack(col))
-			province:Draw()
-		love.graphics.pop()
 	end
 end)
