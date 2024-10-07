@@ -78,6 +78,10 @@ function Province:GetBounds()
 	return self:GetMinPos(), self:GetMaxPos()
 end
 
+function Province:GetCenter()
+	return (self:GetMinPos() + self:GetMaxPos()) / 2
+end
+
 function Province:GetRegion()
 	return self.regionOwner
 end
