@@ -327,9 +327,26 @@ function Region:DrawCapital(offset)
 	love.graphics.rectangle('fill', offset + centerPos.x - pointSize / 2, centerPos.y, pointSize, pointSize)
 
 	local sx = 0.2
+	local tw = text:getWidth()
 
-	love.graphics.setColor(1, 1, 1)
-	love.graphics.draw(text, offset + centerPos.x - (text:getWidth() * sx) / 2, centerPos.y - (text:getHeight() * sx), 0, sx)
+	if camera._scale > 3.5 then
+		if not self.capitalAlpha or self.capitalAlpha < 1 then
+			self.capitalAlpha = Lerp(0.01, self.capitalAlpha or 0, 1)
+
+			if self.capitalAlpha > 0.95 then
+				self.capitalAlpha = 1
+			end
+		end
+	elseif self.capitalAlpha then
+		self.capitalAlpha = Lerp(0.01, self.capitalAlpha, 0)
+
+		if self.capitalAlpha < 0.05 then
+			self.capitalAlpha = nil
+		end
+	end
+
+	love.graphics.setColor(1, 1, 1, self.capitalAlpha or 0)
+	love.graphics.draw(text, offset + centerPos.x - (tw * sx) / 2, centerPos.y - (text:getHeight() * sx), 0, sx)
 end
 
 function Region:Draw()
