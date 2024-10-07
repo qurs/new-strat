@@ -16,7 +16,7 @@ function love.load()
 
 	ui = nuklear.newUI()
 
-	local provincesPath = 'game/assets/provinces.csv'
+	local provincesPath = 'game/assets/map/provinces.csv'
 	local maxStepProvinces = 0
 
 	local file = io.open(provincesPath, 'r')
@@ -78,8 +78,8 @@ function love.load()
 			{
 				name = 'Map',
 				files = {
-					{path = 'assets/map.dxt1', name = 'map', type = 'img', compressed = true},
-					{path = 'assets/provinces.bmp', name = 'map_provinces', type = 'img'},
+					{path = 'assets/map/map.dxt1', name = 'map', type = 'img', compressed = true},
+					{path = 'assets/map/provinces.bmp', name = 'map_provinces', type = 'img'},
 				},
 			},
 			{
