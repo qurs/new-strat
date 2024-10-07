@@ -28,7 +28,7 @@ function love.load()
 	local neighborsStage
 	local neighbors = {}
 
-	local neighborsFilePath = 'game/assets/province_neighbors.json'
+	local neighborsFilePath = 'game/data/province_neighbors.json'
 	local hasNeighbors = false
 
 	do
