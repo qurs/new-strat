@@ -114,7 +114,7 @@ end
 function meta:DistanceSqr(other)
 	local xd = other.x - self.x
 	local yd = other.y - self.y
-	return xd * xd + yd * yd
+	return xd^2 + yd^2
 end
 
 function meta:Distance(other)
