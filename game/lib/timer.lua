@@ -1,6 +1,30 @@
 timer = {}
 timer._timers = {}
 
+function timer.Ipairs(tbl, delay, callback)
+	local i = 1
+	local id = os.clock() .. math.random() .. 'ipairs' .. tostring(tbl)
+
+	timer.Create(id, delay, 0, function()
+		if tbl[i] == nil then return timer.Remove(id) end
+		callback(i, tbl[i])
+		i = i + 1
+	end)
+end
+
+function timer.Pairs(tbl, delay, callback)
+	local id = os.clock() .. math.random() .. 'pairs' .. tostring(tbl)
+	local lastKey
+
+	timer.Create(id, delay, 0, function()
+		local k, v = next(tbl, lastKey)
+		if k == nil then return timer.Remove(id) end
+
+		lastKey = k
+		callback(k, v)
+	end)
+end
+
 function timer.Create(id, time, reps, callback)
 	timer._timers[id] = {
 		time = time,
