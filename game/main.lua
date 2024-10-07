@@ -85,7 +85,7 @@ function love.load()
 			{
 				name = 'Textures',
 				files = {
-					{path = 'assets/pause.png', name = 'pause_img', type = 'img'},
+					{path = 'assets/ui/pause.png', name = 'pause_img', type = 'img'},
 				},
 			},
 			{
