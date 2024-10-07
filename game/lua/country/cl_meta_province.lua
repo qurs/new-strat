@@ -224,98 +224,12 @@ end
 
 function Province:OnClick(button)
 	if button == 1 then
-		local editor = regionEditor._editor
-		if editor and editor.settings.needProvinces then
-			if self:GetCountry() ~= editor.region:GetCountry() then return end
-
-			local id = self:GetID()
-			local region = self:GetRegion()
-			if not region then return end
-
-			if 
-				(editor.settings.takeProvincesFromOther and region:GetID() == editor.region:GetID())
-				or (not editor.settings.takeProvincesFromOther and region:GetID() ~= editor.region:GetID())
-			then
-				return
-			end
-
-			if region:GetCapitalProvince() == id then return end
-
-			if editor._selectedProvinces[id] then
-				editor._selectedProvinces[id] = nil
-			else
-				editor._selectedProvinces[id] = self
-			end
-
-			return
-		end
+		if regionEditor._editor then return regionEditor.handler.provinceLeftClick(self) end
 
 		map._selectedProvince = self
 	elseif button == 2 then
-		local myCountry = self:GetCountry()
-		local editor = regionEditor._editor
-
-		if editor and editor.settings.needCapital then
-			if self:GetCountry() ~= editor.region:GetCountry() then return end
-
-			local id = self:GetID()
-			local region = self:GetRegion()
-			if not region then return end
-
-			if 
-				(editor.settings.takeProvincesFromOther and region:GetID() == editor.region:GetID())
-				or (not editor.settings.takeProvincesFromOther and region:GetID() ~= editor.region:GetID())
-			then
-				return
-			end
-
-			if region:GetCapitalProvince() == id then return end
-			if not editor._selectedProvinces[id] then return notify.show('error', 2, 'Нужно сначала выделить эту провинцию!') end
-
-			editor._selectedCapital = id
-
-			return
-		end
-
-		if units._selectedUnits and myCountry then
-			local firstUnit = next(units._selectedUnits)
-			local targetCountry = firstUnit:GetCountry()
-
-			if myCountry == targetCountry or (myCountry:InWarWith(targetCountry) and not self:HasAnyUnit()) then
-				for unit in pairs(units._selectedUnits) do
-					unit:Move(self)
-				end
-			elseif myCountry:InWarWith(targetCountry) then
-				local fight = units.getFightByProv(self)
-				if fight then
-					for unit in pairs(units._selectedUnits) do
-						local curProvince = unit:GetProvince()
-						if curProvince:HasNeighbor(self) then
-							unit.targetAttack = self
-							fight.attackerTeam[#fight.attackerTeam + 1] = unit
-						end
-					end
-					return
-				end
-
-				local unitList = {}
-				for id, unit in pairs(self:GetUnits()) do
-					unitList[#unitList + 1] = unit
-				end
-
-				local attackList = {}
-				for unit in pairs(units._selectedUnits) do
-					local curProvince = unit:GetProvince()
-					if curProvince:HasNeighbor(self) then
-						attackList[#attackList + 1] = unit
-					end
-				end
-
-				units.fight(attackList, unitList, self)
-			end
-
-			return
-		end
+		if regionEditor._editor then return regionEditor.handler.provinceRightClick(self) end
+		if units.handler.provinceRightClick(self) == true then return end
 
 		map._selectedCountry = self:GetCountry()
 	elseif button == 4 then
