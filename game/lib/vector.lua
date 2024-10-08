@@ -151,7 +151,7 @@ end
 
 function meta:Rotate(ang)
 	local cos, sin = math.cos(ang), math.sin(ang)
-	local matrix = { {cos, sin}, {-sin, cos} }
+	local matrix = { {cos, -sin}, {sin, cos} }
 
 	local x, y = self.x, self.y
 
@@ -163,7 +163,7 @@ end
 
 function meta:Rotated(ang)
 	local cos, sin = math.cos(ang), math.sin(ang)
-	local matrix = { {cos, sin}, {-sin, cos} }
+	local matrix = { {cos, -sin}, {sin, cos} }
 
 	local x, y = self.x, self.y
 	local pos = {matrix[1][1] * x + matrix[1][2] * y, matrix[2][1] * x + matrix[2][2] * y}
