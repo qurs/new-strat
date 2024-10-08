@@ -36,63 +36,77 @@ function meta:__eq(other)
 end
 
 function meta:__add(other)
+	local first, second = self, other
 	local pos
 
-	if type(other) == 'number' then
-		pos = {self[1] + other, self[2] + other}
-	elseif other.__isvector then
-		pos = {self[1] + other[1], self[2] + other[2]}
+	if type(first) == 'number' then
+		pos = {second.x + first, second.y + first}
+	elseif type(second) == 'number' then
+		pos = {first.x + second, first.y + second}
+	elseif first.__isvector and second.__isvector then
+		pos = {first.x + second.x, first.y + second.y}
 	end
 
-	if not pos then return error('Попытка сложить вектор с типом ' .. type(other)) end
+	if not pos then return error(('Попытка сложить %s + %s'):format(first, second)) end
 
 	return setmetatable(pos, vector._meta)
 end
 
 function meta:__sub(other)
+	local first, second = self, other
 	local pos
 
-	if type(other) == 'number' then
-		pos = {self[1] - other, self[2] - other}
-	elseif other.__isvector then
-		pos = {self[1] - other[1], self[2] - other[2]}
+	if type(first) == 'number' then
+		pos = {second.x - first, second.y - first}
+	elseif type(second) == 'number' then
+		pos = {first.x - second, first.y - second}
+	elseif first.__isvector and second.__isvector then
+		pos = {first.x - second.x, first.y - second.y}
 	end
 
-	if not pos then return error('Попытка вычесть из вектора тип ' .. type(other)) end
+	if not pos then return error(('Попытка вычесть %s - %s'):format(first, second)) end
 
 	return setmetatable(pos, vector._meta)
 end
 
 function meta:__mul(other)
+	local first, second = self, other
 	local pos
 
-	if type(other) == 'number' then
-		pos = {self[1] * other, self[2] * other}
-	elseif other.__isvector then
-		pos = {self[1] * other[1], self[2] * other[2]}
+	if type(first) == 'number' then
+		pos = {second.x * first, second.y * first}
+	elseif type(second) == 'number' then
+		pos = {first.x * second, first.y * second}
+	elseif first.__isvector and second.__isvector then
+		pos = {first.x * second.x, first.y * second.y}
 	end
 
-	if not pos then return error('Попытка умножить вектор с типом ' .. type(other)) end
+	if not pos then return error(('Попытка умножить %s * %s'):format(first, second)) end
 
 	return setmetatable(pos, vector._meta)
 end
 
 function meta:__div(other)
+	local first, second = self, other
 	local pos
 
-	if type(other) == 'number' then
-		pos = {self[1] / other, self[2] / other}
-	elseif other.__isvector then
-		pos = {self[1] / other[1], self[2] / other[2]}
+	if type(first) == 'number' then
+		pos = {second.x / first, second.y / first}
+	elseif type(second) == 'number' then
+		pos = {first.x / second, first.y / second}
+	elseif first.__isvector and second.__isvector then
+		pos = {first.x / second.x, first.y / second.y}
 	end
 
-	if not pos then return error('Попытка поделить вектор с типом ' .. type(other)) end
+	if not pos then return error(('Попытка поделить %s / %s'):format(first, second)) end
 
 	return setmetatable(pos, vector._meta)
 end
 
 function meta:__unm()
-	return setmetatable({-self[1], -self[2]}, vector._meta)
+	self.x = -self.x
+	self.y = -self.y
+	return self
 end
 
 function meta:__tostring()
