@@ -4,7 +4,7 @@ pathFind.AStar = require 'astar'
 pathFind._map = {}
 pathFind._cachedNodes = {}
 
-local map, cachedNodes = pathFind._map, pathFind._cachedNodes
+local map, cachedNodes, AStar = pathFind._map, pathFind._cachedNodes, pathFind.AStar
 
 local function getNodeByID(id)
 	cachedNodes[id] = cachedNodes[id] or {id = id}
