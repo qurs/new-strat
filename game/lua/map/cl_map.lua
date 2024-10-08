@@ -225,6 +225,7 @@ hook.Add('Draw', 'map', function()
 end)
 
 hook.Add('DrawUI', 'map', function()
+	if scene.getName() ~= 'map' and scene.getName() ~= 'start_game' then return end
 	if not map.debugProvinces then return end
 
 	local imgData = map._img
@@ -257,6 +258,7 @@ hook.Add('DrawUI', 'map', function()
 end)
 
 hook.Add('MouseDown', 'map', function(x, y, button)
+	if scene.getName() ~= 'map' and scene.getName() ~= 'start_game' then return end
 	if button == 3 then return end
 	if not map._provincesMap then return end
 
@@ -278,6 +280,7 @@ hook.Add('MouseDown', 'map', function(x, y, button)
 end)
 
 hook.Add('KeyDown', 'map', function(button)
+	if scene.getName() ~= 'map' and scene.getName() ~= 'start_game' then return end
 	if button == 'escape' then
 		if map._selectedProvince then map._selectedProvince = nil end
 		if map._selectedCountry then map._selectedCountry = nil end
