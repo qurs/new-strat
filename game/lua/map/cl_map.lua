@@ -73,8 +73,8 @@ end
 function map.getProvinceByPos(x, y)
 	local data = assetloader.get('map_provinces').data
 
-	local r, g, b = data:getPixel(x, y)
-	if not r then return end
+	local ok, r, g, b = pcall(data.getPixel, data, x, y)
+	if not ok or not r then return end
 
 	r, g, b = love.math.colorToBytes(r, g, b)
 
