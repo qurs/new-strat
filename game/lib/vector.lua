@@ -149,6 +149,28 @@ function meta:Clamp(min, max)
 	return self
 end
 
+function meta:Rotate(ang)
+	local cos, sin = math.cos(ang), math.sin(ang)
+	local matrix = { {cos, -sin}, {sin, cos} }
+
+	local x, y = self.x, self.y
+
+	self.x = matrix[1][1] * x + matrix[1][2] * y
+	self.y = matrix[2][1] * x + matrix[2][2] * y
+
+	return self
+end
+
+function meta:Rotated(ang)
+	local cos, sin = math.cos(ang), math.sin(ang)
+	local matrix = { {cos, -sin}, {sin, cos} }
+
+	local x, y = self.x, self.y
+	local pos = {matrix[1][1] * x + matrix[1][2] * y, matrix[2][1] * x + matrix[2][2] * y}
+
+	return setmetatable(pos, vector._meta)
+end
+
 function Vector(x, y)
 	local pos = {x or 0, y or 0}
 
