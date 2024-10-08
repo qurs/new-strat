@@ -185,20 +185,27 @@ function love.resize(w, h)
 end
 
 function love.mousepressed(x, y, button, istouch, presses)
-	if ui:mousepressed(x, y, button, istouch, presses) then return end
+	if not radialMenu._opened then
+		if ui:mousepressed(x, y, button, istouch, presses) then return end
+	end
 
 	hook.Run('MouseDown', x, y, button, istouch, presses)
 end
 
 function love.mousereleased(x, y, button, istouch, presses)
-	if ui:mousereleased(x, y, button, istouch, presses) then return end
+	if not radialMenu._opened then
+		if ui:mousereleased(x, y, button, istouch, presses) then return end
+	end
 
 	hook.Run('MouseUp', x, y, button, istouch, presses)
 end
 
 function love.mousemoved(x, y, dx, dy, istouch)
 	hook.Run('MouseMoved', x, y, dx, dy, istouch)
-	ui:mousemoved(x, y, dx, dy, istouch)
+
+	if not radialMenu._opened then
+		ui:mousemoved(x, y, dx, dy, istouch)
+	end
 end
 
 function love.keypressed(key, scancode, isrepeat)
