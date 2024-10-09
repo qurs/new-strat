@@ -31,7 +31,7 @@ hook.Add('AssetsLoaded', 'country.actionList', function()
 						return notify.show('error', 2.5, 'Название столицы должно быть не короче 3-х и не длиннее 32-х символов!')
 					end
 
-					local с = region:GetCountry()
+					local c = region:GetCountry()
 
 					region:RemoveProvinces(table.GetKeys(editor._selectedProvinces))
 
@@ -42,7 +42,7 @@ hook.Add('AssetsLoaded', 'country.actionList', function()
 					newRegion:SetCapitalProvince(editor._selectedCapital)
 					newRegion:SetPopulation(population)
 
-					с:AddRegion(newRegion)
+					c:AddRegion(newRegion)
 
 					regionEditor.close()
 				end)
