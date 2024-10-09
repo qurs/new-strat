@@ -60,12 +60,6 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: ${{ env.CORE_LOVE_ARTIFACT_NAME }}
-      # This is an example dynamic library
-      - name: Download ColdClear
-        uses: ./.github/actions/get-cc
-        with:
-          platform: Windows
-          dir: ./ColdClear
       - name: Build Windows packages
         id: build-packages
         uses: love-actions/love-actions-windows@v1
