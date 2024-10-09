@@ -66,12 +66,8 @@ jobs:
         with:
           love-package: ${{ env.CORE_LOVE_PACKAGE_PATH }}
           icon-path: ./.github/build/windows/${{ env.BUILD_TYPE }}/icon.ico
-          rc-path: ./.github/build/windows/${{ env.BUILD_TYPE }}/template.rc
-          extra-assets-x86: ./ColdClear/x86/CCloader.dll ./ColdClear/x86/cold_clear.dll
-          extra-assets-x64: ./ColdClear/x64/CCloader.dll ./ColdClear/x64/cold_clear.dll
           product-name: ${{ env.PRODUCT_NAME }}
           app-id: ${{ secrets.APP_ID }}
-          project-website: https://www.example.com/
           installer-languages: Russian.isl English.isl
           output-folder: ${{ env.OUTPUT_FOLDER }}
       - name: Upload 32-bit artifact
