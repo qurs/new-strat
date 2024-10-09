@@ -30,7 +30,7 @@ jobs:
       - name: Build core love package
         uses: love-actions/love-actions-core@v1
         with:
-          build-list: ./media/ ./parts/ ./Zframework/ ./game/conf.lua ./game/main.lua ./game/version.lua
+          build-list: ./game/*
           package-path: ${{ env.CORE_LOVE_PACKAGE_PATH }}
       - name: Upload core love package
         uses: actions/upload-artifact@v3
