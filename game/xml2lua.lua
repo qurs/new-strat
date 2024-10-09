@@ -129,12 +129,9 @@ end
 -- @param xmlFilePath the path for the XML file to load
 -- @return the XML loaded file content
 function xml2lua.loadFile(xmlFilePath)
-    local f, e = io.open(xmlFilePath, "r")
-    if f then
-        --Gets the entire file content and stores into a string
-        local content = f:read("*a")
-        f:close()
-        return content
+    local content, e = love.filesystem.read(xmlFilePath)
+    if content then
+      return content
     end
 
     error(e)

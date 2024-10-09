@@ -9,11 +9,9 @@ local imgData = args[2]
 local pixelCount = args[3]
 local w = args[4]
 
-local file = io.open(path, 'r')
-
 local ffi = require('ffi')
 
-for line in file:lines() do
+for line in love.filesystem.lines(path) do
 	local data = string.Split(line, ';')
 	local id = tonumber(data[1])
 	local r, g, b = tonumber(data[2]), tonumber(data[3]), tonumber(data[4])
@@ -55,5 +53,3 @@ for line in file:lines() do
 		maxPos = {maxX, maxY},
 	})
 end
-
-file:close()

@@ -16,34 +16,27 @@ function love.load()
 
 	ui = nuklear.newUI()
 
-	local provincesPath = 'game/assets/map/provinces.csv'
+	local provincesPath = 'assets/map/provinces.csv'
 	local maxStepProvinces = 0
 
-	local file = io.open(provincesPath, 'r')
-	for line in file:lines() do
+	for line in love.filesystem.lines(provincesPath) do
 		maxStepProvinces = maxStepProvinces + 1
 	end
-	file:close()
 
 	local neighborsStage
 	local neighbors = {}
 
-	local neighborsFilePath = 'game/data/province_neighbors.json'
+	local neighborsFilePath = 'data/province_neighbors.json'
 	local hasNeighbors = false
 
 	do
-		local neighborsFile = io.open(neighborsFilePath, 'r')
-		if neighborsFile then
-			local raw = neighborsFile:read('*a')
-			if raw then
-				local ok, tbl = pcall(json.decode, raw)
-				if ok then
-					hasNeighbors = true
-					neighbors = tbl
-				end
+		local neighborsRaw = love.filesystem.read(neighborsFilePath)
+		if neighborsRaw then
+			local ok, tbl = pcall(json.decode, neighborsRaw)
+			if ok then
+				hasNeighbors = true
+				neighbors = tbl
 			end
-
-			neighborsFile:close()
 		end
 
 		if not hasNeighbors then
@@ -127,12 +120,7 @@ function love.load()
 		},
 	}, function()
 		if not hasNeighbors then
-			local file = io.open(neighborsFilePath, 'w')
-			if file then
-				file:write(json.encode(neighbors))
-				file:flush()
-				file:close()
-			end
+			love.filesystem.write(neighborsFilePath, json.encode(neighbors))
 		end
 
 		do
