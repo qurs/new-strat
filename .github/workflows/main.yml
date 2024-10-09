@@ -46,9 +46,6 @@ jobs:
           submodules: recursive
       - name: Love actions for testing
         uses: love-actions/love-actions-test@v1
-        with:
-          font-path: ./parts/fonts/proportional.otf
-          language-folder: ./parts/language
   build-windows:
     runs-on: windows-latest
     needs: [build-core, auto-test]
