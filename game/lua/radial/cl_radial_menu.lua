@@ -17,6 +17,7 @@ gui.registerFont('radialMenu.desc', {
 })
 
 function radialMenu.open()
+	if mapEditor._editor then return end
 	radialMenu._opened = true
 end
 
@@ -96,11 +97,20 @@ hook.Add('PostDrawUI', 'radialMenu', function()
 			love.graphics.arc('fill', x, y, radius - lineWidth, startAng, endAng)
 		end, 'increment', 1)
 
-		local diffBetween = math.abs( (startAng - endAng + math.pi) % (math.pi * 2) - math.pi )
-		local diffToStart = math.abs( (startAng - mouseAng + math.pi) % (math.pi * 2) - math.pi )
-		local diffToEnd = math.abs( (endAng - mouseAng + math.pi) % (math.pi * 2) - math.pi )
+		local mouseSelect = false
+		if #radialMenu._options == 1 then
+			mouseSelect = mouseRadius < radius
+		elseif #radialMenu._options == 2 then
+			mouseSelect = mouseRadius < radius and mouseAng > startAng and mouseAng < endAng
+		else
+			local diffBetween = math.abs( (startAng - endAng + math.pi) % (math.pi * 2) - math.pi )
+			local diffToStart = math.abs( (startAng - mouseAng + math.pi) % (math.pi * 2) - math.pi )
+			local diffToEnd = math.abs( (endAng - mouseAng + math.pi) % (math.pi * 2) - math.pi )
 
-		if mouseRadius < radius and diffToStart < diffBetween and diffToEnd < diffBetween then
+			mouseSelect = mouseRadius < radius and diffToStart < diffBetween and diffToEnd < diffBetween
+		end
+
+		if mouseSelect then
 			data.appearLerp = Lerp(0.09, data.appearLerp or 0, 1)
 
 			padText = {
@@ -182,11 +192,20 @@ hook.Add('MouseDown', 'radialMenu', function(mouseX, mouseY, button)
 	for _, v in ipairs(radialMenu._options) do
 		local startAng, endAng = lastAng, lastAng + ang
 
-		local diffBetween = math.abs( (startAng - endAng + math.pi) % (math.pi * 2) - math.pi )
+		local mouseSelect = false
+		if #radialMenu._options == 1 then
+			mouseSelect = true
+		elseif #radialMenu._options == 2 then
+			mouseSelect = mouseAng > startAng and mouseAng < endAng
+		else
+			local diffBetween = math.abs( (startAng - endAng + math.pi) % (math.pi * 2) - math.pi )
 		local diffToStart = math.abs( (startAng - mouseAng + math.pi) % (math.pi * 2) - math.pi )
 		local diffToEnd = math.abs( (endAng - mouseAng + math.pi) % (math.pi * 2) - math.pi )
 
-		if diffToStart < diffBetween and diffToEnd < diffBetween then
+			mouseSelect = diffToStart < diffBetween and diffToEnd < diffBetween
+		end
+
+		if mouseSelect then
 			local map = radialMenu._optionsMap[v.id]
 			if map then
 				map.callback()
@@ -222,7 +241,7 @@ hook.Add('KeyDown', 'radialMenu', function(key)
 	if radialMenu._opened then return end
 	if key ~= radialMenu.OPEN_KEY then return end
 
-	radialMenu._opened = true
+	radialMenu.open()
 end)
 
 hook.Add('KeyUp', 'radialMenu', function(key)
@@ -230,7 +249,7 @@ hook.Add('KeyUp', 'radialMenu', function(key)
 	if not radialMenu._opened then return end
 	if key ~= radialMenu.OPEN_KEY then return end
 
-	radialMenu._opened = nil
+	radialMenu.close()
 end)
 
 --[[ EXAMPLES:
