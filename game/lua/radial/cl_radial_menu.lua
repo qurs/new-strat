@@ -18,6 +18,9 @@ gui.registerFont('radialMenu.desc', {
 
 function radialMenu.open()
 	if mapEditor._editor then return end
+	if #uiLib.popup._popups > 0 then return end
+	if gamecycle.event.ui._window then return end
+
 	radialMenu._opened = true
 end
 
