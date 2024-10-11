@@ -1,5 +1,6 @@
 country = country or {}
 country._countries = country._countries or {}
+country._regions = country._regions or {}
 country._provinces = country._provinces or {}
 
 country.lastRegionID = country.lastRegionID or 0
@@ -26,15 +27,22 @@ function country.get(id)
 	return country._countries[id]
 end
 
+function country.getRegion(id)
+	return country._regions[id]
+end
+
 function country.getProvince(id)
 	return country._provinces[id]
 end
 
 function country.newRegion(...)
-	local meta = setmetatable({}, country._regionMeta)
-	meta:__init(country.lastRegionID + 1, ...)
+	local id = country.lastRegionID + 1
 
-	country.lastRegionID = country.lastRegionID + 1
+	local meta = setmetatable({}, country._regionMeta)
+	meta:__init(id, ...)
+
+	country._regions[id] = meta
+	country.lastRegionID = id
 
 	return meta
 end
