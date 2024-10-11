@@ -22,6 +22,9 @@ local style = {
 	-- Доступен ли альтернативный выбор (ПКМ)
 	select2 = false/true,
 
+	-- Одиночный выбор (выбирается только одна цель)
+	singleSelect = false/true,
+
 	-- Фильтр, определяющий логику выбора target/excludeRegions (отрисовка)
 	targetFilter = function(editor)
 		return targetRegions, excludeRegions
@@ -60,6 +63,9 @@ local style = {
 		[id2] = true,
 		[id3] = true,
 	},
+
+	-- Определяет, является ли список исключений регионами (понадобится для оптимизации, если провинций слишком много и они все относятся к каким-то регионам)
+	selectExcludeIsRegions = false/true,
 
 	-- Текст кнопки отправки в редакторе
 	sendBtnText = 'Отправить',
@@ -291,7 +297,7 @@ local function drawRegion(editor, regID, reg)
 
 		if editor._selected2 == id then
 			col = settings.selectedCol2 or {1, 1, 1}
-		elseif editor._selected[id] then
+		elseif (settings.singleSelect and editor._selected == id) or editor._selected[id] then
 			col = settings.selectedCol or {0.8, 0.8, 0.8}
 		end
 

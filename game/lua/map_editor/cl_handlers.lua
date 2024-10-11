@@ -7,14 +7,27 @@ function mapEditor.handler.provinceLeftClick(prov)
 
 	if settings.selectTarget ~= 'province' then return end
 
+	local id = prov:GetID()
+	if settings.singleSelect then
+		if editor._selected == id or editor._selected2 == id then return end
+	end
+
 	local region = prov:GetRegion()
 	if not region then return end
 
-	local regionID = region:GetID()
-
-	local id = prov:GetID()
 	local selectTargetsMap, excludeSelectTarget = mapEditor.getSelectTarget()
-	if (selectTargetsMap and not selectTargetsMap[id]) or (excludeSelectTarget and excludeSelectTarget[id]) then
+
+	local excludeCheckID = id
+	if settings.selectExcludeIsRegions then
+		excludeCheckID = region:GetID()
+	end
+
+	if (selectTargetsMap and not selectTargetsMap[id]) or (excludeSelectTarget and excludeSelectTarget[excludeCheckID]) then
+		return
+	end
+
+	if settings.singleSelect then
+		editor._selected = id
 		return
 	end
 
@@ -37,13 +50,25 @@ function mapEditor.handler.provinceRightClick(prov)
 	if settings.selectTarget ~= 'province' then return end
 
 	local id = prov:GetID()
+
+	if settings.singleSelect and editor._selected == id then return end
 	if editor._selected2 == id then return end
 
 	local region = prov:GetRegion()
 	if not region then return end
 
+	local excludeCheckID = id
+	if settings.selectExcludeIsRegions then
+		excludeCheckID = region:GetID()
+	end
+
 	local selectTargetsMap, excludeSelectTarget = mapEditor.getSelectTarget()
-	if (selectTargetsMap and not selectTargetsMap[id]) or (excludeSelectTarget and excludeSelectTarget[id]) then
+	if (selectTargetsMap and not selectTargetsMap[id]) or (excludeSelectTarget and excludeSelectTarget[excludeCheckID]) then
+		return
+	end
+
+	if settings.singleSelect then
+		editor._selected2 = id
 		return
 	end
 
