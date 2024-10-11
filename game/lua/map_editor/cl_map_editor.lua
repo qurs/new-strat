@@ -37,7 +37,11 @@ local style = {
 	regions = {id, id2, id3},
 
 	-- Регионы, которые НЕ будут использоваться в редакторе (замена regions) (отрисовка)
-	excludeRegions = {id, id2, id3},
+	excludeRegions = {
+		[id1] = true,
+		[id2] = true,
+		[id3] = true,
+	},
 
 	-- Фильтр, определяющий логику выбора target/exclude (выделение)
 	selectTargetFilter = function(editor)
@@ -51,7 +55,11 @@ local style = {
 	selectTargets = {id, id2, id3},
 
 	-- Регионы/провинции, которые НЕ будут использоваться в редакторе (замена selectTargets) (выделение)
-	selectExclude = {id1, id2, id3},
+	selectExclude = {
+		[id1] = true,
+		[id2] = true,
+		[id3] = true,
+	},
 
 	-- Текст кнопки отправки в редакторе
 	sendBtnText = 'Отправить',
