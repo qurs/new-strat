@@ -1,49 +1,57 @@
+country = country or {}
+country.actions = country.actions or {}
+
+function country.actions._createRegionPopup(callback)
+	uiLib.popup.query('Создание региона', {
+		{
+			type = 'edit',
+			tooltip = 'Название региона',
+			entry = {value = ''},
+		},
+		{
+			type = 'edit',
+			tooltip = 'Название столицы',
+			entry = {value = ''},
+		},
+	}, callback)
+end
+
 hook.Add('AssetsLoaded', 'country.actionList', function()
 	-- Regions
 
 	country.actions.addRegionAction('Выделить регион', function(region)
 		if region:GetProvinceCount() < 2 then return notify.show('error', 3, 'В регионе должно быть больше 1-й провинции, чтобы выделить еще один регион!') end
 
-		mapEditor.open({
-			select2 = true,
-			selectTarget = 'province',
-			selectTargets = table.GetKeys(region:GetProvinces()),
+		mapEditor.open(
+			{
+				select2 = true,
+				selectTarget = 'province',
+				selectTargets = table.GetKeys(region:GetProvinces()),
 
-			renderTargets = {region:GetID()},
+				renderTargets = {region:GetID()},
 
-			hint = 'Выберите провинции для нового региона\nЛКМ - выделить/снять выделение ПКМ - выбрать столицу',
+				hint = 'Выберите провинции для нового региона\nЛКМ - выделить/снять выделение ПКМ - выбрать столицу',
 
-			proccessProvince = function(regID, reg, id, prov)
-				if region:GetCapitalProvince() == id then
-					return {0.2, 0.2, 0.2}
-				end
-			end,
+				proccessProvince = function(regID, reg, id, prov)
+					if region:GetCapitalProvince() == id then
+						return {0.2, 0.2, 0.2}
+					end
+				end,
 
-			filter = function(editor)
-				if table.IsEmpty(editor._selected) then
-					return false, 'Нужно выбрать провинции!'
-				end
+				filter = function(editor)
+					if table.IsEmpty(editor._selected) then
+						return false, 'Нужно выбрать провинции!'
+					end
 
-				if not editor._selected2 then
-					return false, 'Нужно выбрать столицу!'
-				end
+					if not editor._selected2 then
+						return false, 'Нужно выбрать столицу!'
+					end
 
-				return true
-			end,
-		}, function(editor)
-				uiLib.popup.query('Создание региона', {
-					{
-						type = 'edit',
-						tooltip = 'Название региона',
-						entry = {value = ''},
-					},
-					{
-						type = 'edit',
-						tooltip = 'Название столицы',
-						entry = {value = ''},
-					},
-				},
-				function(widgets)
+					return true
+				end,
+			},
+			function(editor)
+				country.actions._createRegionPopup(function(widgets)
 					local regionName, capitalName = widgets[1].entry.value, widgets[2].entry.value
 					if utf8.len(regionName) < 3 or utf8.len(regionName) > 32 then
 						return notify.show('error', 2.5, 'Название региона должно быть не короче 3-х и не длиннее 32-х символов!')
@@ -51,20 +59,20 @@ hook.Add('AssetsLoaded', 'country.actionList', function()
 					if utf8.len(capitalName) < 3 or utf8.len(capitalName) > 32 then
 						return notify.show('error', 2.5, 'Название столицы должно быть не короче 3-х и не длиннее 32-х символов!')
 					end
-
+			
 					local c = region:GetCountry()
-
+			
 					region:RemoveProvinces(table.GetKeys(editor._selected))
-
+			
 					local population = region:GetPopulation() / 2
 					region:AddPopulation(-population)
-
+			
 					local newRegion = country.newRegion(regionName, capitalName, editor._selected)
 					newRegion:SetCapitalProvince(editor._selected2)
 					newRegion:SetPopulation(population)
-
+			
 					c:AddRegion(newRegion)
-
+			
 					mapEditor.close()
 				end)
 			end
