@@ -9,7 +9,7 @@ hook.Add('AssetsLoaded', 'country.actionList', function()
 			selectTarget = 'province',
 			selectTargets = table.GetKeys(region:GetProvinces()),
 
-			regions = {region:GetID()},
+			renderTargets = {region:GetID()},
 
 			hint = 'Выберите провинции для нового региона\nЛКМ - выделить/снять выделение ПКМ - выбрать столицу',
 
@@ -91,7 +91,7 @@ hook.Add('AssetsLoaded', 'country.actionList', function()
 			selectTargets = targets,
 
 			country = region:GetCountry(),
-			blockRegions = {
+			renderBlockTargets = {
 				[region:GetID()] = true,
 			},
 

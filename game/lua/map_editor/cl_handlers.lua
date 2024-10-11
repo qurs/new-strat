@@ -12,13 +12,13 @@ function mapEditor.handler.provinceLeftClick(prov)
 		if editor._selected == id or editor._selected2 == id then return end
 	end
 
-	local region = prov:GetRegion()
-	if not region then return end
-
 	local selectTargetsMap, excludeSelectTarget = mapEditor.getSelectTarget()
 
 	local excludeCheckID = id
-	if settings.selectExcludeIsRegions then
+	if settings.selectExcludeType == 'region' then
+		local region = prov:GetRegion()
+		if not region then return end
+
 		excludeCheckID = region:GetID()
 	end
 
@@ -54,11 +54,11 @@ function mapEditor.handler.provinceRightClick(prov)
 	if settings.singleSelect and editor._selected == id then return end
 	if editor._selected2 == id then return end
 
-	local region = prov:GetRegion()
-	if not region then return end
-
 	local excludeCheckID = id
-	if settings.selectExcludeIsRegions then
+	if settings.selectExcludeType == 'region' then
+		local region = prov:GetRegion()
+		if not region then return end
+
 		excludeCheckID = region:GetID()
 	end
 

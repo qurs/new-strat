@@ -30,21 +30,28 @@ local style = {
 		return targetRegions, excludeRegions
 	end,
 
-	-- Регионы, которые будут в редакторе, но будут недоступны
-	blockRegions = {id, id2, id3},
-
-	-- Регионы этой страны будут использоваться в редакторе (отрисовка)
-	country = Country,
-
-	-- Регионы, которые будут использоваться в редакторе (отрисовка)
-	regions = {id, id2, id3},
-
-	-- Регионы, которые НЕ будут использоваться в редакторе (замена regions) (отрисовка)
-	excludeRegions = {
+	-- Объекты, которые будут в редакторе, но будут недоступны
+	renderBlockTargets = {
 		[id1] = true,
 		[id2] = true,
 		[id3] = true,
 	},
+
+	-- Регионы этой страны будут использоваться в редакторе (отрисовка)
+	country = Country,
+
+	-- Объекты, которые будут использоваться в редакторе (отрисовка)
+	renderTargets = {id, id2, id3},
+
+	-- Цели, которые НЕ будут использоваться в редакторе (замена regions) (отрисовка)
+	renderExclude = {
+		[id1] = true,
+		[id2] = true,
+		[id3] = true,
+	},
+
+	-- Тип цели в renderTargets/renderExclude
+	renderType = 'region'/'province',
 
 	-- Фильтр, определяющий логику выбора target/exclude (выделение)
 	selectTargetFilter = function(editor)
@@ -64,8 +71,8 @@ local style = {
 		[id3] = true,
 	},
 
-	-- Определяет, является ли список исключений регионами (понадобится для оптимизации, если провинций слишком много и они все относятся к каким-то регионам)
-	selectExcludeIsRegions = false/true,
+	-- Определяет тип объекта в selectExclude (понадобится для оптимизации, если провинций слишком много и они все относятся к каким-то регионам)
+	selectExcludeType = 'region'/'province',
 
 	-- Текст кнопки отправки в редакторе
 	sendBtnText = 'Отправить',
@@ -134,19 +141,19 @@ function mapEditor.getTarget()
 		return unpack(editor._target)
 	end
 
-	local targetRegions
-	local excludeRegions
+	local renderTargets
+	local renderExclude
 
 	if settings.country then
-		targetRegions = table.GetKeys(settings.country:GetRegions())
-	elseif settings.regions then
-		targetRegions = settings.regions
-	elseif settings.excludeRegions then
-		excludeRegions = settings.excludeRegions
+		renderTargets = table.GetKeys(settings.country:GetRegions())
+	elseif settings.renderTargets then
+		renderTargets = settings.renderTargets
+	elseif settings.renderExclude then
+		renderExclude = settings.renderExclude
 	end
 
-	editor._target = {targetRegions, excludeRegions}
-	return targetRegions, excludeRegions
+	editor._target = {renderTargets, renderExclude}
+	return renderTargets, renderExclude
 end
 
 function mapEditor.getSelectTarget()
@@ -263,70 +270,86 @@ hook.Add('DrawUI', 'mapEditor', function()
 	love.graphics.draw(hintText, 0, padH / 2 - hintText:getHeight() / 2)
 end)
 
-local function drawBlockedRegion(editor, regID, reg)
+local function drawBlockedProvince(editor, id, prov)
 	local settings = editor.settings
-	
+	local r, g, b = unpack(settings.blockedRegionCol or {0.2, 0.2, 0.2})
+
+	love.graphics.push()
+		love.graphics.translate(map._centerX, 0)
+		love.graphics.setColor(r, g, b)
+		prov:Draw()
+	love.graphics.pop()
+
+	love.graphics.push()
+		love.graphics.translate(map._minX, 0)
+		love.graphics.setColor(r, g, b)
+		prov:Draw()
+	love.graphics.pop()
+
+	love.graphics.push()
+		love.graphics.translate(map._maxX, 0)
+		love.graphics.setColor(r, g, b)
+		prov:Draw()
+	love.graphics.pop()
+end
+
+local function drawBlockedRegion(editor, regID, reg)
 	for id, province in pairs(reg:GetProvinces()) do
-		local r, g, b = unpack(settings.blockedRegionCol or {0.2, 0.2, 0.2})
-
-		love.graphics.push()
-			love.graphics.translate(map._centerX, 0)
-			love.graphics.setColor(r, g, b)
-			province:Draw()
-		love.graphics.pop()
-
-		love.graphics.push()
-			love.graphics.translate(map._minX, 0)
-			love.graphics.setColor(r, g, b)
-			province:Draw()
-		love.graphics.pop()
-
-		love.graphics.push()
-			love.graphics.translate(map._maxX, 0)
-			love.graphics.setColor(r, g, b)
-			province:Draw()
-		love.graphics.pop()
+		drawBlockedProvince(editor, id, province)
 	end
 end
 
-local function drawRegion(editor, regID, reg)
+local function drawProvince(editor, id, prov)
 	local settings = editor.settings
 
+	local reg = prov:GetRegion()
+	local regID = reg and reg:GetID()
+
+	local col = settings.targetCol or {0.5, 0.5, 0.5}
+	local selected = false
+	if settings.singleSelect then
+		selected = editor._selected == id
+	else
+		selected = editor._selected[id]
+	end
+
+	if editor._selected2 == id then
+		col = settings.selectedCol2 or {1, 1, 1}
+	elseif selected then
+		col = settings.selectedCol or {0.8, 0.8, 0.8}
+	end
+
+	if settings.proccessProvince then
+		local newCol = settings.proccessProvince(regID, reg, id, prov)
+		if newCol then
+			col = newCol
+		end
+	end
+
+	local r, g, b = unpack(col)
+
+	love.graphics.push()
+		love.graphics.translate(map._centerX, 0)
+		love.graphics.setColor(r, g, b)
+		prov:Draw()
+	love.graphics.pop()
+
+	love.graphics.push()
+		love.graphics.translate(map._minX, 0)
+		love.graphics.setColor(r, g, b)
+		prov:Draw()
+	love.graphics.pop()
+
+	love.graphics.push()
+		love.graphics.translate(map._maxX, 0)
+		love.graphics.setColor(r, g, b)
+		prov:Draw()
+	love.graphics.pop()
+end
+
+local function drawRegion(editor, regID, reg)
 	for id, province in pairs(reg:GetProvinces()) do
-		local col = settings.targetCol or {0.5, 0.5, 0.5}
-
-		if editor._selected2 == id then
-			col = settings.selectedCol2 or {1, 1, 1}
-		elseif (settings.singleSelect and editor._selected == id) or editor._selected[id] then
-			col = settings.selectedCol or {0.8, 0.8, 0.8}
-		end
-
-		if settings.proccessProvince then
-			local newCol = settings.proccessProvince(regID, reg, id, province)
-			if newCol then
-				col = newCol
-			end
-		end
-
-		local r, g, b = unpack(col)
-
-		love.graphics.push()
-			love.graphics.translate(map._centerX, 0)
-			love.graphics.setColor(r, g, b)
-			province:Draw()
-		love.graphics.pop()
-
-		love.graphics.push()
-			love.graphics.translate(map._minX, 0)
-			love.graphics.setColor(r, g, b)
-			province:Draw()
-		love.graphics.pop()
-
-		love.graphics.push()
-			love.graphics.translate(map._maxX, 0)
-			love.graphics.setColor(r, g, b)
-			province:Draw()
-		love.graphics.pop()
+		drawProvince(editor, id, province)
 	end
 end
 
@@ -336,35 +359,64 @@ hook.Add('Draw', 'mapEditor', function()
 
 	local settings = editor.settings
 
-	local blockRegions = settings.blockRegions
-	local targetRegions, excludeRegions = mapEditor.getTarget()
+	local renderBlockTargets = settings.renderBlockTargets
+	local renderTarget, renderExclude = mapEditor.getTarget()
 
-	if targetRegions then
-		for _, regID in ipairs(targetRegions) do
-			local reg = country.getRegion(regID)
-			if not reg then goto continue end
+	local renderType = settings.renderType or 'region'
 
-			if blockRegions and blockRegions[regID] then
-				drawBlockedRegion(editor, regID, reg)
-				goto continue
+	if renderTarget then
+		for _, id in ipairs(renderTarget) do
+			if renderType == 'region' then
+				local reg = country.getRegion(id)
+				if not reg then goto continue end
+	
+				if renderBlockTargets and renderBlockTargets[id] then
+					drawBlockedRegion(editor, id, reg)
+					goto continue
+				end
+	
+				drawRegion(editor, id, reg)
+			elseif renderType == 'province' then
+				local prov = country.getProvince(id)
+				if not prov then goto continue end
+	
+				if renderBlockTargets and renderBlockTargets[id] then
+					drawBlockedProvince(editor, id, prov)
+					goto continue
+				end
+	
+				drawProvince(editor, id, prov)
 			end
-
-			drawRegion(editor, regID, reg)
-
+			
 			::continue::
 		end
-	elseif excludeRegions then
-		for regID, reg in pairs(country._regions) do
-			if excludeRegions[regID] then goto continue end
+	elseif renderExclude then
+		if renderType == 'region' then
+			for regID, reg in pairs(country._regions) do
+				if renderExclude[regID] then goto continue end
 
-			if blockRegions and blockRegions[regID] then
-				drawBlockedRegion(editor, regID, reg)
-				goto continue
+				if renderBlockTargets and renderBlockTargets[regID] then
+					drawBlockedRegion(editor, regID, reg)
+					goto continue
+				end
+
+				drawRegion(editor, regID, reg)
+
+				::continue::
 			end
+		elseif renderType == 'province' then
+			for provID, prov in pairs(country._provinces) do
+				if renderExclude[provID] then goto continue end
 
-			drawRegion(editor, regID, reg)
+				if renderBlockTargets and renderBlockTargets[provID] then
+					drawBlockedProvince(editor, provID, prov)
+					goto continue
+				end
 
-			::continue::
+				drawProvince(editor, provID, prov)
+
+				::continue::
+			end
 		end
 	end
 end)
