@@ -18,7 +18,7 @@ end)
 
 hook.Add('UI', 'country.regionActions', function(dt)
 	if scene.getName() ~= 'map' then return end
-	if regionEditor._editor then return end
+	if mapEditor._editor then return end
 	if map._selectedCountry then return end
 
 	local province = map._selectedProvince
@@ -54,7 +54,7 @@ end)
 
 hook.Add('PreDrawUI', 'country.regionActions', function()
 	if scene.getName() ~= 'map' then return end
-	if regionEditor._editor then return end
+	if mapEditor._editor then return end
 	if map._selectedCountry then return end
 
 	local province = map._selectedProvince

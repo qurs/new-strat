@@ -4,12 +4,33 @@ hook.Add('AssetsLoaded', 'country.actionList', function()
 	country.actions.addRegionAction('Выделить регион', function(region)
 		if region:GetProvinceCount() < 2 then return notify.show('error', 3, 'В регионе должно быть больше 1-й провинции, чтобы выделить еще один регион!') end
 
-		regionEditor.open(region,
-			{
-				needProvinces = true,
-				needCapital = true,
-			},
-			function(editor)
+		mapEditor.open({
+			select2 = true,
+			selectTarget = 'province',
+			selectTargets = table.GetKeys(region:GetProvinces()),
+
+			regions = {region:GetID()},
+
+			hint = 'Выберите провинции для нового региона\nЛКМ - выделить/снять выделение ПКМ - выбрать столицу',
+
+			proccessProvince = function(regID, reg, id, prov)
+				if region:GetCapitalProvince() == id then
+					return {0.2, 0.2, 0.2}
+				end
+			end,
+
+			filter = function(editor)
+				if table.IsEmpty(editor._selected) then
+					return false, 'Нужно выбрать провинции!'
+				end
+
+				if not editor._selected2 then
+					return false, 'Нужно выбрать столицу!'
+				end
+
+				return true
+			end,
+		}, function(editor)
 				uiLib.popup.query('Создание региона', {
 					{
 						type = 'edit',
@@ -33,34 +54,65 @@ hook.Add('AssetsLoaded', 'country.actionList', function()
 
 					local c = region:GetCountry()
 
-					region:RemoveProvinces(table.GetKeys(editor._selectedProvinces))
+					region:RemoveProvinces(table.GetKeys(editor._selected))
 
 					local population = region:GetPopulation() / 2
 					region:AddPopulation(-population)
 
-					local newRegion = country.newRegion(regionName, capitalName, editor._selectedProvinces)
-					newRegion:SetCapitalProvince(editor._selectedCapital)
+					local newRegion = country.newRegion(regionName, capitalName, editor._selected)
+					newRegion:SetCapitalProvince(editor._selected2)
 					newRegion:SetPopulation(population)
 
 					c:AddRegion(newRegion)
 
-					regionEditor.close()
+					mapEditor.close()
 				end)
 			end
 		)
 	end)
 
 	country.actions.addRegionAction('Расширить', function(region)
-		regionEditor.open(region,
-			{
-				needProvinces = true,
-				needCapital = false,
-				takeProvincesFromOther = true,
-				hint = 'Выберите новые провинции для региона\nЛКМ - выделить/снять выделение',
+		local targets = {}
+
+		for id, reg in pairs(region:GetCountry():GetRegions()) do
+			if id == region:GetID() then goto continue end
+
+			for provID, prov in pairs(reg:GetProvinces()) do
+				if provID ~= reg:GetCapitalProvince() then
+					targets[#targets + 1] = provID
+				end
+			end
+
+			::continue::
+		end
+
+		mapEditor.open({
+			selectTarget = 'province',
+			selectTargets = targets,
+
+			country = region:GetCountry(),
+			blockRegions = {
+				[region:GetID()] = true,
 			},
-			function(editor)
+
+			hint = 'Выберите новые провинции для региона\nЛКМ - выделить/снять выделение',
+
+			proccessProvince = function(regID, reg, id, prov)
+				if reg:GetCapitalProvince() == id then
+					return {0.2, 0.2, 0.2}
+				end
+			end,
+
+			filter = function(editor)
+				if table.IsEmpty(editor._selected) then
+					return false, 'Нужно выбрать провинции!'
+				end
+
+				return true
+			end,
+		}, function(editor)
 				local tbl = {}
-				for id, province in pairs(editor._selectedProvinces) do
+				for id, province in pairs(editor._selected) do
 					local reg = province:GetRegion()
 					reg:RemoveProvince(province)
 
@@ -68,7 +120,7 @@ hook.Add('AssetsLoaded', 'country.actionList', function()
 				end
 
 				region:AddProvinces(tbl)
-				regionEditor.close()
+				mapEditor.close()
 			end
 		)
 	end)
