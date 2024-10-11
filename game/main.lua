@@ -79,6 +79,7 @@ function love.load()
 				name = 'Textures',
 				files = {
 					{path = 'assets/ui/pause.png', name = 'pause_img', type = 'img'},
+					{path = 'assets/ui/wild_colonization.png', name = 'wild_colonization_icon', type = 'img'},
 				},
 			},
 			{
