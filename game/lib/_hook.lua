@@ -1,19 +1,25 @@
 hook = {}
 hook._handlers = {}
 
-function hook.Add(name, id, callback)
+function hook.Add(name, id, callback, order)
+	order = order or 0
+
 	hook._handlers[name] = hook._handlers[name] or {}
-	hook._handlers[name][id] = callback
+	hook._handlers[name][order] = hook._handlers[name][order] or {}
+
+	hook._handlers[name][order][id] = callback
 end
 
 function hook.Run(name, ...)
-	local handlers = hook._handlers[name]
-	if not handlers then return end
+	local orders = hook._handlers[name]
+	if not orders then return end
 
-	for id, callback in SortedPairs(handlers) do
-		local val = callback(...)
-		if val ~= nil then
-			return val
-		end
+	for order, handlers in SortedPairs(orders, true) do
+		for id, callback in SortedPairs(handlers) do
+			local val = callback(...)
+			if val ~= nil then
+				return val
+			end
+		end	
 	end
 end
