@@ -344,3 +344,11 @@ function string.Comma( number )
 	return number
 
 end
+
+function string.FromTable(tbl)
+	local str = ''
+	for _, v in ipairs(tbl) do
+		str = str .. v
+	end
+	return str
+end
