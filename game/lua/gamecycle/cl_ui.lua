@@ -132,6 +132,8 @@ hook.Add('PostDrawUI', 'gamecycle', function()
 end)
 
 hook.Add('KeyDown', 'gamecycle', function(key)
+	if devConsole._open then return end
+
 	if key == 'space' then
 		gamecycle.toggle()
 	end
