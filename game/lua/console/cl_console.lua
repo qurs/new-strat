@@ -1,5 +1,6 @@
 devConsole = devConsole or {}
 devConsole._commands = devConsole._commands or {}
+devConsole._executeHistory = devConsole._executeHistory or {}
 
 gui.registerFont('devConsole', {
 	font = 'Montserrat-Medium',
@@ -19,6 +20,7 @@ local consoleField = {
 }
 
 local consoleHistory = {}
+local curSelectedExecute
 
 function devConsole.open()
 	devConsole._open = true
@@ -28,7 +30,23 @@ function devConsole.close()
 	devConsole._open = nil
 end
 
+function devConsole.selectExecute(offset)
+	if curSelectedExecute then
+		curSelectedExecute = math.Clamp(curSelectedExecute + offset, 1, #devConsole._executeHistory)
+	else
+		if offset < 0 then
+			curSelectedExecute = #devConsole._executeHistory
+		else
+			curSelectedExecute = 1
+		end
+	end
+
+	consoleField.value = devConsole._executeHistory[curSelectedExecute] or ''
+end
+
 function devConsole.execute(line)
+	devConsole._executeHistory[#devConsole._executeHistory + 1] = line
+
 	local args = string.Explode('%s', line, true)
 	local cmd = table.remove(args, 1)
 	local cmdData = devConsole._commands[cmd]
@@ -126,7 +144,12 @@ hook.Add('UI', 'devConsole', function()
 			ui:layoutSpaceEnd()
 
 			ui:layoutRow('dynamic', editH, 1)
-			consoleField.state = ui:edit('simple', consoleField)
+
+			local state, changed = ui:edit('simple', consoleField)
+			consoleField.state = state
+			if changed then
+				curSelectedExecute = nil
+			end
 		elseif devConsole._open then
 			devConsole.close()
 		end
@@ -138,9 +161,15 @@ hook.Add('KeyDown', 'devConsole', function(key)
 	if devConsole._open then
 		if key == 'escape' then
 			devConsole.close()
-		elseif consoleField.state == 'active' and key == 'return' then
-			devConsole.execute(consoleField.value)
-			consoleField.value = ''
+		elseif consoleField.state == 'active' then
+			if key == 'return' then
+				devConsole.execute(consoleField.value)
+				consoleField.value = ''
+			elseif key == 'up' then
+				devConsole.selectExecute(-1)
+			elseif key == 'down' then
+				devConsole.selectExecute(1)
+			end
 		end
 	elseif not devConsole._open and key == love.keyboard.getScancodeFromKey('`') then
 		devConsole.open()
