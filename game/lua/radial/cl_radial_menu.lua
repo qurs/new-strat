@@ -67,6 +67,8 @@ function radialMenu.removeOption(id)
 	for i, v in ipairs(radialMenu._options) do
 		radialMenu._optionsMap[id].index = i
 	end
+
+	return true
 end
 
 local up = Vector(1, 0)
@@ -241,6 +243,7 @@ end)
 
 hook.Add('KeyDown', 'radialMenu', function(key)
 	if scene.getName() ~= 'map' then return end
+	if devConsole._open then return end
 	if radialMenu._opened then return end
 	if key ~= radialMenu.OPEN_KEY then return end
 
