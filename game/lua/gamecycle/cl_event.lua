@@ -7,6 +7,7 @@ gamecycle._events.single = gamecycle._events.single or {}
 gamecycle._events.regular = gamecycle._events.regular or {}
 
 gamecycle._plannedEvents = gamecycle._plannedEvents or {}
+gamecycle._plannedEventsUI = gamecycle._plannedEventsUI or {}
 
 function gamecycle.event.registerEvent(name, callback)
 	gamecycle._events.single[name] = callback
@@ -23,8 +24,13 @@ function gamecycle.event.startEvent(name, ...)
 	callback(...)
 end
 
-function gamecycle.event.startDelayedEvent(name, delay, ...)
-	gamecycle._plannedEvents[#gamecycle._plannedEvents + 1] = {name, (gamecycle._time or 1) + delay, {...}}
+function gamecycle.event.startDelayedEvent(name, delay, uiOptions, ...)
+	local endTime = (gamecycle._time or 1) + delay
+
+	gamecycle._plannedEvents[#gamecycle._plannedEvents + 1] = {name, endTime, {...}}
+	if uiOptions then
+		gamecycle._plannedEventsUI[#gamecycle._plannedEventsUI + 1] = {uiOptions.name, endTime, delay}
+	end
 end
 
 hook.Add('gamecycle.step', 'gamecycle.event', function()

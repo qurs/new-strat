@@ -1,4 +1,5 @@
 gamecycle = gamecycle or {}
+gamecycle.uiPadSize = {240, 40}
 
 gui.registerFont('gamecycle.pad', {
 	font = 'Montserrat-Medium',
@@ -32,7 +33,7 @@ local monthNames = {
 }
 
 local text, textMinus, textPlus, pauseImg
-local padW, padH = 240, 40
+local padW, padH = unpack(gamecycle.uiPadSize)
 
 function gamecycle.ui(dt)
 	if scene.getName() ~= 'map' then return end

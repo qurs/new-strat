@@ -135,7 +135,7 @@ hook.Add('Initialize', 'wildColonization', function()
 			local days = math.random(unpack(wildColonization.colonizationTime))
 
 			wildColonization._blocked = true
-			gamecycle.event.startDelayedEvent('wild_colonization', days * 24, prov)
+			gamecycle.event.startDelayedEvent('wild_colonization', days * 24, {name = 'Колонизация'}, prov)
 
 			mapEditor.close()
 		end)
