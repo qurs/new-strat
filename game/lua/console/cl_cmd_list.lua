@@ -43,6 +43,7 @@ hook.Add('Initialize', 'devConsole.cmdlist', function()
 
 	devConsole.registerCommand('country_region_list', {'countryID'}, 'Prints the country region list in format "id = name"', function(args, argStr)
 		local countryID = tonumber(args[1])
+		if not countryID then return false end
 
 		local c = country.get(countryID)
 		if not c then return {('Country with id "%s" not found!'):format(countryID), '#FF0000'} end
@@ -64,6 +65,8 @@ hook.Add('Initialize', 'devConsole.cmdlist', function()
 		provinceID = tonumber(provinceID)
 		regionID = tonumber(regionID)
 
+		if not provinceID or not regionID then return false end
+
 		local prov = country.getProvince(provinceID)
 		if not prov then return {('Province with id "%s" not found!'):format(provinceID), '#FF0000'} end
 
@@ -79,6 +82,8 @@ hook.Add('Initialize', 'devConsole.cmdlist', function()
 		local regionID, countryID = unpack(args)
 		regionID = tonumber(regionID)
 		countryID = tonumber(countryID)
+
+		if not regionID or not countryID then return false end
 
 		local reg = country.getRegion(regionID)
 		if not reg then return {('Region with id "%s" not found!'):format(regionID), '#FF0000'} end
@@ -102,6 +107,8 @@ hook.Add('Initialize', 'devConsole.cmdlist', function()
 
 	devConsole.registerCommand('set_speed', {'number'}, 'Sets game speed', function(args, argStr)
 		local speed = tonumber(args[1])
+		if not speed then return false end
+
 		gamecycle.speed = speed
 	
 		return {'Speed was set to ' .. speed, '#00FF00'}

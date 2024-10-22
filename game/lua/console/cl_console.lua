@@ -57,20 +57,26 @@ function devConsole.execute(line)
 		return
 	end
 
-	local argStr = table.concat(args, ' ')
-	if cmdData.form and #args ~= #cmdData.form then
+	local function unknownSyntax()
 		consoleHistory[#consoleHistory + 1] = {('%s Unknown syntax: %s [%s]'):format(os.date('[%X]'), cmd, table.concat(cmdData.form, ' ')), '#FF0000'}
 
 		if cmdData.desc then
 			consoleHistory[#consoleHistory + 1] = ('	- %s: %s'):format(cmd, cmdData.desc)
 		end
+	end
 
-		return
+	local argStr = table.concat(args, ' ')
+	if cmdData.form and #args ~= #cmdData.form then
+		return unknownSyntax()
 	end
 
 	consoleHistory[#consoleHistory + 1] = ('%s > %s'):format(os.date('[%X]'), cmd .. ' ' .. argStr)
 
 	local msg = cmdData.callback(args, argStr)
+	if msg == false then
+		return unknownSyntax()
+	end
+
 	if msg then
 		if type(msg) == 'string' then
 			consoleHistory[#consoleHistory + 1] = os.date('[%X]') .. ' ' .. msg
