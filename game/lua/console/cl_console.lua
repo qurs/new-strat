@@ -21,8 +21,10 @@ local consoleField = {
 
 local consoleHistory = {}
 local curSelectedExecute
+local focusEdit = false
 
 function devConsole.open()
+	focusEdit = true
 	devConsole._open = true
 end
 
@@ -144,6 +146,11 @@ hook.Add('UI', 'devConsole', function()
 			ui:layoutSpaceEnd()
 
 			ui:layoutRow('dynamic', editH, 1)
+
+			if focusEdit then
+				focusEdit = false
+				ui:editFocus()
+			end
 
 			local state, changed = ui:edit('simple', consoleField)
 			consoleField.state = state
