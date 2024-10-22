@@ -11,6 +11,23 @@ hook.Add('Initialize', 'devConsole.cmdlist', function()
 		assert( loadstring(argStr) )()
 	end)
 
+	devConsole.registerCommand('cmd_list', nil, 'Prints the command list', function(args, argStr)
+		local str = ''
+		for cmd, data in pairs(devConsole._commands) do
+			local form = ''
+			if data.form then
+				form = (' [%s]'):format(table.concat(data.form, ' '))
+			end
+
+			str = str .. ('	- %s%s: %s'):format(cmd, form, data.desc)
+			if next(devConsole._commands, cmd) then
+				str = str .. '\n'
+			end
+		end
+
+		return {'Command list:\n' .. str, '#FFFF00'}
+	end)
+
 	devConsole.registerCommand('country_list', nil, 'Prints a country list in format "id = name"', function(args, argStr)
 		local str = ''
 		for id, c in pairs(country._countries) do
