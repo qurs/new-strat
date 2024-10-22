@@ -99,4 +99,11 @@ hook.Add('Initialize', 'devConsole.cmdlist', function()
 	
 		return {('Radial menu option "%s" has been removed!'):format(id), '#00FF00'}
 	end)
+
+	devConsole.registerCommand('set_speed', {'number'}, 'Sets game speed', function(args, argStr)
+		local speed = tonumber(args[1])
+		gamecycle.speed = speed
+	
+		return {'Speed was set to ' .. speed, '#00FF00'}
+	end)
 end)
