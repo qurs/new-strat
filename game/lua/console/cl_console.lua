@@ -52,7 +52,12 @@ function devConsole.execute(line)
 
 	local msg = cmdData.callback(args, argStr)
 	if msg then
-		consoleHistory[#consoleHistory + 1] = os.date('[%X]') .. ' ' .. msg
+		if type(msg) == 'string' then
+			consoleHistory[#consoleHistory + 1] = os.date('[%X]') .. ' ' .. msg
+		else
+			msg[1] = os.date('[%X]') .. ' ' .. msg[1]
+			consoleHistory[#consoleHistory + 1] = msg
+		end		
 	end
 end
 
@@ -122,6 +127,8 @@ hook.Add('UI', 'devConsole', function()
 
 			ui:layoutRow('dynamic', editH, 1)
 			consoleField.state = ui:edit('simple', consoleField)
+		elseif devConsole._open then
+			devConsole.close()
 		end
 		ui:windowEnd()
 	ui:stylePop()
