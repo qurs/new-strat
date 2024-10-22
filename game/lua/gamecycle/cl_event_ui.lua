@@ -2,6 +2,8 @@ gamecycle = gamecycle or {}
 gamecycle.event = gamecycle.event or {}
 gamecycle.event.ui = gamecycle.event.ui or {}
 
+gamecycle.event.ui._window = gamecycle.event.ui._window or {}
+
 gui.registerFont('gamecycle.event.ui', {
 	font = 'Montserrat-Medium',
 	size = 14,
@@ -16,7 +18,7 @@ local style = {
 }
 
 function gamecycle.event.ui.showWindow(text, buttons)
-	gamecycle.event.ui._window = {
+	gamecycle.event.ui._window[#gamecycle.event.ui._window + 1] = {
 		text = text,
 		buttons = buttons,
 	}
@@ -29,34 +31,42 @@ end)
 hook.Add('UI', 'gamecycle.event.ui', function(dt)
 	if not style.font then return end
 
-	local window = gamecycle.event.ui._window
-	if not window then return end
+	local windows = gamecycle.event.ui._window
+	if #windows < 1 then return end
 
 	local popupW, popupH = ScrW() / 2, ScrH() / 2
 	local popupX, popupY = ScrW() / 2 - popupW / 2, ScrH() / 2 - popupH / 2
 
-	local _, wrapLimit = style.font:getWrap( window.text, popupW - 40 )
-	local th = #wrapLimit * style.font:getHeight()
+	local toRemove = {}
 
 	ui:stylePush(style)
-		if ui:windowBegin('gamecycle_event_ui', popupX, popupY, popupW, popupH, 'background') then
-			if ui:popupBegin('dynamic', 'Событие', 0, 0, popupW, popupH, 'title', 'scrollbar') then
-				for _, v in ipairs(wrapLimit) do
-					ui:layoutRow('dynamic', style.font:getHeight(), 1)
-					ui:label(v)
-				end
+		for i, window in ipairs(windows) do
+			local _, wrapLimit = style.font:getWrap( window.text, popupW - 40 )
+			local th = #wrapLimit * style.font:getHeight()
 
-				for _, btn in ipairs(window.buttons) do
-					ui:layoutRow('dynamic', 28, 1)
-					if ui:button(btn.text) then
-						if btn.callback then btn.callback() end
-						
-						gamecycle.event.ui._window = nil
+			if ui:windowBegin('gamecycle_event_ui' .. i, popupX, popupY, popupW, popupH, 'background') then
+				if ui:popupBegin('dynamic', 'Событие', 0, 0, popupW, popupH, 'title', 'scrollbar') then
+					for _, v in ipairs(wrapLimit) do
+						ui:layoutRow('dynamic', style.font:getHeight(), 1)
+						ui:label(v)
 					end
+	
+					for _, btn in ipairs(window.buttons) do
+						ui:layoutRow('dynamic', 28, 1)
+						if ui:button(btn.text) then
+							if btn.callback then btn.callback() end
+							toRemove[#toRemove + 1] = i
+						end
+					end
+					ui:popupEnd()
 				end
-				ui:popupEnd()
 			end
+			ui:windowEnd()
 		end
-		ui:windowEnd()
 	ui:stylePop()
+
+	for i = #toRemove, 1, -1 do
+		local index = toRemove[i]
+		table.remove(gamecycle.event.ui._window, index)
+	end
 end)
