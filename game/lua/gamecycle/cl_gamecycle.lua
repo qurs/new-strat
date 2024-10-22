@@ -61,7 +61,11 @@ function gamecycle.getDate()
 end
 
 hook.Add('UI', 'gamecycle', function(dt)
-	if gamecycle.ui then gamecycle.ui(dt) end
+	if not gamecycle.ui then return end
+	gamecycle.ui(dt)
+end)
+
+hook.Add('Think', 'gamecycle', function(dt)
 	if not gamecycle._started then return end
 	if gamecycle._nextStep and gamecycle._nextStep > os.clock() then return end
 
