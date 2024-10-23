@@ -41,3 +41,14 @@ function PrintTable( t, indent, done )
 	end
 
 end
+
+function RGBFromNum(num)
+	num = math.floor(num)
+	if num < 0 or num > 16777215 then return end
+
+	local r = math.floor(num / (256 * 256)) % 256
+    local g = math.floor(num / 256) % 256
+    local b = num % 256
+
+	return r, g, b
+end
