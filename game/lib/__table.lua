@@ -72,43 +72,28 @@ function table.GetKeys( tab )
 
 end
 
-local function keyValuePairs( state )
-
-	state.Index = state.Index + 1
-
-	local keyValue = state.KeyValues[ state.Index ]
-	if not keyValue then return end
-
-	return keyValue.key, keyValue.val
-
-end
-
-local function toKeyValues( tbl )
-
-	local result = {}
-
-	for k,v in pairs( tbl ) do
-		table.insert( result, { key = k, val = v } )
-	end
-
-	return result
-
-end
-
 --[[---------------------------------------------------------
 	A Pairs function
 		Sorted by TABLE KEY
 -----------------------------------------------------------]]
 function SortedPairs( pTable, Desc )
 
-	local sortedTbl = toKeyValues( pTable )
+	local keys = table.GetKeys( pTable )
 
 	if ( Desc ) then
-		table.sort( sortedTbl, function( a, b ) return a.key > b.key end )
+		table.sort( keys, function( a, b )
+			return a > b
+		end )
 	else
-		table.sort( sortedTbl, function( a, b ) return a.key < b.key end )
+		table.sort( keys, function( a, b )
+			return a < b
+		end )
 	end
 
-	return keyValuePairs, { Index = 0, KeyValues = sortedTbl }
+	local i, key = 1
+	return function()
+		key, i = keys[ i ], i + 1
+		return key, pTable[ key ]
+	end
 
 end
