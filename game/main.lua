@@ -2,11 +2,15 @@ if os.getenv('LOCAL_LUA_DEBUGGER_VSCODE') == '1' then
 	require('lldebugger').start()
 end
 
-enet = require('enet')
+local extension = jit.os == 'Windows' and 'dll' or jit.os == 'Linux' and 'so' or jit.os == 'OSX' and 'dylib'
+package.cpath = string.format('%s;%s/?.%s', package.cpath, love.filesystem.getSourceBaseDirectory(), extension)
+package.cpath = string.format('%s;%s/?.%s', package.cpath, love.filesystem.getSourceBaseDirectory() .. '/game', extension)
 
 local libloader = require('libloader')
 gameloader = require('gameloader')
-nuklear = require('nuklear')
+enet = require('enet')
+imgui = require('cimgui')
+ffi = require('ffi')
 
 function love.load()
 	love.keyboard.setKeyRepeat(true)
@@ -14,7 +18,7 @@ function love.load()
 	libloader.load()
 	gameloader.load()
 
-	ui = nuklear.newUI()
+	imgui.love.Init()
 
 	local provincesPath = 'assets/map/provinces.csv'
 	local maxStepProvinces = 0
@@ -95,7 +99,7 @@ function love.load()
 					local meta = country.newProvince(result.id, {
 							rgb255 = result.rgb255,
 							rgb = { love.math.colorFromBytes(unpack(result.rgb255)) },
-							hex = result.hex,
+							colorID = result.colorID,
 						},
 						result.pixels,
 						result.pixelsMap,
@@ -104,7 +108,7 @@ function love.load()
 					)
 
 					map._provinces[result.id] = meta
-					map._provincesMap[result.hex] = result.id
+					map._provincesMap[result.colorID] = result.id
 				end,
 
 				args = function()
@@ -139,16 +143,14 @@ function love.load()
 	end)
 
 	hook.Run('Initialize')
-
 	scene.change('mainmenu')
 end
 
 function love.update(dt)
 	hook.Run('Think', dt)
 
-	ui:frameBegin()
-		hook.Run('UI', dt)
-	ui:frameEnd()
+	imgui.love.Update(dt)
+	imgui.NewFrame()
 end
 
 function love.draw()
@@ -164,7 +166,10 @@ function love.draw()
 	if suppress == true then return end
 
 	hook.Run('DrawUI')
-	ui:draw()
+
+	love.graphics.setColor(1, 1, 1, 1)
+	imgui.Render()
+	imgui.love.RenderDrawLists()
 
 	hook.Run('PostDrawUI')
 end
@@ -175,7 +180,8 @@ end
 
 function love.mousepressed(x, y, button, istouch, presses)
 	if not radialMenu._opened then
-		if ui:mousepressed(x, y, button, istouch, presses) then return end
+		imgui.love.MousePressed(button)
+		if imgui.love.GetWantCaptureMouse() then return end
 	end
 
 	hook.Run('MouseDown', x, y, button, istouch, presses)
@@ -183,37 +189,50 @@ end
 
 function love.mousereleased(x, y, button, istouch, presses)
 	if not radialMenu._opened then
-		if ui:mousereleased(x, y, button, istouch, presses) then return end
+		imgui.love.MouseReleased(button)
+		if imgui.love.GetWantCaptureMouse() then return end
 	end
 
 	hook.Run('MouseUp', x, y, button, istouch, presses)
 end
 
 function love.mousemoved(x, y, dx, dy, istouch)
-	hook.Run('MouseMoved', x, y, dx, dy, istouch)
-
 	if not radialMenu._opened then
-		ui:mousemoved(x, y, dx, dy, istouch)
+		imgui.love.MouseMoved(x, y)
+		if imgui.love.GetWantCaptureMouse() then return end
 	end
+
+	hook.Run('MouseMoved', x, y, dx, dy, istouch)
 end
 
 function love.keypressed(key, scancode, isrepeat)
+	imgui.love.KeyPressed(key)
+	if imgui.love.GetWantCaptureKeyboard() then return end
+
 	hook.Run('KeyDown', key, scancode, isrepeat)
-	ui:keypressed(key, scancode, isrepeat)
 end
 
 function love.keyreleased(key, scancode)
+	imgui.love.KeyReleased(key)
+	if imgui.love.GetWantCaptureKeyboard() then return end
+
 	hook.Run('KeyUp', key, scancode, isrepeat)
-	ui:keyreleased(key, scancode)
 end
 
 function love.textinput(text)
+	imgui.love.TextInput(text)
+	if imgui.love.GetWantCaptureKeyboard() then return end
+
 	hook.Run('TextInput', text)
-	ui:textinput(text)
 end
 
 function love.wheelmoved(x, y)
-	if ui:wheelmoved(x, y) then return end
+	imgui.love.WheelMoved(x, y)
+	if imgui.love.GetWantCaptureMouse() then return end
 
 	hook.Run('WheelMoved', x, y)
+end
+
+function love.quit()
+	return imgui.love.Shutdown()
 end

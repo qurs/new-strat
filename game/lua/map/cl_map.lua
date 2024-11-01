@@ -78,9 +78,9 @@ function map.getProvinceByPos(x, y)
 
 	r, g, b = love.math.colorToBytes(r, g, b)
 
-	local hex = nuklear.colorRGBA(r, g, b)
+	local colorID = ('%s,%s,%s'):format(r, g, b)
 
-	local id = map._provincesMap[hex]
+	local id = map._provincesMap[colorID]
 	if not id then return end
 
 	local province = map._provinces[id]

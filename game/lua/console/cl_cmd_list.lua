@@ -8,7 +8,12 @@ hook.Add('Initialize', 'devConsole.cmdlist', function()
 	end)
 
 	devConsole.registerCommand('run_lua', {'code'}, 'Runs Lua from a string', function(args, argStr)
-		assert( loadstring(argStr) )()
+		local okOrChunk, err = loadstring(argStr)
+		if not okOrChunk then
+			return {err, {1, 0, 0}}
+		else
+			okOrChunk()
+		end
 	end)
 
 	devConsole.registerCommand('cmd_list', nil, 'Prints the command list', function(args, argStr)
@@ -25,7 +30,7 @@ hook.Add('Initialize', 'devConsole.cmdlist', function()
 			end
 		end
 
-		return {'Command list:\n' .. str, '#FFFF00'}
+		return {'Command list:\n' .. str, {1, 1, 0}}
 	end)
 
 	devConsole.registerCommand('country_list', nil, 'Prints a country list in format "id = name"', function(args, argStr)
@@ -37,7 +42,7 @@ hook.Add('Initialize', 'devConsole.cmdlist', function()
 			end
 		end
 
-		return {'Country list:\n' .. str, '#FFFF00'}
+		return {'Country list:\n' .. str, {1, 1, 0}}
 	end)
 
 	devConsole.registerCommand('full_region_list', nil, 'Prints the full region list in format "id = name | countryID"', function(args, argStr)
@@ -55,7 +60,7 @@ hook.Add('Initialize', 'devConsole.cmdlist', function()
 			end
 		end
 
-		return {'Full region list:\n' .. str, '#FFFF00'}
+		return {'Full region list:\n' .. str, {1, 1, 0}}
 	end)
 
 	devConsole.registerCommand('country_region_list', {'countryID'}, 'Prints the country region list in format "id = name"', function(args, argStr)
@@ -63,7 +68,7 @@ hook.Add('Initialize', 'devConsole.cmdlist', function()
 		if not countryID then return false end
 
 		local c = country.get(countryID)
-		if not c then return {('Country with id "%s" not found!'):format(countryID), '#FF0000'} end
+		if not c then return {('Country with id "%s" not found!'):format(countryID), {1, 0, 0}} end
 
 		local regions = c:GetRegions()
 		local str = ''
@@ -74,7 +79,7 @@ hook.Add('Initialize', 'devConsole.cmdlist', function()
 			end
 		end
 
-		return {'Country region list:\n' .. str, '#FFFF00'}
+		return {'Country region list:\n' .. str, {1, 1, 0}}
 	end)
 
 	devConsole.registerCommand('province_change_region', {'provinceID', 'regionID'}, 'Transfers the province to the region', function(args, argStr)
@@ -85,14 +90,14 @@ hook.Add('Initialize', 'devConsole.cmdlist', function()
 		if not provinceID or not regionID then return false end
 
 		local prov = country.getProvince(provinceID)
-		if not prov then return {('Province with id "%s" not found!'):format(provinceID), '#FF0000'} end
+		if not prov then return {('Province with id "%s" not found!'):format(provinceID), {1, 0, 0}} end
 
 		local reg = country.getRegion(regionID)
-		if not reg then return {('Region with id "%s" not found!'):format(regionID), '#FF0000'} end
+		if not reg then return {('Region with id "%s" not found!'):format(regionID), {1, 0, 0}} end
 
 		prov:ChangeRegion(reg)
 
-		return {('The province "%s" has been transfered to the region "%s"'):format(provinceID, reg:GetName()), '#00FF00'}
+		return {('The province "%s" has been transfered to the region "%s"'):format(provinceID, reg:GetName()), {0, 1, 0}}
 	end)
 
 	devConsole.registerCommand('region_change_country', {'regionID', 'countryID'}, 'Transfers the region to the country', function(args, argStr)
@@ -103,23 +108,23 @@ hook.Add('Initialize', 'devConsole.cmdlist', function()
 		if not regionID or not countryID then return false end
 
 		local reg = country.getRegion(regionID)
-		if not reg then return {('Region with id "%s" not found!'):format(regionID), '#FF0000'} end
+		if not reg then return {('Region with id "%s" not found!'):format(regionID), {1, 0, 0}} end
 
 		local c = country.get(countryID)
-		if not c then return {('Country with id "%s" not found!'):format(countryID), '#FF0000'} end
+		if not c then return {('Country with id "%s" not found!'):format(countryID), {1, 0, 0}} end
 
 		reg:ChangeCountry(c)
 
-		return {('The region "%s" has been transfered to the country "%s"'):format(reg:GetName(), c:GetName()), '#00FF00'}
+		return {('The region "%s" has been transfered to the country "%s"'):format(reg:GetName(), c:GetName()), {0, 1, 0}}
 	end)
 	
 	devConsole.registerCommand('remove_radial_option', {'id'}, 'Removes the option from the radial menu', function(args, argStr)
 		local id = args[1]
 		if not radialMenu.removeOption(id) then
-			return {('Radial menu option "%s" not found!'):format(id), '#FF0000'}
+			return {('Radial menu option "%s" not found!'):format(id), {1, 0, 0}}
 		end
 	
-		return {('Radial menu option "%s" has been removed!'):format(id), '#00FF00'}
+		return {('Radial menu option "%s" has been removed!'):format(id), {0, 1, 0}}
 	end)
 
 	devConsole.registerCommand('set_speed', {'number'}, 'Sets game speed', function(args, argStr)
@@ -128,6 +133,6 @@ hook.Add('Initialize', 'devConsole.cmdlist', function()
 
 		gamecycle.speed = speed
 	
-		return {'Speed was set to ' .. speed, '#00FF00'}
+		return {'Speed was set to ' .. speed, {0, 1, 0}}
 	end)
 end)

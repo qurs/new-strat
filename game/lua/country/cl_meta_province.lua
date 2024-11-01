@@ -27,7 +27,7 @@ end
 
 function Province:__tostring()
 	local r, g, b = self:GetRGB255()
-	return ('Province[%s][%s %s %s][%s]'):format(self:GetID(), r, g, b, self:GetHEX())
+	return ('Province[%s][%s %s %s]'):format(self:GetID(), r, g, b)
 end
 
 -- GETTERS
@@ -50,12 +50,6 @@ function Province:GetRGB255()
 	local clr = self:GetColorData()
 
 	return unpack(clr.rgb255)
-end
-
-function Province:GetHEX()
-	local clr = self:GetColorData()
-
-	return clr.hex
 end
 
 function Province:GetPixelsList()

@@ -8,164 +8,140 @@ uiLib.popup = uiLib.popup or {}
 
 uiLib.popup._popups = uiLib.popup._popups or {}
 
-local style = {
-	font = gui.getFont('uiLib'),
-	window = {
-		spacing = {x = 5, y = 5},
-		padding = {x = 5, y = 5},
-	},
-}
+local fontObj, imguiFont
+hook.Add('Initialize', 'uiLib.popup.init', function()
+	fontObj, imguiFont = gui.getFont('uiLib'), gui.getFontImgui('uiLib')
+end)
 
-function uiLib.popup.showMessage(title, text, callback, style)
+function uiLib.popup.showMessage(title, text, callback)
 	table.insert(uiLib.popup._popups, {
 		id = tostring(os.clock()) .. '|' .. #uiLib.popup._popups,
 		type = 'message',
 		title = title,
 		text = text,
 		callback = callback,
-		style = style,
 	})
 end
 
-function uiLib.popup.query(title, widgets, callback, style)
+function uiLib.popup.query(title, widgets, callback)
 	table.insert(uiLib.popup._popups, {
 		id = tostring(os.clock()) .. '|' .. #uiLib.popup._popups,
 		type = 'query',
 		title = title,
 		widgets = widgets,
 		callback = callback,
-		style = style,
 	})
 end
 
-hook.Add('UI', 'uiLib.popup', function(dt)
-	local w, h = ScrW() / 2, ScrH() / 2
+hook.Add('DrawUI', 'uiLib.popup', function(dt)
+	if not imguiFont then return end
+
+	local flags = imgui.love.WindowFlags('NoResize', 'NoCollapse')
+
+	local w, h = 450, math.min(ScrH() / 2, 400)
 	local x, y = ScrW() / 2 - w / 2, ScrH() / 2 - h / 2
+
+	local style = imgui.GetStyle()
+	local padding = style.WindowPadding
+	local spacing = style.ItemSpacing
 
 	local toRemove = {}
 
 	for k, popup in ipairs(uiLib.popup._popups) do
-		local curStyle = popup.style or style
-		curStyle.window = curStyle.window or style.window
-		curStyle.window.spacing = curStyle.window.spacing or style.window.spacing
-		curStyle.window.padding = curStyle.window.padding or style.window.padding
+		local id = ('%s ##%s'):format(popup.title, popup.id)
 
-		ui:stylePush(curStyle)
-			if ui:windowBegin('uiLib.popup' .. popup.id, popup.title, x, y, w, h, 'title', 'movable', 'scrollbar') then
-				local cx, cy, cw, ch = ui:windowGetContentRegion()
+		imgui.SetNextWindowPos({x, y}, imgui.ImGuiCond_FirstUseEver)
+		imgui.SetNextWindowSize({w, -1}, imgui.ImGuiCond_FirstUseEver)
 
-				local contentH = 0
+		imgui.PushFont(imguiFont)
+		if imgui.Begin(id, nil, flags) then
+			local cw = imgui.GetContentRegionAvail().x
 
-				if popup.type == 'message' then
-					local font = curStyle.font
+			if popup.type == 'message' then
+				local _, wrapLimit = fontObj:getWrap(popup.text, cw)
+				for _, v in ipairs(wrapLimit) do
+					imgui.Text(v)
+				end
 
-					local _, wrapLimit = font:getWrap( popup.text, cw )
-					local th = #wrapLimit * font:getHeight()
-
-					for _, v in ipairs(wrapLimit) do
-						ui:layoutRow('dynamic', font:getHeight(), 1)
-						ui:label(v)
-
-						contentH = contentH + font:getHeight() + curStyle.window.spacing.y
-					end
-
-					ui:layoutRow('dynamic', 28, 1)
-					if ui:button('Ок') then
-						toRemove[#toRemove + 1] = k
-						if popup.callback then popup.callback() end
-					end
-
-					contentH = contentH + 28
-				elseif popup.type == 'query' then
-					local font = curStyle.font
-
-					for _, widget in ipairs(popup.widgets) do
-						if widget.type == 'label' then
-							local _, wrapLimit = font:getWrap( widget.text, cw )
-							local th = #wrapLimit * font:getHeight()
-		
-							for _, v in ipairs(wrapLimit) do
-								ui:layoutRow('dynamic', font:getHeight(), 1)
-								ui:label(v)
-		
-								contentH = contentH + font:getHeight() + curStyle.window.spacing.y
+				if imgui.Button('Ок', {-1, 28}) then
+					toRemove[#toRemove + 1] = k
+					if popup.callback then popup.callback() end
+				end
+			elseif popup.type == 'query' then
+				for widgetIndex, widget in ipairs(popup.widgets) do
+					if widget.type == 'label' then
+						local _, wrapLimit = fontObj:getWrap(widget.text, cw)
+						for _, v in ipairs(wrapLimit) do
+							imgui.Text(v)
+						end
+					elseif widget.type == 'edit' then
+						if widget.editType == 'multiline' then
+							imgui.InputTextMultiline(widget.tooltip or '', widget.entry, widget.maxLength)
+						else
+							imgui.InputText(widget.tooltip or '', widget.entry, widget.maxLength)
+						end
+					elseif widget.type == 'button' then
+						if imgui.Button(widget.text, {-1, 28}) then
+							if widget.callback then widget.callback() end
+							if widget.close then
+								toRemove[#toRemove + 1] = k
 							end
-						elseif widget.type == 'edit' then
-							local h = 28
-							
-							if widget.tooltip then
-								h = math.max(h, font:getHeight())
+						end
+					elseif widget.type == 'checkbox' then
+						imgui.Checkbox(widget.tooltip, widget.entry)
+					elseif widget.type == 'radio' then
+						for k, v in ipairs(widget.selection) do
+							imgui.RadioButton_IntPtr(v.tooltip, widget.entry, v.val)
+							if next(widget.selection, k) then imgui.SameLine() end
+						end
+					elseif widget.type == 'slider' then
+						if widget.float then
+							imgui.SliderFloat(widget.tooltip, widget.entry, widget.min, widget.max, widget.format)
+						else
+							imgui.SliderInt(widget.tooltip, widget.entry, widget.min, widget.max)
+						end
+					elseif widget.type == 'color' then
+						local size = widget.size or 96
+						local flags = {'DisplayRGB', 'NoDragDrop', 'NoOptions', 'NoInputs'}
+						if not widget.alpha then
+							flags[#flags + 1] = 'NoAlpha'
+						end
 
-								ui:layoutRow('dynamic', h, 2)
-								ui:label(widget.tooltip)
-							else
-								ui:layoutRow('dynamic', h, 1)
-							end
+						flags = imgui.love.ColorEditFlags(unpack(flags))
+						imgui.ColorEdit4(widget.tooltip, widget.entry, flags)
+					elseif widget.type == 'combo' then
+						widget.selected = widget.selected or 1
+						if imgui.BeginCombo(widget.tooltip or ('##%02i'):format(widgetIndex), widget.items[widget.selected]) then
+							for i, v in ipairs(widget.items) do
+								local selected = i == widget.selected
+								if imgui.Selectable_Bool(v, selected) then
+									widget.selected = i
+								end
 
-							ui:edit(widget.editType or 'simple', widget.entry)
-		
-							contentH = contentH + h + curStyle.window.spacing.y
-						elseif widget.type == 'button' then
-							ui:layoutRow('dynamic', 28, 1)
-							if ui:button(widget.text) then
-								if widget.callback then widget.callback() end
-								if widget.close then
-									toRemove[#toRemove + 1] = k
+								if selected then
+									imgui.SetItemDefaultFocus()
 								end
 							end
-		
-							contentH = contentH + 28 + curStyle.window.spacing.y
-						elseif widget.type == 'checkbox' then
-							ui:layoutRow('dynamic', font:getHeight(), 1)
-							ui:checkbox(widget.tooltip, widget.entry)
-		
-							contentH = contentH + font:getHeight() + curStyle.window.spacing.y
-						elseif widget.type == 'radio' then
-							ui:layoutRow('dynamic', font:getHeight(), #widget.selection)
-							for _, v in ipairs(widget.selection) do
-								ui:radio(v.val, v.tooltip, widget.entry)
-							end
-		
-							contentH = contentH + font:getHeight() + curStyle.window.spacing.y
-						elseif widget.type == 'slider' then
-							ui:layoutRow('dynamic', font:getHeight(), 2)
-							ui:label(widget.tooltip)
-							ui:slider(widget.min, widget.entry, widget.max, widget.step or 1)
-		
-							contentH = contentH + font:getHeight() + curStyle.window.spacing.y
-						elseif widget.type == 'color' then
-							local size = widget.size or 96
-
-							ui:layoutRow('dynamic', size, 2)
-							ui:label(widget.tooltip)
-							ui:colorPicker(widget.entry, widget.colorType or 'RGB')
-		
-							contentH = contentH + size + curStyle.window.spacing.y
-						elseif widget.type == 'combo' then
-							ui:layoutRow('dynamic', 28, 1)
-							ui:combobox(widget.entry, widget.items)
-		
-							contentH = contentH + 28 + curStyle.window.spacing.y
+							imgui.EndCombo()
 						end
 					end
-
-					ui:layoutRow('dynamic', 28, 1)
-					if ui:button('Отправить') then
-						toRemove[#toRemove + 1] = k
-						if popup.callback then popup.callback(popup.widgets) end
-					end
-
-					contentH = contentH + 28
 				end
 
-				if not popup._resized then
-					popup._resized = true
-
-					ui:windowSetSize('uiLib.popup' .. popup.id, w, math.min(46 + curStyle.window.padding.y + contentH + curStyle.window.padding.y, h))
+				if imgui.Button('Отправить') then
+					toRemove[#toRemove + 1] = k
+					if popup.callback then popup.callback(popup.widgets) end
 				end
 			end
-			ui:windowEnd()
-		ui:stylePop()
+
+			if popup.autosized then
+				local size = imgui.GetWindowSize()
+				imgui.SetWindowSize_Str(id, {w, math.min(size.y, h)})
+			else
+				popup.autosized = true
+			end
+		end
+		imgui.End()
+		imgui.PopFont()
 	end
 
 	for i = #toRemove, 1, -1 do
@@ -181,42 +157,43 @@ end)
 		},
 		{
 			type = 'edit',
-			editType = 'simple',
-			entry = {value = ''},
+			--editType = 'multiline',
+			maxLength = 32,
+			entry = ffi.new('char[32]'),
 		},
 		{
 			type = 'checkbox',
 			tooltip = 'Чекбокс',
-			entry = {value = false},
+			entry = ffi.new('bool[1]'),
 		},
 		{
 			type = 'radio',
 			selection = {
 				{
 					tooltip = 'Радио',
-					val = 'radio1',
+					val = 1,
 				},
 				{
 					tooltip = 'Радио2',
-					val = 'radio2',
+					val = 2,
 				},
 			},
-			entry = {value = ''},
+			entry = ffi.new('int[1]'),
 		},
 		{
 			type = 'slider',
 			tooltip = 'Слайдер',
 			min = 0,
 			max = 3,
-			step = 0.5,
-			entry = {value = 0},
+			float = true,
+			entry = ffi.new('float[1]'),
 		},
 		{
 			type = 'color',
 			tooltip = 'Цвет',
-			colorType = 'RGB',
+			--alpha = true,
 			size = 64,
-			entry = {value = '#ff0000'},
+			entry = ffi.new('float[4]'),
 		},
 		{
 			type = 'combo',
@@ -226,15 +203,15 @@ end)
 				'Предмет 2',
 				'Предмет 3'
 			},
-			entry = {value = 1},
+			selected = 1,
 		},
 	},
 	function(widgets)
-		print('текст: ', widgets[2].entry.value)
-		print('чекбокс:', widgets[3].entry.value)
-		print('радио:', widgets[4].entry.value)
-		print('слайдер:', widgets[5].entry.value)
-		print('цвет:', widgets[6].entry.value)
-		print('комбобокс:', widgets[7].entry.value, ' = ', widgets[7].items[ widgets[7].entry.value ])
+		print('текст: ', ffi.string(widgets[2].entry))
+		print('чекбокс:', widgets[3].entry[0])
+		print('радио:', widgets[4].entry[0])
+		print('слайдер:', widgets[5].entry[0])
+		print('цвет:', widgets[6].entry)
+		print('комбобокс:', widgets[7].selected, ' = ', widgets[7].items[ widgets[7].selected ])
 	end)
 ]]

@@ -1,8 +1,6 @@
 require('love.image')
 require('lib/string')
 
-local nuklear = require('nuklear')
-
 local args = {...}
 local path = args[1]
 local imgData = args[2]
@@ -15,7 +13,7 @@ for line in love.filesystem.lines(path) do
 	local data = string.Split(line, ';')
 	local id = tonumber(data[1])
 	local r, g, b = tonumber(data[2]), tonumber(data[3]), tonumber(data[4])
-	local hex = nuklear.colorRGBA(r, g, b)
+	local colorID = ('%s,%s,%s'):format(r, g, b)
 
 	local pixels = {}
 	local pixelsMap = {}
@@ -45,7 +43,7 @@ for line in love.filesystem.lines(path) do
 
 	love.thread.getChannel('assetloader'):push({
 		id = id,
-		hex = hex,
+		colorID = colorID,
 		rgb255 = {r, g, b},
 		pixels = pixels,
 		pixelsMap = pixelsMap,

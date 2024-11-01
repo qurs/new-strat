@@ -1,46 +1,42 @@
 local curScene = {}
-local style = {}
+
 local countryEntry = {
-	name = {value = ''},
-	regionName = {value = ''},
-	capitalName = {value = ''},
-	color = {value = '#ff0000'},
+	name = ffi.new('char[64]'),
+	regionName = ffi.new('char[32]'),
+	capitalName = ffi.new('char[32]'),
+	color = ffi.new('float[3]'),
 }
 
-local popupClosed = true
-
 local hintText
+local buttonW, buttonH = 128, 32
 
 gui.registerFont('start_game', {
 	font = 'Montserrat-Medium',
 	size = 20,
 })
 
+gui.registerFont('start_game_hint', {
+	font = 'Montserrat-Medium',
+	size = 16,
+})
+
 function curScene:Initialize()
 	hintText = love.graphics.newText(gui.getFont('start_game'))
 	hintText:setf('Выберите место старта', ScrW(), 'center')
-
-	style[1] = {
-		font = gui.getFont('start_game'),
-		window = {
-			['fixed background'] = '#00000000',
-			-- ['background'] = '#00000000',
-			padding = {x = 0, y = 0},
-		},
-	}
 end
 
 function curScene:WindowResized(w, h)
 	if not hintText then return end
-
 	hintText:setf('Выберите место старта', w, 'center')
 end
 
-function curScene:DrawUI()
+function curScene:PreDrawUI()
 	if not hintText then return end
 
+	local style = imgui.GetStyle()
+
+	local buttonPadH = buttonH + style.WindowPadding.y * 4
 	local padH = 48
-	local buttonPadH = 32 + 20
 
 	love.graphics.setColor(0.2, 0.2, 0.2)
 	love.graphics.rectangle('fill', 0, 0, ScrW(), padH)
@@ -52,91 +48,110 @@ function curScene:DrawUI()
 	love.graphics.draw(hintText, 0, padH / 2 - hintText:getHeight() / 2)
 end
 
-function curScene:UI(dt)
-	local w, h = ScrW(), 32 + 10
+function curScene:UI()
+	local font = gui.getFontImgui('start_game')
+	local hintFont = gui.getFontImgui('start_game_hint')
+
+	local flags = imgui.love.WindowFlags('NoBackground', 'NoTitleBar', 'NoMove', 'NoResize', 'NoCollapse')
+	local popupFlags = imgui.love.WindowFlags('NoMove', 'NoResize', 'NoCollapse')
+
+	local style = imgui.GetStyle()
+
+	local w, h = ScrW(), buttonH + style.WindowPadding.y * 4
 	local x, y = 0, ScrH() - h
 
-	local buttonW, buttonH = 128, 32
-
-	local popupW, popupH = ScrW() / 2, ScrH() / 2
+	local popupW, popupH = 450, math.min(ScrH() / 2, 400)
 	local popupX, popupY = ScrW() / 2 - popupW / 2, ScrH() / 2 - popupH / 2
 
-	ui:stylePush(style[1])
-		if not popupClosed and ui:windowBegin('start_game_popups', 0, 0, ScrW(), ScrH(), 'background') then
-			if not popupClosed and ui:popupBegin('dynamic', 'Создание страны', popupX, popupY, popupW, popupH, 'title', 'closable') then
-				ui:layoutRow('dynamic', 26, 2)
-				ui:label('Название страны:')
-				ui:edit('simple', countryEntry.name)
+	imgui.SetNextWindowPos({x, y})
+	imgui.SetNextWindowSize({w, h})
 
-				ui:layoutRow('dynamic', 26, 2)
-				ui:label('Название столичного региона:')
-				ui:edit('simple', countryEntry.regionName)
+	imgui.PushFont(font)
+	if imgui.Begin('start_game', nil, flags) then
 
-				ui:layoutRow('dynamic', 26, 2)
-				ui:label('Название столицы:')
-				ui:edit('simple', countryEntry.capitalName)
+		imgui.SetCursorPosX(imgui.GetContentRegionAvail().x - buttonW)
+		imgui.SetCursorPosY(imgui.GetContentRegionAvail().y - buttonH)
+	
+		imgui.PushStyleColor_Vec4(imgui.ImGuiCol_Button, {0.3, 0.3, 0.3, 1})
+			if imgui.Button('Начать', {buttonW, buttonH}) then
+				if not map._selectedProvince then return notify.show('error', 2, 'Нужно выбрать провинцию!') end
 
-				ui:layoutRow('dynamic', 128, 2)
-				ui:label('Цвет страны:')
-				ui:colorPicker(countryEntry.color, 'RGB')
-
-				ui:layoutRow('dynamic', 28, 1)
-				if ui:button('Создать') then
-					local name, regionName, capitalName, colorHex = countryEntry.name.value, countryEntry.regionName.value, countryEntry.capitalName.value, countryEntry.color.value
-					if utf8.len(name) < 3 or utf8.len(name) > 64 then
-						notify.show('error', 2.5, 'Название страны должно быть не короче 3-х и не длиннее 64-х символов!')
-						goto continue
-					end
-					if utf8.len(regionName) < 3 or utf8.len(regionName) > 32 then
-						notify.show('error', 2.5, 'Название столичного региона должно быть не короче 3-х и не длиннее 32-х символов!')
-						goto continue
-					end
-					if utf8.len(capitalName) < 3 or utf8.len(capitalName) > 32 then
-						notify.show('error', 2.5, 'Название столицы должно быть не короче 3-х и не длиннее 32-х символов!')
-						goto continue
-					end
-
-					local r, g, b = nuklear.colorParseRGBA(colorHex)
-					if not r then return end
-
-					if r < 50 and g < 50 and b < 50 then
-						r, g, b = 50, 50, 50
-					end
-
-					r, g, b = love.math.colorFromBytes(r, g, b)
-					if not r then return end
-
-					local reg = country.newRegion(regionName, capitalName)
-					reg:AddProvince(map._selectedProvince)
-
-					local c = country.newCountry(name, {r, g, b}, reg)
-					c:AddRegion(reg)
-
-					game.myCountry = c
-					scene.change('map', true)
-					hook.Run('GameStarted')
-				end
-				
-				::continue::
-				ui:popupEnd()
-			else
-				popupClosed = true
+				imgui.OpenPopup_Str('start_game')
 			end
-		end
-		ui:windowEnd()
+		imgui.PopStyleColor(1)
 
-		if ui:windowBegin('start_game', x, y, w, h) then
-			ui:layoutSpaceBegin('static', h, 1)
-				ui:layoutSpacePush(w - buttonW - 10, 0, buttonW, buttonH)
-				if ui:button('Начать') then
-					if not map._selectedProvince then return notify.show('error', 2, 'Нужно выбрать провинцию!') end
+		imgui.SetNextWindowPos({popupX, popupY})
+		imgui.SetNextWindowSize({popupW, popupH})
 
-					popupClosed = nil
+		if imgui.BeginPopup('start_game', popupFlags) then
+			local availX = imgui.GetContentRegionAvail().x
+
+			imgui.PushFont(hintFont)
+				local maxWidth = -math.huge
+				maxWidth = math.max(maxWidth, imgui.CalcTextSize('Название страны').x)
+				maxWidth = math.max(maxWidth, imgui.CalcTextSize('Название столичного региона').x)
+				maxWidth = math.max(maxWidth, imgui.CalcTextSize('Название столицы').x)
+				maxWidth = math.max(maxWidth, imgui.CalcTextSize('Цвет страны').x)
+				
+				local label = 'Название страны'
+				imgui.PushItemWidth(availX - maxWidth)
+					imgui.InputText(label, countryEntry.name, 64)
+				imgui.PopItemWidth()
+
+				label = 'Название столичного региона'
+				imgui.PushItemWidth(availX - maxWidth)
+					imgui.InputText(label, countryEntry.regionName, 32)
+				imgui.PopItemWidth()
+
+				label = 'Название столицы'
+				imgui.PushItemWidth(availX - maxWidth)
+					imgui.InputText(label, countryEntry.capitalName, 32)
+				imgui.PopItemWidth()
+
+				label = 'Цвет страны'
+				imgui.PushItemWidth(availX - maxWidth)
+					imgui.ColorEdit3(label, countryEntry.color)
+				imgui.PopItemWidth()
+			imgui.PopFont()
+
+			if imgui.Button('Создать') then
+				local name, regionName, capitalName, r, g, b = ffi.string(countryEntry.name), ffi.string(countryEntry.regionName), ffi.string(countryEntry.capitalName), countryEntry.color[0], countryEntry.color[1], countryEntry.color[2]
+				if utf8.len(name) < 3 or utf8.len(name) > 64 then
+					notify.show('error', 2.5, 'Название страны должно быть не короче 3-х и не длиннее 64-х символов!')
+					goto continue
 				end
-			ui:layoutSpaceEnd()
+				if utf8.len(regionName) < 3 or utf8.len(regionName) > 32 then
+					notify.show('error', 2.5, 'Название столичного региона должно быть не короче 3-х и не длиннее 32-х символов!')
+					goto continue
+				end
+				if utf8.len(capitalName) < 3 or utf8.len(capitalName) > 32 then
+					notify.show('error', 2.5, 'Название столицы должно быть не короче 3-х и не длиннее 32-х символов!')
+					goto continue
+				end
+
+				if r < 0.2 and g < 0.2 and b < 0.2 then
+					r, g, b = 0.2, 0.2, 0.2
+				end
+
+				local reg = country.newRegion(regionName, capitalName)
+				reg:AddProvince(map._selectedProvince)
+
+				local c = country.newCountry(name, {r, g, b}, reg)
+				c:AddRegion(reg)
+
+				game.myCountry = c
+				scene.change('map', true)
+				hook.Run('GameStarted')
+
+				::continue::
+			end
+
+			imgui.EndPopup()
 		end
-		ui:windowEnd()
-	ui:stylePop()
+
+	end
+	imgui.End()
+	imgui.PopFont()
 end
 
 return curScene

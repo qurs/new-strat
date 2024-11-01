@@ -28,32 +28,30 @@ hook.Add('Initialize', 'wildColonization', function()
 			{
 				text = 'Присоединить к существующему региону',
 				callback = function()
-					timer.Simple(0.3, function()
-						uiLib.popup.query('Присоединение новой территории', {
-							{
-								type = 'label',
-								text = 'Выбери регион:',
-							},
-							{
-								type = 'combo',
-								tooltip = 'Регион',
-								items = comboItems,
-								entry = {value = 1},
-							},
+					uiLib.popup.query('Присоединение новой территории', {
+						{
+							type = 'label',
+							text = 'Выбери регион:',
 						},
-						function(widgets)
-							local selectedIndex = widgets[2].entry.value
-							if not selectedIndex then return end
-	
-							local regID = regionsMap[selectedIndex]
-							if not regID then return end
-	
-							local reg = country.getRegion(regID)
-							if not reg then return end
-	
-							reg:AddPopulation(100)
-							reg:AddProvince(prov)
-						end)
+						{
+							type = 'combo',
+							tooltip = 'Регион',
+							items = comboItems,
+							selected = 1,
+						},
+					},
+					function(widgets)
+						local selectedIndex = widgets[2].selected
+						if not selectedIndex then return end
+
+						local regID = regionsMap[selectedIndex]
+						if not regID then return end
+
+						local reg = country.getRegion(regID)
+						if not reg then return end
+
+						reg:AddPopulation(100)
+						reg:AddProvince(prov)
 					end)
 				end,
 			},
@@ -62,16 +60,17 @@ hook.Add('Initialize', 'wildColonization', function()
 				text = 'Создать новый регион',
 				callback = function()
 					country.actions._createRegionPopup(function(widgets)
-						local regionName, capitalName = widgets[1].entry.value, widgets[2].entry.value
+						local regionName, capitalName = ffi.string(widgets[1].entry), ffi.string(widgets[2].entry)
 						if utf8.len(regionName) < 3 or utf8.len(regionName) > 32 then
 							return notify.show('error', 2.5, 'Название региона должно быть не короче 3-х и не длиннее 32-х символов!')
 						end
 						if utf8.len(capitalName) < 3 or utf8.len(capitalName) > 32 then
 							return notify.show('error', 2.5, 'Название столицы должно быть не короче 3-х и не длиннее 32-х символов!')
 						end
-				
-						local newRegion = country.newRegion(regionName, capitalName, {prov})
-						newRegion:SetCapitalProvince(prov:GetID())
+
+						local provID = prov:GetID()
+						local newRegion = country.newRegion(regionName, capitalName, {[provID] = prov})
+						newRegion:SetCapitalProvince(provID)
 						newRegion:SetPopulation(100)
 
 						myCountry:AddRegion(newRegion)

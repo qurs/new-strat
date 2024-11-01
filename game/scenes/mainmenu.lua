@@ -1,41 +1,43 @@
 local curScene = {}
-local style = {}
 
 gui.registerFont('mainmenu', {
 	font = 'Montserrat-Medium',
-	size = 15,
+	size = 18,
 })
 
-function curScene:Initialize()
-	style = {
-		font = gui.getFont('mainmenu'),
-		window = {
-			['fixed background'] = '#00000000',
-			padding = {x = 35, y = 35},
-		},
-	}
-end
+function curScene:UI()
+	local font = gui.getFontImgui('mainmenu')
+	local flags = imgui.love.WindowFlags('NoTitleBar', 'NoBackground', 'NoMove', 'NoResize', 'NoCollapse')
 
-function curScene:UI(dt)
-	local w, h = ScrW() / 2, ScrH() / 2
-	local x, y = ScrW() / 2 - w / 2, ScrH() / 2 - h / 2
+	imgui.SetNextWindowPos({0, 0})
+	imgui.SetNextWindowSize({ScrW(), ScrH()})
 
-	ui:stylePush(style)
-		if ui:windowBegin('STRAT', x, y, w, h) then
-			ui:layoutSpaceBegin('dynamic', 30, 1)
-				ui:layoutSpacePush(0, 0, 1, 1)
-					if ui:button('Начать игру') then
+	imgui.PushFont(font)
+	if imgui.Begin('STRAT', nil, flags) then
+		local style = imgui.GetStyle()
+
+		uiLib.verticalAlign({
+			function()
+				local height = 30
+				return height, function()
+					if uiLib.alignedButton('Начать игру', 0.5, {276, height}) then
 						scene.change('start_game')
 					end
+				end
+			end,
 
-					if ui:button('Сетевая игра') then
+			function()
+				local height = 30
+				return height, function()
+					if uiLib.alignedButton('Сетевая игра', 0.5, {276, height}) then
 						scene.change('multiplayer')
 					end
-				ui:layoutSpaceEnd()
-			ui:layoutSpaceEnd()
-		end
-		ui:windowEnd()
-	ui:stylePop()
+				end
+			end,
+		}, 0.5)
+	end
+	imgui.End()
+	imgui.PopFont()
 end
 
 return curScene

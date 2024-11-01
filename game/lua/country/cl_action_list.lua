@@ -6,12 +6,14 @@ function country.actions._createRegionPopup(callback)
 		{
 			type = 'edit',
 			tooltip = 'Название региона',
-			entry = {value = ''},
+			maxLength = 32,
+			entry = ffi.new('char[32]'),
 		},
 		{
 			type = 'edit',
 			tooltip = 'Название столицы',
-			entry = {value = ''},
+			maxLength = 32,
+			entry = ffi.new('char[32]'),
 		},
 	}, callback)
 end
@@ -52,7 +54,7 @@ hook.Add('AssetsLoaded', 'country.actionList', function()
 			},
 			function(editor)
 				country.actions._createRegionPopup(function(widgets)
-					local regionName, capitalName = widgets[1].entry.value, widgets[2].entry.value
+					local regionName, capitalName = ffi.string(widgets[1].entry), ffi.string(widgets[2].entry)
 					if utf8.len(regionName) < 3 or utf8.len(regionName) > 32 then
 						return notify.show('error', 2.5, 'Название региона должно быть не короче 3-х и не длиннее 32-х символов!')
 					end
@@ -164,11 +166,11 @@ hook.Add('AssetsLoaded', 'country.actionList', function()
 					'Статус-кво',
 					'Текущие границы',
 				},
-				entry = {value = 1},
+				selected = 1,
 			},
 		},
 		function(widgets)
-			local val = widgets[1].entry.value
+			local val = widgets[1].selected
 			if val == 2 then
 				-- потом сделать предложение
 				game.myCountry.inWarWith = nil

@@ -6,17 +6,14 @@ gui.registerFont('region.actionsTitle', {
 country = country or {}
 country.actions = country.actions or {}
 
-local style = {}
-
 local padW, padH = 256, 400
 local textObj
 
 hook.Add('AssetsLoaded', 'country.regionActions', function()
-	style.font = gui.getFont('region.actionsTitle')
 	textObj = love.graphics.newText(gui.getFont('region.actionsTitle'))
 end)
 
-hook.Add('UI', 'country.regionActions', function(dt)
+hook.Add('DrawUI', 'country.regionActions', function()
 	if scene.getName() ~= 'map' then return end
 	if mapEditor._editor then return end
 	if map._selectedCountry then return end
@@ -30,26 +27,34 @@ hook.Add('UI', 'country.regionActions', function(dt)
 	local w, h = padW, padH
 	local x, y = 0, ScrH() - h
 
-	local font = style.font
+	local font = gui.getFontImgui('region.actionsTitle')
+	local flags = imgui.love.WindowFlags('NoTitleBar', 'NoMove', 'NoResize', 'NoCollapse')
 
-	local _, wrapLimit = font:getWrap( ('Население: %s'):format(region:GetPopulation()), w )
+	local population = region:GetPopulation()
+	local populationStr = tostring(population)
+	if population > 1000000000 then
+		local billions = math.floor(population / 1000000000)
+		populationStr = billions .. 'kkk'
+	elseif population > 1000000 then
+		local millions = math.floor(population / 1000000)
+		populationStr = millions .. 'kk'
+	end
 
-	ui:stylePush(style)
-		if ui:windowBegin('region_actions', x, y, w, h, 'scrollbar') then
-			for _, v in ipairs(wrapLimit) do
-				ui:layoutRow('dynamic', font:getHeight(), 1)
-				ui:label(v)
-			end
+	imgui.SetNextWindowPos({x, y})
+	imgui.SetNextWindowSize({w, h})
 
-			for _, action in ipairs(country.actions.list.region) do
-				ui:layoutRow('dynamic', 28, 1)
-				if ui:button(action.name) then
-					action.callback(region)
-				end
+	imgui.PushFont(font)
+	if imgui.Begin('region_actions', nil, flags) then
+		imgui.Text( ('Население: %s'):format(populationStr) )
+
+		for _, action in ipairs(country.actions.list.region) do
+			if imgui.Button(action.name) then
+				action.callback(region)
 			end
 		end
-		ui:windowEnd()
-	ui:stylePop()
+	end
+	imgui.End()
+	imgui.PopFont()
 end)
 
 hook.Add('PreDrawUI', 'country.regionActions', function()

@@ -6,17 +6,14 @@ gui.registerFont('country.actionsTitle', {
 country = country or {}
 country.actions = country.actions or {}
 
-local style = {}
-
 local padW, padH = 256, 400
 local textObj
 
 hook.Add('AssetsLoaded', 'country.countryActions', function()
-	style.font = gui.getFont('country.actionsTitle')
 	textObj = love.graphics.newText(gui.getFont('country.actionsTitle'))
 end)
 
-hook.Add('UI', 'country.countryActions', function(dt)
+hook.Add('DrawUI', 'country.countryActions', function()
 	if scene.getName() ~= 'map' then return end
 	if mapEditor._editor then return end
 
@@ -26,19 +23,22 @@ hook.Add('UI', 'country.countryActions', function(dt)
 	local w, h = padW, padH
 	local x, y = 0, ScrH() - h
 
-	local font = style.font
+	local font = gui.getFontImgui('country.actionsTitle')
+	local flags = imgui.love.WindowFlags('NoTitleBar', 'NoMove', 'NoResize', 'NoCollapse')
 
-	ui:stylePush(style)
-		if ui:windowBegin('country_actions', x, y, w, h, 'scrollbar') then
-			for _, action in ipairs(country.actions.list.country) do
-				ui:layoutRow('dynamic', 28, 1)
-				if ui:button(action.name) then
-					action.callback(c)
-				end
+	imgui.SetNextWindowPos({x, y})
+	imgui.SetNextWindowSize({w, h})
+
+	imgui.PushFont(font)
+	if imgui.Begin('country_actions', nil, flags) then
+		for _, action in ipairs(country.actions.list.country) do
+			if imgui.Button(action.name) then
+				action.callback(c)
 			end
 		end
-		ui:windowEnd()
-	ui:stylePop()
+	end
+	imgui.End()
+	imgui.PopFont()
 end)
 
 hook.Add('PreDrawUI', 'country.countryActions', function()

@@ -60,9 +60,9 @@ function gamecycle.getDate()
 	}
 end
 
-hook.Add('UI', 'gamecycle', function(dt)
+hook.Add('DrawUI', 'gamecycle', function()
 	if not gamecycle.ui then return end
-	gamecycle.ui(dt)
+	gamecycle.ui()
 end)
 
 hook.Add('Think', 'gamecycle', function(dt)

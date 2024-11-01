@@ -4,35 +4,32 @@ devConsole._executeHistory = devConsole._executeHistory or {}
 
 gui.registerFont('devConsole', {
 	font = 'Montserrat-Medium',
-	size = 11,
+	size = 12,
 })
 
-local style = {
-	font = gui.getFont('devConsole'),
-	window = {
-		spacing = {x = 5, y = 5},
-		padding = {x = 5, y = 5},
-	},
-}
-
-local consoleField = {
-	value = ''
-}
+local inputPointer = ffi.new('char[256]')
+local openPointer = ffi.new('bool[1]', true)
 
 local consoleHistory = {}
 local curSelectedExecute
-local focusEdit = false
+local firstFocus = false
+
+local imguiFont
+hook.Add('Initialize', 'devConsole', function()
+	imguiFont = gui.getFontImgui('devConsole')
+end, -1)
 
 function devConsole.open()
-	focusEdit = true
+	openPointer[0] = true
 	devConsole._open = true
+	firstFocus = true
 end
 
 function devConsole.close()
 	devConsole._open = nil
 end
 
-function devConsole.selectExecute(offset)
+function devConsole.selectExecute(data, offset)
 	if curSelectedExecute then
 		curSelectedExecute = math.Clamp(curSelectedExecute + offset, 1, #devConsole._executeHistory)
 	else
@@ -43,22 +40,28 @@ function devConsole.selectExecute(offset)
 		end
 	end
 
-	consoleField.value = devConsole._executeHistory[curSelectedExecute] or ''
+	local newStr = devConsole._executeHistory[curSelectedExecute] or ''
+
+	data:DeleteChars(0, data.BufTextLen)
+	data:InsertChars(0, newStr)
+
+	return 0
 end
 
-function devConsole.execute(line)
-	devConsole._executeHistory[#devConsole._executeHistory + 1] = line
+function devConsole.execute(char)
+	local line = ffi.string(char)
+	devConsole._executeHistory[#devConsole._executeHistory + 1] = char
 
 	local args = string.Explode('%s', line, true)
 	local cmd = table.remove(args, 1)
 	local cmdData = devConsole._commands[cmd]
 	if not cmdData then
-		consoleHistory[#consoleHistory + 1] = {os.date('[%X]') .. ' Unknown command: ' .. cmd, '#FF0000'}
+		consoleHistory[#consoleHistory + 1] = {os.date('[%X]') .. ' Unknown command: ' .. cmd, {1, 0, 0}}
 		return
 	end
 
 	local function unknownSyntax()
-		consoleHistory[#consoleHistory + 1] = {('%s Unknown syntax: %s [%s]'):format(os.date('[%X]'), cmd, table.concat(cmdData.form, ' ')), '#FF0000'}
+		consoleHistory[#consoleHistory + 1] = {('%s Unknown syntax: %s [%s]'):format(os.date('[%X]'), cmd, table.concat(cmdData.form, ' ')), {1, 0, 0}}
 
 		if cmdData.desc then
 			consoleHistory[#consoleHistory + 1] = ('	- %s: %s'):format(cmd, cmdData.desc)
@@ -95,27 +98,22 @@ function devConsole.registerCommand(cmd, form, desc, callback)
 	}
 end
 
-local function drawLabel(curStyle, text, color)
-	local font = curStyle.font
-	if not font then return end
-
-	local cx, cy, cw, ch = ui:windowGetContentRegion()
-
-	local _, wrapLimit = font:getWrap( text, cw )
-
-	for _, v in ipairs(wrapLimit) do
-		ui:layoutRow('dynamic', font:getHeight(), 1)
-
-		if color then
-			ui:label(v, 'left', color)
-		else
-			ui:label(v, 'left')
+local function inputCallback(data)
+	local flag, key = data.EventFlag, data.EventKey
+	if flag == imgui.ImGuiInputTextFlags_CallbackHistory then
+		if key == imgui.ImGuiKey_UpArrow then
+			return devConsole.selectExecute(data, -1)
+		elseif key == imgui.ImGuiKey_DownArrow then
+			return devConsole.selectExecute(data, 1)
 		end
-		
 	end
+	
+	return 0
 end
+local inputCallback_CFunc = ffi.cast('ImGuiInputTextCallback', inputCallback)
 
-hook.Add('UI', 'devConsole', function()
+hook.Add('DrawUI', 'devConsole', function()
+	if not imguiFont then return end
 	if not devConsole._open then return end
 
 	local sw, sh = ScrW(), ScrH()
@@ -123,66 +121,72 @@ hook.Add('UI', 'devConsole', function()
 	local w, h = sw / 2, sh / 2
 	local x, y = sw / 2 - w / 2, sh / 2 - h / 2
 
+	local flags = imgui.love.WindowFlags('NoCollapse', 'NoScrollbar')
+	local childWindowFlags = imgui.love.WindowFlags('HorizontalScrollbar')
+	local inputFlags = imgui.love.InputTextFlags('EnterReturnsTrue', 'CallbackHistory', 'CallbackResize')
+	local style = imgui.GetStyle()
+
 	local editH = 24
-	local spacing = style.window.spacing
-	local padding = style.window.padding
+	local spacing = style.ItemSpacing
+	local padding = style.WindowPadding
 
-	ui:stylePush(style)
-		if ui:windowBegin('devconsole', 'Console', x, y, w, h, 'title', 'movable', 'scalable', 'closable', 'scrollbar') then
-			local cx, cy, cw, ch = ui:windowGetContentRegion()
+	imgui.SetNextWindowPos({x, y}, imgui.ImGuiCond_FirstUseEver)
+	imgui.SetNextWindowSize({w, h}, imgui.ImGuiCond_FirstUseEver)
+	imgui.SetNextWindowFocus()
 
-			ui:layoutSpaceBegin('static', ch - editH - spacing.y - padding.y * 2, 1)
-				local _, _, lsw, lsh = ui:layoutSpaceBounds()
+	imgui.PushFont(imguiFont)
+	if imgui.Begin('Console', openPointer, flags) then
+		local avail = imgui.GetContentRegionAvail()
 
-				ui:layoutSpacePush(0, 0, lsw, lsh)
-				if ui:groupBegin('console_labels', 'scrollbar') then
-					for _, msg in ipairs(consoleHistory) do
-						local text, color
-						if type(msg) == 'table' then
-							text, color = unpack(msg)
-						else
-							text = msg
-						end
-
-						drawLabel(style, text, color)
-					end
-
-					ui:groupEnd()
+		if imgui.BeginChild_Str('ConsoleScrollingRegion', {avail.x, avail.y - editH - spacing.y}, nil, childWindowFlags) then
+			for _, msg in ipairs(consoleHistory) do
+				local text, color
+				if type(msg) == 'table' then
+					text, color = unpack(msg)
+					color[4] = 1
+				else
+					text = msg
 				end
-			ui:layoutSpaceEnd()
 
-			ui:layoutRow('dynamic', editH, 1)
-
-			if focusEdit then
-				focusEdit = false
-				ui:editFocus()
+				if color then imgui.PushStyleColor_Vec4(imgui.ImGuiCol_Text, color) end
+					imgui.TextUnformatted(text)
+				if color then imgui.PopStyleColor(1) end
 			end
 
-			local state, changed = ui:edit('simple', consoleField)
-			consoleField.state = state
-			if changed then
-				curSelectedExecute = nil
-			end
-		elseif devConsole._open then
-			devConsole.close()
+			imgui.EndChild()
 		end
-		ui:windowEnd()
-	ui:stylePop()
+		imgui.Separator()
+
+		local reclaimFocus = false
+		imgui.PushItemWidth(-1)
+			if imgui.InputText('##console_input', inputPointer, 256, inputFlags, inputCallback_CFunc) then
+				devConsole.execute(inputPointer)
+				inputPointer = ffi.new('char[256]')
+				reclaimFocus = true
+			end
+		imgui.PopItemWidth()
+
+		imgui.SetItemDefaultFocus()
+		if firstFocus then
+			firstFocus = false
+			imgui.SetKeyboardFocusHere(-1)
+        elseif reclaimFocus then
+        	imgui.SetKeyboardFocusHere(-1)
+		end
+	end
+
+	imgui.End()
+	imgui.PopFont()
+
+	if not openPointer[0] then
+		devConsole.close()
+	end
 end, -1)
 
 hook.Add('KeyDown', 'devConsole', function(key)
 	if devConsole._open then
 		if key == 'escape' then
 			devConsole.close()
-		elseif consoleField.state == 'active' then
-			if key == 'return' then
-				devConsole.execute(consoleField.value)
-				consoleField.value = ''
-			elseif key == 'up' then
-				devConsole.selectExecute(-1)
-			elseif key == 'down' then
-				devConsole.selectExecute(1)
-			end
 		end
 	elseif not devConsole._open and key == love.keyboard.getScancodeFromKey('`') then
 		devConsole.open()

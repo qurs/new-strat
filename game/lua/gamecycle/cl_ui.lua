@@ -6,17 +6,6 @@ gui.registerFont('gamecycle.pad', {
 	size = 15,
 })
 
-local style = {
-	window = {
-		['fixed background'] = '#00000000',
-		padding = {x = 0, y = 0},
-		spacing = {x = 0, y = 0},
-	},
-	button = {
-		['border color'] = '#00000000',
-	},
-}
-
 local monthNames = {
 	'января',
 	'февраля',
@@ -35,41 +24,82 @@ local monthNames = {
 local text, textMinus, textPlus, pauseImg
 local padW, padH = unpack(gamecycle.uiPadSize)
 
-function gamecycle.ui(dt)
+function gamecycle.ui()
 	if scene.getName() ~= 'map' then return end
 	if mapEditor._editor then return end
 
 	local x, y = ScrW() - padW, 0
+	local flags = imgui.love.WindowFlags('NoTitleBar', 'NoBackground', 'NoMove', 'NoResize', 'NoCollapse', 'NoScrollbar')
 
-	ui:stylePush(style)
-		if ui:windowBegin('gamecycle', x, y, padW, padH) then
-			ui:layoutRow('static', padH - 6, {16, padW - 32, 16})
-			if ui:button(nil, '#00000000') then
+	local col = {0, 0, 0, 0}
+	
+	imgui.SetNextWindowPos({x, y})
+	imgui.SetNextWindowSize({padW, padH})
+
+	imgui.PushStyleVar_Vec2(imgui.ImGuiStyleVar_WindowPadding, {0, 0})
+	imgui.PushStyleVar_Vec2(imgui.ImGuiStyleVar_FramePadding, {0, 0})
+	imgui.PushStyleVar_Vec2(imgui.ImGuiStyleVar_ItemSpacing, {0, 0})
+	imgui.PushStyleVar_Float(imgui.ImGuiStyleVar_WindowBorderSize, 0)
+
+	if imgui.Begin('gamecycle', nil, flags) then
+		imgui.PushStyleColor_Vec4(imgui.ImGuiCol_Button, col)
+		imgui.PushStyleColor_Vec4(imgui.ImGuiCol_ButtonHovered, col)
+		imgui.PushStyleColor_Vec4(imgui.ImGuiCol_ButtonActive, col)
+			if imgui.Button('##01', {16, padH - 7}) then
 				gamecycle.decreaseSpeed()
 			end
-			if ui:button(nil, '#00000000') then
+			imgui.SameLine()
+			if imgui.Button('##02', {padW - 32, padH - 7}) then
 				gamecycle.toggle()
 			end
-			if ui:button(nil, '#00000000') then
+			imgui.SameLine()
+			if imgui.Button('##03', {16, padH - 7}) then
 				gamecycle.increaseSpeed()
 			end
+		imgui.PopStyleColor(3)
 
-			ui:layoutRow('dynamic', 6, 4)
-			if ui:button(nil, '#66ff63' .. (gamecycle.speed == gamecycle.speeds[1] and 'ff' or '30')) then
+		col = {0.4, 1, 0.39, gamecycle.speed == gamecycle.speeds[1] and 1 or 0.2}
+		imgui.PushStyleColor_Vec4(imgui.ImGuiCol_Button, col)
+		imgui.PushStyleColor_Vec4(imgui.ImGuiCol_ButtonHovered, col)
+		imgui.PushStyleColor_Vec4(imgui.ImGuiCol_ButtonActive, col)
+			if imgui.Button('##04', {padW / 4, 7}) then
 				gamecycle.setSpeed(1)
 			end
-			if ui:button(nil, '#efff63' .. (gamecycle.speed == gamecycle.speeds[2] and 'ff' or '30')) then
+			imgui.SameLine()
+		imgui.PopStyleColor(3)
+
+		col = {0.94, 1, 0.39, gamecycle.speed == gamecycle.speeds[2] and 1 or 0.2}
+		imgui.PushStyleColor_Vec4(imgui.ImGuiCol_Button, col)
+		imgui.PushStyleColor_Vec4(imgui.ImGuiCol_ButtonHovered, col)
+		imgui.PushStyleColor_Vec4(imgui.ImGuiCol_ButtonActive, col)
+			if imgui.Button('##05', {padW / 4, 7}) then
 				gamecycle.setSpeed(2)
 			end
-			if ui:button(nil, '#ff8a63' .. (gamecycle.speed == gamecycle.speeds[3] and 'ff' or '30')) then
+			imgui.SameLine()
+		imgui.PopStyleColor(3)
+
+		col = {1, 0.54, 0.39, gamecycle.speed == gamecycle.speeds[3] and 1 or 0.2}
+		imgui.PushStyleColor_Vec4(imgui.ImGuiCol_Button, col)
+		imgui.PushStyleColor_Vec4(imgui.ImGuiCol_ButtonHovered, col)
+		imgui.PushStyleColor_Vec4(imgui.ImGuiCol_ButtonActive, col)
+			if imgui.Button('##06', {padW / 4, 7}) then
 				gamecycle.setSpeed(3)
 			end
-			if ui:button(nil, '#ff6363' .. (gamecycle.speed == gamecycle.speeds[4] and 'ff' or '30')) then
+			imgui.SameLine()
+		imgui.PopStyleColor(3)
+
+		col = {1, 0.39, 0.39, gamecycle.speed == gamecycle.speeds[4] and 1 or 0.2}
+		imgui.PushStyleColor_Vec4(imgui.ImGuiCol_Button, col)
+		imgui.PushStyleColor_Vec4(imgui.ImGuiCol_ButtonHovered, col)
+		imgui.PushStyleColor_Vec4(imgui.ImGuiCol_ButtonActive, col)
+			if imgui.Button('##07', {padW / 4, 7}) then
 				gamecycle.setSpeed(4)
 			end
-		end
-		ui:windowEnd()
-	ui:stylePop()
+		imgui.PopStyleColor(3)
+	end
+	imgui.End()
+
+	imgui.PopStyleVar(4)
 end
 
 hook.Add('AssetsLoaded', 'gamecycle', function()
@@ -80,7 +110,7 @@ hook.Add('AssetsLoaded', 'gamecycle', function()
 	textPlus = love.graphics.newText(gui.getFont('gamecycle.pad'), '+')
 end)
 
-hook.Add('DrawUI', 'gamecycle', function()
+hook.Add('PreDrawUI', 'gamecycle', function()
 	if scene.getName() ~= 'map' then return end
 	if mapEditor._editor then return end
 	if not text then return end

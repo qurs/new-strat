@@ -5,15 +5,8 @@ gui.registerFont('map_editor', {
 	size = 20,
 })
 
-local hintText
+local hintText, imguiFont
 local btnW, btnH = 128, 28
-
-local style = {
-	window = {
-		['fixed background'] = '#00000000',
-		padding = {x = 0, y = 0},
-	},
-}
 
 --[[ SETTINGS
 	-- Что будет выбирать игрок в редакторе
@@ -204,50 +197,59 @@ function mapEditor.getSelectTarget()
 end
 
 hook.Add('AssetsLoaded', 'mapEditor', function()
-	style.font = gui.getFont('map_editor')
+	imguiFont = gui.getFontImgui('map_editor')
 	hintText = love.graphics.newText(gui.getFont('map_editor'))
 end)
 
-hook.Add('UI', 'mapEditor', function()
+hook.Add('DrawUI', 'mapEditor', function()
+	if not imguiFont then return end
+
 	local editor = mapEditor._editor
 	if not editor then return end
 
+	local flags = imgui.love.WindowFlags('NoTitleBar', 'NoBackground', 'NoMove', 'NoResize', 'NoCollapse', 'NoScrollbar')
 	local settings = editor.settings
 
-	local w, h = btnW * 2 + 15, btnH
-	local x, y = ScrW() - w - 10, ScrH() - h - 10
+	local w, h = ScrW(), btnH
+	local x, y = 0, ScrH() - h - 10
 
-	ui:stylePush(style)
-		if ui:windowBegin('map_editor', x, y, w, h) then
-			ui:layoutSpaceBegin('static', h, 2)
-				ui:layoutSpacePush(w - btnW, 0, btnW, btnH)
-				if ui:button(settings.sendBtnText or 'Применить') then
-					if settings.filter then
-						local ok, err, errTime = settings.filter(editor)
-						if not ok then
-							notify.show('error', errTime or 2, err)
-							goto continue
-						end
-					end
+	imgui.SetNextWindowPos({x, y})
+	imgui.SetNextWindowSize({w, h})
 
-					if editor.callback then
-						editor.callback(editor)
-					end
+	imgui.PushFont(imguiFont)
+	imgui.PushStyleVar_Vec2(imgui.ImGuiStyleVar_WindowPadding, {10, 0})
+	if imgui.Begin('map_editor', nil, flags) then
+		local cw = imgui.GetContentRegionAvail().x
 
-					::continue::
-				end
-
-				ui:layoutSpacePush(0, 0, btnW, btnH)
-				if ui:button(settings.cancelBtnText or 'Отмена') then
-					mapEditor.close()
-				end
-			ui:layoutSpaceEnd()
+		if imgui.Button(settings.cancelBtnText or 'Отмена', {btnW, btnH}) then
+			mapEditor.close()
 		end
-		ui:windowEnd()
-	ui:stylePop()
+
+		imgui.SameLine()
+		imgui.SetCursorPosX(cw + 10 - btnW)
+		if imgui.Button(settings.sendBtnText or 'Применить', {btnW, btnH}) then
+			if settings.filter then
+				local ok, err, errTime = settings.filter(editor)
+				if not ok then
+					notify.show('error', errTime or 2, err)
+					goto continue
+				end
+			end
+
+			if editor.callback then
+				editor.callback(editor)
+			end
+
+			::continue::
+		end
+
+		imgui.End()
+	end
+	imgui.PopStyleVar(1)
+	imgui.PopFont()
 end)
 
-hook.Add('DrawUI', 'mapEditor', function()
+hook.Add('PreDrawUI', 'mapEditor', function()
 	if not hintText then return end
 
 	local editor = mapEditor._editor
@@ -258,7 +260,7 @@ hook.Add('DrawUI', 'mapEditor', function()
 	hintText:setf(settings.hint or 'Редактор', ScrW() - 10, 'center')
 
 	local padH = math.max(48, hintText:getHeight() + 10)
-	local buttonPadH = 32 + 20
+	local buttonPadH = btnH + 20
 
 	love.graphics.setColor(0.2, 0.2, 0.2)
 	love.graphics.rectangle('fill', 0, 0, ScrW(), padH)
