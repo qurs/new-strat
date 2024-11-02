@@ -34,6 +34,7 @@ jobs:
         id: semantic
         with:
           dry-run: true
+          additional-packages: semantic-release-gitmoji
           plugins: |
             [
               'semantic-release-gitmoji',
