@@ -45,7 +45,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Write version file
         shell: bash
-        run: echo "return '${{ steps.semantic.outputs.release-version }}'" > './game/version.lua' 
+        run: |
+          echo "return '${{ steps.semantic.outputs.git-tag }}'" > './game/version.lua' 
       - name: Build core love package
         uses: love-actions/love-actions-core@v1
         with:
