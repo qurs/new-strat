@@ -113,7 +113,3 @@ jobs:
           tag: "v${{needs.build-core.outputs.version_tag}}"
           body: "${{needs.build-core.outputs.changelog}}"
           prerelease: true
-          files: >
-            ${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_x86.zip
-            ${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_x64.zip
-            ${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_installer.exe
