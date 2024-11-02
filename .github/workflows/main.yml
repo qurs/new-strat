@@ -18,6 +18,9 @@ env:
   PRODUCT_NAME: strat
   BUNDLE_ID: com.strat.myloveapp
 
+permissions:
+  contents: write
+
 jobs:
   build-core:
     runs-on: ubuntu-latest
@@ -109,6 +112,7 @@ jobs:
           name: "v${{needs.build-core.outputs.version_tag}}"
           tag: "v${{needs.build-core.outputs.version_tag}}"
           body: "${{needs.build-core.outputs.changelog}}"
+          prerelease: true
           files: >
             ${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_x86.zip
             ${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_x64.zip
