@@ -24,12 +24,12 @@ jobs:
     env:
       OUTPUT_FOLDER: ./build
     steps:
-      - name: Write version file
-        shell: bash
-        run: echo "return 'test'" > './game/version.lua' 
       - uses: actions/checkout@v3
         with:
           submodules: recursive
+      - name: Write version file
+        shell: bash
+        run: echo "return 'test'" > './game/version.lua' 
       - name: Build core love package
         uses: love-actions/love-actions-core@v1
         with:
