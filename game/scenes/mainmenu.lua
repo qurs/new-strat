@@ -7,9 +7,8 @@ gui.registerFont('mainmenu', {
 })
 
 gui.registerFont('mainmenu.version', {
-	font = 'Montserrat-Regular',
-	size = 13,
-	hinting = 'mono',
+	font = 'Montserrat-Medium',
+	size = 14,
 })
 
 function curScene:Initialize()
