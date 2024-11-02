@@ -33,7 +33,7 @@ jobs:
       - uses: codfish/semantic-release-action@v3
         id: semantic
         with:
-          # dry-run: true
+          dry-run: true
           additional-packages: semantic-release-gitmoji
           plugins: |
             [
