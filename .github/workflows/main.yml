@@ -36,22 +36,7 @@ jobs:
           dry-run: true
           plugins: |
             [
-              [
-                '@semantic-release/commit-analyzer',
-                {
-                  "releaseRules": [
-                    { "emoji": ":bug:", "release": "patch" },
-                    { "emoji": ":sparkles:", "release": "minor" },
-                    { "emoji": ":boom:", "release": "major" },
-                    { "emoji": ":lipstick:", "release": "patch" },
-                    { "emoji": ":wrench:", "release": "patch" },
-                    { "emoji": ":ambulance:", "release": "patch" },
-                    { "emoji": ":fire:", "release": "patch" },
-                    { "emoji": ":zap:", "release": "patch" },
-                    { "emoji": ":tada:", "release": "major" }
-                  ]
-                }
-              ],
+              'semantic-release-gitmoji',
               '@semantic-release/release-notes-generator',
               '@semantic-release/github'
             ]
