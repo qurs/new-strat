@@ -68,11 +68,18 @@ function curScene:UI()
 
 	imgui.PushFont(font)
 	if imgui.Begin('start_game', nil, flags) then
+		local cw = imgui.GetContentRegionAvail().x
 
-		imgui.SetCursorPosX(imgui.GetContentRegionAvail().x - buttonW)
-		imgui.SetCursorPosY(imgui.GetContentRegionAvail().y - buttonH)
-	
 		imgui.PushStyleColor_Vec4(imgui.ImGuiCol_Button, {0.3, 0.3, 0.3, 1})
+			imgui.SetCursorPosY(imgui.GetContentRegionAvail().y - buttonH)
+
+			if imgui.Button('Назад', {buttonW, buttonH}) then
+				scene.change('mainmenu')
+			end
+
+			imgui.SameLine()
+			imgui.SetCursorPosX(cw + style.WindowPadding.x - buttonW)
+
 			if imgui.Button('Начать', {buttonW, buttonH}) then
 				if not map._selectedProvince then return notify.show('error', 2, 'Нужно выбрать провинцию!') end
 
