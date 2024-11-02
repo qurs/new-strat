@@ -1,9 +1,27 @@
 local curScene = {}
+local versionText
 
 gui.registerFont('mainmenu', {
 	font = 'Montserrat-Medium',
 	size = 18,
 })
+
+gui.registerFont('mainmenu.version', {
+	font = 'Montserrat-Regular',
+	size = 13,
+	hinting = 'mono',
+})
+
+function curScene:Initialize()
+	versionText = love.graphics.newText(gui.getFont('mainmenu.version'), VERSION)
+end
+
+function curScene:PreDrawUI()
+	if not versionText then return end
+
+	love.graphics.setColor(0.7, 0.7, 0.7)
+	love.graphics.draw(versionText, 15, ScrH() - versionText:getHeight() - 15)
+end
 
 function curScene:UI()
 	local font = gui.getFontImgui('mainmenu')

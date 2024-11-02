@@ -12,6 +12,8 @@ enet = require('enet')
 imgui = require('cimgui')
 ffi = require('ffi')
 
+VERSION = require('version')
+
 function love.load()
 	love.keyboard.setKeyRepeat(true)
 

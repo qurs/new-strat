@@ -16,6 +16,10 @@ hook.Add('Initialize', 'devConsole.cmdlist', function()
 		end
 	end)
 
+	devConsole.registerCommand('version', nil, 'Print game version', function(args, argStr)
+		return 'Game version: ' .. VERSION
+	end)
+
 	devConsole.registerCommand('cmd_list', nil, 'Prints the command list', function(args, argStr)
 		local str = ''
 		for cmd, data in pairs(devConsole._commands) do
