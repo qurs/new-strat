@@ -93,3 +93,17 @@ jobs:
         with:
           name: ${{ env.PRODUCT_NAME }}_Windows_installer
           path: ${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_installer.exe
+      - name: Get Versioning Data
+        id: versioning
+        uses: Soumeh/Auto-Versioning@main
+      - name: Create Release
+        uses: meeDamian/github-release@2.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          name: "v${{ steps.versioning.outputs.tag }}"
+          tag: "v${{ steps.versioning.outputs.tag }}"
+          body: "${{ steps.versioning.outputs.changelog }}"
+          files: >
+            ${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_x86.zip
+            ${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_x64.zip
+            ${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_installer.exe
