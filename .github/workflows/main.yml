@@ -39,6 +39,7 @@ jobs:
               [
                 '@semantic-release/commit-analyzer',
                 {
+                  "preset": "eslint",
                   "releaseRules": [
                     { "tag": "🐛", "release": "patch" },
                     { "tag": "✨", "release": "minor" },
