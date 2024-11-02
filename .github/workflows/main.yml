@@ -51,7 +51,7 @@ jobs:
       - name: Write version file
         shell: bash
         run: |
-          echo "return '${{ steps.semantic.outputs.git-tag:=steps.latest_release_info.outputs.tag_name }}'" > './game/version.lua' 
+          echo "return '${{ steps.semantic.outputs.git-tag || steps.latest_release_info.outputs.tag_name }}'" > './game/version.lua' 
       - name: Build core love package
         uses: love-actions/love-actions-core@v1
         with:
