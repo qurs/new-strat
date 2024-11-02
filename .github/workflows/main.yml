@@ -39,17 +39,16 @@ jobs:
               [
                 '@semantic-release/commit-analyzer',
                 {
-                  "preset": "eslint",
                   "releaseRules": [
-                    { "tag": "🐛", "release": "patch" },
-                    { "tag": "✨", "release": "minor" },
-                    { "tag": "💥", "release": "major" },
-                    { "tag": "💄", "release": "patch" },
-                    { "tag": "🔧", "release": "patch" },
-                    { "tag": "🚑", "release": "patch" },
-                    { "tag": "🔥", "release": "patch" },
-                    { "tag": "⚡️", "release": "patch" },
-                    { "tag": "🎉", "release": "major" }
+                    { "emoji": ":bug:", "release": "patch" },
+                    { "emoji": ":sparkles:", "release": "minor" },
+                    { "emoji": ":boom:", "release": "major" },
+                    { "emoji": ":lipstick:", "release": "patch" },
+                    { "emoji": ":wrench:", "release": "patch" },
+                    { "emoji": ":ambulance:", "release": "patch" },
+                    { "emoji": ":fire:", "release": "patch" },
+                    { "emoji": ":zap:", "release": "patch" },
+                    { "emoji": ":tada:", "release": "major" }
                   ]
                 }
               ],
