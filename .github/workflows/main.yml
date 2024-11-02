@@ -36,7 +36,6 @@ jobs:
           dry-run: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: Write version file
         shell: bash
         run: echo "return '${{ steps.semantic.outputs.release-version }}'" > './game/version.lua' 
