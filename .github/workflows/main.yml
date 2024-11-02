@@ -110,6 +110,6 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           name: "v${{needs.build-core.outputs.version_tag}}"
-          tag: "v${{needs.build-core.outputs.version_tag}}"
+          tag: "${{needs.build-core.outputs.version_tag}}"
           body: "${{needs.build-core.outputs.changelog}}"
           prerelease: true
