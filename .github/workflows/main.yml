@@ -24,6 +24,9 @@ jobs:
     env:
       OUTPUT_FOLDER: ./build
     steps:
+      - name: Write version file
+        shell: bash
+        run: echo "return 'test'" > './game/version.lua' 
       - uses: actions/checkout@v3
         with:
           submodules: recursive
