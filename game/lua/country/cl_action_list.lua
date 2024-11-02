@@ -145,6 +145,68 @@ hook.Add('AssetsLoaded', 'country.actionList', function()
 		units.create(c, prov, 0.5, 10, 1, 1.5, 0, 0)
 	end)
 
+	country.actions.addRegionAction('Удалить', function(region)
+		local myCountry = game.myCountry
+		local regionsMap = {}
+		local comboItems = {}
+
+		for regID, reg in pairs(myCountry:GetRegions()) do
+			if regID == region:GetID() then goto continue end
+
+			local name = reg:GetName()
+			local index = #comboItems + 1
+
+			comboItems[index] = name
+			regionsMap[index] = regID
+
+			::continue::
+		end
+
+		uiLib.popup.query('Удаление региона', {
+			{
+				type = 'label',
+				text = 'Выберите действие для удаляемого региона',
+			},
+			{
+				type = 'radio',
+				selection = {
+					{
+						tooltip = 'Освободить',
+						val = 1,
+					},
+					{
+						tooltip = 'Слияние с другим регионом',
+						val = 2,
+					},
+				},
+				entry = ffi.new('int[1]'),
+			},
+			{
+				type = 'combo',
+				tooltip = 'С каким регионом выполнить слияние',
+				items = comboItems,
+				selected = 1,
+			},
+		},
+		function(widgets)
+			local radioVal = widgets[2].entry[0]
+			if radioVal == 1 then
+				region:Remove()
+			else
+				local comboSelected = widgets[3].selected
+				local regID = regionsMap[comboSelected]
+				if not regID then return notify.show('error', 2, 'Выбран несуществующий регион!') end
+
+				local targetRegion = myCountry:GetRegions()[regID]
+				if not targetRegion then return notify.show('error', 2, 'Выбран несуществующий регион!') end
+
+				local population = region:GetPopulation()
+				targetRegion:AddPopulation(population)
+				region:TransferProvinces(nil, targetRegion)
+			end
+		end)
+	end)
+
 	-- Countries
 
 	country.actions.addCountryAction('Объявить войну', function(target)

@@ -102,6 +102,25 @@ end
 
 -- OTHER
 
+function Region:Remove()
+	local id = self:GetID()
+
+	local c = self:GetCountry()
+	if c then c:RemoveRegion(id) end
+
+	if self.provinceCount > 0 then
+		for id, prov in pairs(self:GetProvinces()) do
+			prov:_SetRegion()
+			util.queuePrioritizedPreDrawMethodCall(prov, 'CreateCanvas', 1)
+			self.provinces[id] = nil
+			self.provinceCount = self.provinceCount - 1
+		end
+	end
+
+	country._regions[id] = nil
+	util.queuePrioritizedPreDrawFunctionCall(map.createCanvas, 99)
+end
+
 function Region:AddPopulation(add)
 	self:SetPopulation( self:GetPopulation() + add )
 end
@@ -206,13 +225,12 @@ function Region:RemoveProvince(provOrID)
 	self.provinceCount = self.provinceCount - 1
 
 	if self.provinceCount < 1 then
-		self:GetCountry():RemoveRegion(self:GetID())
-		return util.queuePrioritizedPreDrawFunctionCall(map.createCanvas, 99)
+		return self:Remove()
 	end
 
 	if self:GetCapitalProvince() == id then
 		local keys = table.GetKeys(self.provinces)
-		local newID = keys[#math.random(keys)]
+		local newID = keys[math.random(#keys)]
 		if newID then
 			self:SetCapitalProvince(newID)
 		end
@@ -246,7 +264,9 @@ function Region:AddProvinces(tbl)
 end
 
 function Region:RemoveProvinces(tbl)
-	for _, provOrID in ipairs(tbl) do
+	tbl = tbl or table.GetKeys(self:GetProvinces())
+
+	for k, provOrID in ipairs(tbl) do
 		local id = type(provOrID) == 'number' and provOrID or provOrID:GetID()
 
 		local province = self.provinces[id]
@@ -259,9 +279,13 @@ function Region:RemoveProvinces(tbl)
 		self.provinces[id] = nil
 		self.provinceCount = self.provinceCount - 1
 
-		if self:GetCapitalProvince() == id then
-			local keys = table.GetKeys(self.provinces)
-			local newID = keys[#math.random(keys)]
+		if self.provinceCount < 1 then
+			return self:Remove()
+		end
+
+		if not self.provinces[self:GetCapitalProvince()] and not next(tbl, k) then
+			local keys = table.GetKeys(self:GetProvinces())
+			local newID = keys[math.random(#keys)]
 			if newID then
 				self:SetCapitalProvince(newID)
 			end
@@ -270,6 +294,45 @@ function Region:RemoveProvinces(tbl)
 		::continue::
 	end
 
+	util.queuePrioritizedPreDrawMethodCall(self, 'CreateCanvas', 2)
+	util.queuePrioritizedPreDrawFunctionCall(map.createCanvas, 99)
+end
+
+function Region:TransferProvinces(tbl, otherRegion)
+	tbl = tbl or table.GetKeys(self:GetProvinces())
+
+	for k, provOrID in ipairs(tbl) do
+		local id = type(provOrID) == 'number' and provOrID or provOrID:GetID()
+
+		local province = self.provinces[id]
+		if not province then goto continue end
+		if not province:GetRegion() then goto continue end
+
+		province:_SetRegion(otherRegion)
+		otherRegion.provinces[id] = province
+		otherRegion.provinceCount = otherRegion.provinceCount + 1
+		util.queuePrioritizedPreDrawMethodCall(province, 'CreateCanvas', 1)
+
+		self.provinces[id] = nil
+		self.provinceCount = self.provinceCount - 1
+
+		if self.provinceCount < 1 then
+			util.queuePrioritizedPreDrawMethodCall(otherRegion, 'CreateCanvas', 2)
+			return self:Remove()
+		end
+
+		if not self.provinces[self:GetCapitalProvince()] and not next(tbl, k) then
+			local keys = table.GetKeys(self:GetProvinces())
+			local newID = keys[math.random(#keys)]
+			if newID then
+				self:SetCapitalProvince(newID)
+			end
+		end
+
+		::continue::
+	end
+
+	util.queuePrioritizedPreDrawMethodCall(otherRegion, 'CreateCanvas', 2)
 	util.queuePrioritizedPreDrawMethodCall(self, 'CreateCanvas', 2)
 	util.queuePrioritizedPreDrawFunctionCall(map.createCanvas, 99)
 end
