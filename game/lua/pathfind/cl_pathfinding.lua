@@ -70,7 +70,7 @@ function pathFind.customFind(startProv, goalProv, getNeighbors)
 	customMap.get_neighbors = getNeighbors
 
 	local finder = AStar.new(customMap)
-	pathFind.find(startProv, goalProv, finder)
+	return pathFind.find(startProv, goalProv, finder)
 end
 
 hook.Add('AssetsLoaded', 'pathFinding', function()
