@@ -85,6 +85,10 @@ function Unit:GetState()
 	return self.state
 end
 
+function Unit:GetFight()
+	return self.fight
+end
+
 -- SETTERS
 
 function Unit:SetCountry(country)
@@ -144,9 +148,29 @@ function Unit:AddCapability(add)
 	self:SetCapability( self:GetCapability() + add )
 end
 
-function Unit:CanMoveIn(prov)
-	local provCountry = prov:GetCountry()
+function Unit:Retreat()
 	local myCountry = self:GetCountry()
+	local curProvince = self:GetProvince()
+	for _, neighbor in ipairs(curProvince:GetNeighbors()) do
+		if neighbor:GetCountry() == myCountry and not units.fight.getFight(neighbor) then
+			return self:Move(neighbor)
+		end
+	end
+
+	if self:GetCapability() == 0 then
+		self:Remove()
+	end
+end
+
+function Unit:CanMoveIn(prov)
+	if not prov then return false end
+
+	local provCountry = prov:GetCountry()
+	if not provCountry then return false end
+
+	local myCountry = self:GetCountry()
+	if not myCountry then return false end
+
 	return provCountry == myCountry or (myCountry:InWarWith(provCountry) and not prov:HasAnyUnit())
 end
 
@@ -183,41 +207,13 @@ function Unit:Move(province)
 	if not self:CanMoveIn(province) then return end
 
 	local curProvince = self:GetProvince()
+	if curProvince == province then
+		return self:Idle()
+	end
+
 	if not curProvince:HasNeighbor(province) then
 		self:BuildPath(province)
 		return
-	end
-
-	if self:GetState() == 'attacking' and self.targetAttack and self.targetAttack ~= province then
-		local prov = self.targetAttack
-		local fight, i = units.getFightByProv(prov)
-		if fight then
-			table.RemoveByValue(fight.attackerTeam, self)
-
-			if #fight.attackerTeam < 1 then
-				for _, unit in ipairs(fight.defenderTeam) do
-					unit:Idle()
-				end
-
-				hook.Run('units.wonFight', fight.defenderTeam, prov)
-				table.remove(units._fights, i)
-			end
-		end
-	elseif self:GetState() == 'defending' then
-		local prov = self:GetProvince()
-		local fight, i = units.getFightByProv(prov)
-		if fight then
-			table.RemoveByValue(fight.derenderTeam, unit)
-
-			if #fight.derenderTeam < 1 then
-				for _, unit in ipairs(fight.attackerTeam) do
-					unit:Move(prov)
-				end
-
-				hook.Run('units.wonFight', fight.defenderTeam, prov)
-				table.remove(units._fights, i)
-			end
-		end
 	end
 
 	self.movingEndTime = gamecycle._time + ( (1 / self:GetSpeed()) * 24 )
@@ -238,17 +234,20 @@ end
 -- Hooks
 
 function Unit:OnChangeState(old, new)
-	if old == 'attacking' then
-		self.targetAttack = nil
+	local fight = self:GetFight()
+	if fight then
+		if old == 'attacking' then
+			fight:RemoveAttacker(self)
+		elseif old == 'defending' then
+			fight:RemoveDefender(self)
+		end
 	end
 
 	if old == 'moving' then
 		self.movingEndTime = nil
 		self.moveTarget = nil
+		self.movePath = nil
 	end
-end
-
-function Unit:Think(dt)
 end
 
 function Unit:CycleStep()
