@@ -176,22 +176,10 @@ jobs:
         submodules: recursive
     - uses: actions/download-artifact@v3
       with:
-        name: ${{ env.PRODUCT_NAME }}_Windows_x86
-        path: ${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_x86.zip
-    - uses: actions/download-artifact@v3
-      with:
         name: ${{ env.PRODUCT_NAME }}_Windows_x64
         path: ${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_x64.zip
-    - uses: actions/download-artifact@v3
+    - name: Discord Webhook Action
+      uses: tsickert/discord-webhook@v6.0.0
       with:
-        name: ${{ env.PRODUCT_NAME }}_Windows_installer
-        path: ${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_installer.exe
-    - uses: "hugoalh/send-discord-webhook-ghaction@v7.0.0"
-      with:
-        key: '${{ secrets.WEBHOOK_URL }}'
-        username: Release
-        content: ${{ needs.release.outputs.release_tag }}
-        files: |
-          ${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_x86.zip
-          ${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_x64.zip
-          ${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_installer.exe
+        webhook-url: ${{ secrets.WEBHOOK_URL }}
+        filename: ${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_x64.zip
