@@ -9,6 +9,7 @@ function table.RemoveByValue(tbl, val)
 	if not i then return end
 
 	table.remove(tbl, i)
+	return true
 end
 
 function table.RemoveByMemberValue(tbl, key, val)
@@ -22,6 +23,7 @@ function table.RemoveByMemberValue(tbl, key, val)
 	if not i then return end
 
 	table.remove(tbl, i)
+	return true
 end
 
 function table.HasMemberValue(tbl, key, val)
