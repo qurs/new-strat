@@ -186,13 +186,12 @@ jobs:
       with:
         name: ${{ env.PRODUCT_NAME }}_Windows_installer
         path: ${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_installer.exe
-    - name: Upload multiple files
-      uses: MineBartekSA/discord-webhook@v2
+    - uses: "hugoalh/send-discord-webhook-ghaction@v7.0.0"
       with:
-        webhook: ${{ secrets.WEBHOOK_URL }}
+        key: ${{ secrets.WEBHOOK_URL }}
         username: Release
         content: ${{ needs.release.outputs.release_tag }}
-        attachment: |
-          - file: ${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_x86.zip
-          - file: ${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_x64.zip
-          - file: ${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_installer.exe
+        files: |
+          ${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_x86.zip
+          ${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_x64.zip
+          ${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_installer.exe
