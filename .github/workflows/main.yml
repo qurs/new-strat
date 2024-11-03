@@ -17,6 +17,7 @@ env:
   CORE_LOVE_ARTIFACT_NAME: core_love_package
   PRODUCT_NAME: strat
   BUNDLE_ID: com.strat.myloveapp
+  OUTPUT_FOLDER: ./build
 
 permissions:
   contents: write
@@ -74,8 +75,6 @@ jobs:
   build-windows:
     runs-on: windows-latest
     needs: [build-core, auto-test]
-    env:
-      OUTPUT_FOLDER: ./build
     steps:
       - uses: actions/checkout@v3
         with:
@@ -112,3 +111,40 @@ jobs:
         with:
           name: ${{ env.PRODUCT_NAME }}_Windows_installer
           path: ${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_installer.exe
+  release:
+    runs-on: ubuntu-latest
+    needs: [build-windows]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - uses: codfish/semantic-release-action@v3
+        id: semantic
+        with:
+          additional-packages: semantic-release-gitmoji
+          plugins: |
+            [
+              'semantic-release-gitmoji',
+              '@semantic-release/release-notes-generator',
+              [
+                '@semantic-release/github',
+                {
+                  'assets':[
+                    {
+                      'path': '${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_x86.zip',
+                      'label': '${{ env.PRODUCT_NAME }}_Windows_x86'
+                    },
+                    {
+                      'path': '${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_x64.zip',
+                      'label': '${{ env.PRODUCT_NAME }}_Windows_x64'
+                    },
+                    {
+                      'path': '${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_installer.exe',
+                      'label': '${{ env.PRODUCT_NAME }}_Windows_installer'
+                    }
+                  ]
+                }
+              ]
+            ]
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
