@@ -190,10 +190,9 @@ jobs:
       uses: MineBartekSA/discord-webhook@v2
       with:
         webhook: ${{ secrets.WEBHOOK_URL }}
+        username: Release
+        content: ${{ needs.release.outputs.release_tag }}
         attachment: |
           - file: ${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_x86.zip
-            filename: ${{ env.PRODUCT_NAME }}_Windows_x86.zip
           - file: ${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_x64.zip
-            filename: ${{ env.PRODUCT_NAME }}_Windows_x64.zip
           - file: ${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_installer.exe
-            filename: ${{ env.PRODUCT_NAME }}_Windows_installer.exe
