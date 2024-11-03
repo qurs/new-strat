@@ -176,11 +176,24 @@ jobs:
         submodules: recursive
     - uses: actions/download-artifact@v3
       with:
+        name: ${{ env.PRODUCT_NAME }}_Windows_x86
+        path: ${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_x86.zip
+    - uses: actions/download-artifact@v3
+      with:
+        name: ${{ env.PRODUCT_NAME }}_Windows_x64
+        path: ${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_x64.zip
+    - uses: actions/download-artifact@v3
+      with:
         name: ${{ env.PRODUCT_NAME }}_Windows_installer
         path: ${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_installer.exe
-    - name: Discord Webhook Action
-      uses: tsickert/discord-webhook@v5.3.0
+    - name: Upload multiple files
+      uses: MineBartekSA/discord-webhook@v2
       with:
-        webhook-url: ${{ secrets.WEBHOOK_URL }}
-        content: ${{ needs.release.outputs.release_tag }}
-        filename: '${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_installer.exe'
+        webhook: ${{ secrets.WEBHOOK_URL }}
+        attachment: |
+          - file: ${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_x86.zip
+            filename: ${{ env.PRODUCT_NAME }}_Windows_x86.zip
+          - file: ${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_x64.zip
+            filename: ${{ env.PRODUCT_NAME }}_Windows_x64.zip
+          - file: ${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_installer.exe
+            filename: ${{ env.PRODUCT_NAME }}_Windows_installer.exe
