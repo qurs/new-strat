@@ -188,7 +188,7 @@ jobs:
         path: ${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_installer.exe
     - uses: "hugoalh/send-discord-webhook-ghaction@v7.0.0"
       with:
-        key: ${{ secrets.WEBHOOK_URL }}
+        key: '${{ secrets.WEBHOOK_URL }}'
         username: Release
         content: ${{ needs.release.outputs.release_tag }}
         files: |
