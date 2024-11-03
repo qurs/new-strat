@@ -114,10 +114,17 @@ jobs:
   release:
     runs-on: ubuntu-latest
     needs: [build-windows]
+    outputs:
+      release_tag: ${{ steps.semantic.outputs.git-tag || steps.latest_release_info.outputs.tag_name }}
     steps:
       - uses: actions/checkout@v3
         with:
           submodules: recursive
+      - name: Gets latest created release info
+        id: latest_release_info
+        uses: jossef/action-latest-release-info@v1.2.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/download-artifact@v3
         with:
           name: ${{ env.PRODUCT_NAME }}_Windows_x86
@@ -160,3 +167,17 @@ jobs:
             ]
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  discord-webhook:
+    runs-on: ubuntu-latest
+    needs: [release]
+    steps:
+    - uses: actions/download-artifact@v3
+      with:
+        name: ${{ env.PRODUCT_NAME }}_Windows_installer
+        path: ${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_installer.exe
+    - name: Discord Webhook Action
+      uses: tsickert/discord-webhook@v5.3.0
+      with:
+        webhook-url: ${{ secrets.WEBHOOK_URL }}
+        content: ${{ needs.release.outputs.release_tag }}
+        filename: ${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_installer.exe
