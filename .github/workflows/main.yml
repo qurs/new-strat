@@ -183,4 +183,4 @@ jobs:
       with:
         webhook-url: ${{ secrets.WEBHOOK_URL }}
         content: ${{ needs.release.outputs.release_tag }}
-        filename: ${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_installer.exe
+        filename: '${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}_installer.exe'
