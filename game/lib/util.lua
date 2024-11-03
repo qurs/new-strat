@@ -52,3 +52,12 @@ function RGBFromNum(num)
 
 	return r, g, b
 end
+
+_type = _type or type
+function type(obj)
+	if _type(obj) == 'table' and obj.__type then
+		return obj.__type
+	end
+
+	return _type(obj)
+end
