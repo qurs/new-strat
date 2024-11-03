@@ -212,6 +212,8 @@ hook.Add('Draw', 'map', function()
 		end
 	end
 
+	hook.Run('PostDrawOverCountry')
+
 	if map.debugRecursiveMap then
 		love.graphics.setColor(1, 1, 1, 0.8)
 		love.graphics.rectangle('fill', map._centerX, 0, map._canvas:getWidth(), map._canvas:getHeight())
