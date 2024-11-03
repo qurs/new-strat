@@ -144,16 +144,49 @@ function Unit:AddCapability(add)
 	self:SetCapability( self:GetCapability() + add )
 end
 
-function Unit:Move(province)
-	if self:GetState() == 'moving' and self:GetCapability() < 1 then
-		return
+function Unit:CanMoveIn(prov)
+	local provCountry = prov:GetCountry()
+	local myCountry = self:GetCountry()
+	return provCountry == myCountry or (myCountry:InWarWith(provCountry) and not prov:HasAnyUnit())
+end
+
+function Unit:BuildPath(prov)
+	if self.movePath and self:GetState() == 'moving' then
+		self.movePath = nil
+		self:Idle()
 	end
 
-	local provCountry = province:GetCountry()
-	if provCountry ~= self:GetCountry() and province:HasAnyUnit() then return end -- Добавить потом проверку на наличие войны между государствами
+	local curProvince = self:GetProvince()
+
+	local path = pathFind.customFind(curProvince, prov, function(map, node, fromNode, callback)
+		local prov = country.getProvince(node.id)
+		for _, neighbor in ipairs(prov:GetNeighbors()) do
+			if self:CanMoveIn(neighbor) then
+				callback(pathFind._getNodeByID(neighbor:GetID()))
+			end
+		end
+	end)
+
+	if not path then return end
+	table.remove(path, 1)
+
+	self.movePath = path
+
+	local target = table.remove(self.movePath, 1)
+	self.movingEndTime = gamecycle._time + ( (1 / self:GetSpeed()) * 24 )
+	self.moveTarget = target
+	self:SetState('moving')
+end
+
+function Unit:Move(province)
+	if self:GetState() == 'moving' and self:GetCapability() < 1 then return end
+	if not self:CanMoveIn(province) then return end
 
 	local curProvince = self:GetProvince()
-	if not curProvince:HasNeighbor(province) then return end
+	if not curProvince:HasNeighbor(province) then
+		self:BuildPath(province)
+		return
+	end
 
 	if self:GetState() == 'attacking' and self.targetAttack and self.targetAttack ~= province then
 		local prov = self.targetAttack
@@ -226,7 +259,14 @@ function Unit:CycleStep()
 			self:SetProvince(self.moveTarget)
 			hook.Run('units.movedToProvince', self, self.moveTarget)
 
-			self:Idle()
+			local path = self.movePath
+			if path and not table.IsEmpty(path) then
+				local target = table.remove(path, 1)
+				self.movingEndTime = gamecycle._time + ( (1 / self:GetSpeed()) * 24 )
+				self.moveTarget = target
+			else
+				self:Idle()
+			end
 		end
 
 		return
@@ -267,29 +307,19 @@ function Unit:Draw(i, offset)
 	local cx, cy = camera._pos:Unpack()
 	local scale = camera._scale or 1
 
-	if self:GetState() == 'moving' then
-		local r, g, b = 1, 1, 1
-
-		local target = self.moveTarget
-
+	local target = self.moveTarget
+	if self:GetState() == 'moving' and target then
 		local minPos, maxPos = target:GetBounds()
 		minPos, maxPos = minPos * ratio, maxPos * ratio
 
 		local endPos = (minPos + maxPos) / 2
 
-		local outlineColor = {0, 0, 0}
-		if self:GetState() == 'attacking' then
-			outlineColor = {0.3, 0, 0}
-		elseif self:GetState() == 'defending' then
-			outlineColor = {0, 0, 0.3}
-		end
-
 		love.graphics.setLineWidth(2)
-		love.graphics.setColor(unpack(outlineColor))
+		love.graphics.setColor(0, 0, 0)
 		love.graphics.line(offset + centerPos.x, centerPos.y, offset + endPos.x, endPos.y)
 
 		love.graphics.setLineWidth(1)
-		love.graphics.setColor(r, g, b)
+		love.graphics.setColor(1, 1, 1)
 		love.graphics.line(offset + centerPos.x, centerPos.y, offset + endPos.x, endPos.y)
 	end
 

@@ -6,22 +6,22 @@ pathFind._cachedNodes = {}
 
 local map, cachedNodes, AStar = pathFind._map, pathFind._cachedNodes, pathFind.AStar
 
-local function getNodeByID(id)
+function pathFind._getNodeByID(id)
 	cachedNodes[id] = cachedNodes[id] or {id = id}
 	return cachedNodes[id]
 end
 
-local function getNode(x, y)
+function pathFind._getNode(x, y)
 	local prov = map.getProvinceByPos(x, y)
 	local id = prov:GetID()
 
-	return getNodeByID(id)
+	return pathFind._getNodeByID(id)
 end
 
 function map:get_neighbors(node, fromNode, callback)
 	local prov = country.getProvince(node.id)
 	for _, neighbor in ipairs(prov:GetNeighbors()) do
-		callback(getNodeByID(neighbor:GetID()))
+		callback(pathFind._getNodeByID(neighbor:GetID()))
 	end
 end
 
@@ -50,7 +50,7 @@ function pathFind.find(startProv, goalProv, finder)
 		startID, goalID = startProv:GetID(), goalProv:GetID()
 	end
 
-	local start, goal = getNodeByID(startID), getNodeByID(goalID)
+	local start, goal = pathFind._getNodeByID(startID), pathFind._getNodeByID(goalID)
 	local path = finder:find(start, goal)
 
 	if not path then return end
