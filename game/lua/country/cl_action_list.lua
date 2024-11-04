@@ -2,7 +2,7 @@ country = country or {}
 country.actions = country.actions or {}
 
 function country.actions._createRegionPopup(callback)
-	uiLib.popup.query('Создание региона', {
+	uiLib.popup.query('Создание региона', nil, {
 		{
 			type = 'edit',
 			tooltip = 'Название региона',
@@ -162,7 +162,7 @@ hook.Add('AssetsLoaded', 'country.actionList', function()
 			::continue::
 		end
 
-		uiLib.popup.query('Удаление региона', {
+		uiLib.popup.query('Удаление региона', {closable = true}, {
 			{
 				type = 'label',
 				text = 'Выберите действие для удаляемого региона',
@@ -220,7 +220,7 @@ hook.Add('AssetsLoaded', 'country.actionList', function()
 		if target == game.myCountry then return end
 		if not game.myCountry:InWarWith(target) then return end
 
-		uiLib.popup.query('Предложение мира', {
+		uiLib.popup.query('Предложение мира', nil, {
 			{
 				type = 'combo',
 				tooltip = 'Предложение',

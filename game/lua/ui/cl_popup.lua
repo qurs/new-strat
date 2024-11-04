@@ -23,11 +23,12 @@ function uiLib.popup.showMessage(title, text, callback)
 	})
 end
 
-function uiLib.popup.query(title, widgets, callback)
+function uiLib.popup.query(title, settings, widgets, callback)
 	table.insert(uiLib.popup._popups, {
 		id = tostring(os.clock()) .. '|' .. #uiLib.popup._popups,
 		type = 'query',
 		title = title,
+		settings = settings,
 		widgets = widgets,
 		callback = callback,
 	})
@@ -49,12 +50,20 @@ hook.Add('DrawUI', 'uiLib.popup', function(dt)
 
 	for k, popup in ipairs(uiLib.popup._popups) do
 		local id = ('%s ##%s'):format(popup.title, popup.id)
+		local settings = popup.settings or {}
+		local popupFlags = settings.flags or flags
+
+		if settings.closable and not popup._closePointer then
+			popup._closePointer = ffi.new('bool[1]', true)
+		end
+
+		local pointer = popup._closePointer
 
 		imgui.SetNextWindowPos({x, y}, imgui.ImGuiCond_FirstUseEver)
 		imgui.SetNextWindowSize({w, -1}, imgui.ImGuiCond_FirstUseEver)
 
 		imgui.PushFont(imguiFont)
-		if imgui.Begin(id, nil, flags) then
+		if imgui.Begin(id, pointer, popupFlags) then
 			local cw = imgui.GetContentRegionAvail().x
 
 			if popup.type == 'message' then
@@ -142,6 +151,10 @@ hook.Add('DrawUI', 'uiLib.popup', function(dt)
 		end
 		imgui.End()
 		imgui.PopFont()
+
+		if not pointer[0] then
+			toRemove[#toRemove + 1] = k
+		end
 	end
 
 	for i = #toRemove, 1, -1 do
@@ -150,7 +163,7 @@ hook.Add('DrawUI', 'uiLib.popup', function(dt)
 end)
 
 --[[ Пример вызова функции uiLib.popup.query со всеми возможными виджетами
-	uiLib.popup.query('Запрос текста', {
+	uiLib.popup.query('Запрос текста', nil, {
 		{
 			type = 'label',
 			text = 'Напишите данные банковской карты, фактический адрес проживания, контактные данные, серия и номера паспорта:',

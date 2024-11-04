@@ -28,7 +28,7 @@ hook.Add('Initialize', 'wildColonization', function()
 			{
 				text = 'Присоединить к существующему региону',
 				callback = function()
-					uiLib.popup.query('Присоединение новой территории', {
+					uiLib.popup.query('Присоединение новой территории', nil, {
 						{
 							type = 'label',
 							text = 'Выбери регион:',
