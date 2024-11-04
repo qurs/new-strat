@@ -187,6 +187,7 @@ hook.Add('KeyDown', 'devConsole', function(key)
 	if devConsole._open then
 		if key == 'escape' then
 			devConsole.close()
+			return true
 		end
 	elseif not devConsole._open and key == love.keyboard.getScancodeFromKey('`') then
 		devConsole.open()
