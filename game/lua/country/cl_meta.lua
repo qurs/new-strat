@@ -68,6 +68,12 @@ end
 
 function Country:SetName(name)
 	self.name = name
+
+	if self.text then
+		self.text:set(name)
+	else
+		self.text = love.graphics.newText(gui.getFont('country.name'), name)
+	end
 end
 
 function Country:SetCapitalRegion(reg)
@@ -137,6 +143,8 @@ function Country:Destroy(reason)
 			},
 		})
 	end
+
+	collectgarbage()
 end
 
 function Country:AddRegion(region)

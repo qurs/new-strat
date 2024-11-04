@@ -186,6 +186,7 @@ function Province:CreateCanvas()
 		r, g, b = country:GetColor()
 	end
 
+	if self.canvas then self.canvas:release() end
 	self.canvas = love.graphics.newCanvas(w, ScrH())
 
 	love.graphics.setCanvas({self.canvas, stencil = true})

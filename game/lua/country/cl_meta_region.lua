@@ -86,6 +86,12 @@ end
 
 function Region:SetCapitalName(name)
 	self.capitalName = name
+
+	if self.capitalText then
+		self.capitalText:set(name)
+	else
+		self.capitalText = love.graphics.newText(gui.getFont('region.capitalName'), name)
+	end
 end
 
 function Region:_SetCountry(country)
@@ -119,6 +125,9 @@ function Region:Remove()
 
 	country._regions[id] = nil
 	util.queuePrioritizedPreDrawFunctionCall(map.createCanvas, 99)
+
+	self.canvas:release()
+	collectgarbage()
 end
 
 function Region:AddPopulation(add)
@@ -348,6 +357,7 @@ function Region:CreateCanvas()
 	local ratio = ScrH() / mapH
 	local w, h = mapW * ratio, mapH * ratio
 
+	if self.canvas then self.canvas:release() end
 	self.canvas = love.graphics.newCanvas(w, ScrH())
 	-- self.canvas:setFilter('linear', 'nearest')
 

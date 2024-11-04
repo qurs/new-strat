@@ -56,6 +56,7 @@ function map.createCanvas()
 		new = {w, h},
 	}
 
+	if map._canvas then map._canvas:release() end
 	map._canvas = love.graphics.newCanvas(w, ScrH())
 	map._canvas:setFilter('linear', 'nearest')
 
@@ -283,9 +284,11 @@ end)
 
 hook.Add('KeyDown', 'map', function(button)
 	if scene.getName() ~= 'map' and scene.getName() ~= 'start_game' then return end
-	if button == 'escape' then
+	if button == 'escape' and (map._selectedProvince or map._selectedCountry or units._selectedUnits) then
 		if map._selectedProvince then map._selectedProvince = nil end
 		if map._selectedCountry then map._selectedCountry = nil end
 		if units._selectedUnits then units._selectedUnits = nil end
+
+		return true
 	end
 end)
