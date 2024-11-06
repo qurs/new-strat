@@ -13,3 +13,7 @@ end
 function math.Remap( value, inMin, inMax, outMin, outMax )
 	return outMin + ( ( ( value - inMin ) / ( inMax - inMin ) ) * ( outMax - outMin ) )
 end
+
+function math.HasSquarePoint(minPos, maxPos, point)
+	return (point[1] >= minPos[1] and point[1] <= maxPos[1]) and(point[2] >= minPos[2] and point[2] <= maxPos[2])
+end

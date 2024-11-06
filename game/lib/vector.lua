@@ -171,6 +171,10 @@ function meta:Rotated(ang)
 	return setmetatable(pos, vector._meta)
 end
 
+function meta:IsInsideSquare(minPos, maxPos)
+	return math.HasSquarePoint(minPos, maxPos, self)
+end
+
 function Vector(x, y)
 	local pos = {x or 0, y or 0}
 
