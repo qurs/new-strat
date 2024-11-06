@@ -74,6 +74,7 @@ function curScene:UI()
 			imgui.SetCursorPosY(imgui.GetContentRegionAvail().y - buttonH)
 
 			if imgui.Button('Назад', {buttonW, buttonH}) then
+				uiLib.sound.click(1)
 				scene.change('mainmenu')
 			end
 
@@ -81,6 +82,8 @@ function curScene:UI()
 			imgui.SetCursorPosX(cw + style.WindowPadding.x - buttonW)
 
 			if imgui.Button('Начать', {buttonW, buttonH}) then
+				uiLib.sound.click(1)
+
 				if not map._selectedProvince then return notify.show('error', 2, 'Нужно выбрать провинцию!') end
 
 				imgui.OpenPopup_Str('start_game')
@@ -122,6 +125,8 @@ function curScene:UI()
 			imgui.PopFont()
 
 			if imgui.Button('Создать') then
+				uiLib.sound.click(1)
+
 				local name, regionName, capitalName, r, g, b = ffi.string(countryEntry.name), ffi.string(countryEntry.regionName), ffi.string(countryEntry.capitalName), countryEntry.color[0], countryEntry.color[1], countryEntry.color[2]
 				if utf8.len(name) < 3 or utf8.len(name) > 64 then
 					notify.show('error', 2.5, 'Название страны должно быть не короче 3-х и не длиннее 64-х символов!')

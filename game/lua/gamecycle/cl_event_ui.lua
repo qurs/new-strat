@@ -57,6 +57,7 @@ hook.Add('DrawUI', 'gamecycle.event.ui', function(dt)
 
 			for _, btn in ipairs(window.buttons) do
 				if imgui.Button(btn.text) then
+					uiLib.sound.click(1)
 					if btn.callback then btn.callback() end
 					toRemove[#toRemove + 1] = i
 				end

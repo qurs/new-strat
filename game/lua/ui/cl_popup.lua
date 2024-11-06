@@ -73,6 +73,7 @@ hook.Add('DrawUI', 'uiLib.popup', function(dt)
 				end
 
 				if imgui.Button('Ок', {-1, 28}) then
+					uiLib.sound.click(1)
 					toRemove[#toRemove + 1] = k
 					if popup.callback then popup.callback() end
 				end
@@ -91,6 +92,7 @@ hook.Add('DrawUI', 'uiLib.popup', function(dt)
 						end
 					elseif widget.type == 'button' then
 						if imgui.Button(widget.text, {-1, 28}) then
+							uiLib.sound.click(1)
 							if widget.callback then widget.callback() end
 							if widget.close then
 								toRemove[#toRemove + 1] = k
@@ -137,6 +139,7 @@ hook.Add('DrawUI', 'uiLib.popup', function(dt)
 				end
 
 				if imgui.Button('Отправить') then
+					uiLib.sound.click(1)
 					toRemove[#toRemove + 1] = k
 					if popup.callback then popup.callback(popup.widgets) end
 				end

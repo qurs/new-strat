@@ -37,6 +37,7 @@ hook.Add('DrawUI', 'country.countryActions', function()
 	if imgui.Begin('country_actions', nil, flags) then
 		for _, action in ipairs(country.actions.list.country) do
 			if imgui.Button(action.name) and c ~= game.myCountry then
+				uiLib.sound.click(1)
 				action.callback(c)
 			end
 		end

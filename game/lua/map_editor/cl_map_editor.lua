@@ -222,12 +222,15 @@ hook.Add('DrawUI', 'mapEditor', function()
 		local cw = imgui.GetContentRegionAvail().x
 
 		if imgui.Button(settings.cancelBtnText or 'Отмена', {btnW, btnH}) then
+			uiLib.sound.click(1)
 			mapEditor.close()
 		end
 
 		imgui.SameLine()
 		imgui.SetCursorPosX(cw + 10 - btnW)
 		if imgui.Button(settings.sendBtnText or 'Применить', {btnW, btnH}) then
+			uiLib.sound.click(1)
+
 			if settings.filter then
 				local ok, err, errTime = settings.filter(editor)
 				if not ok then

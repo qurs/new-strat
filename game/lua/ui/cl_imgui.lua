@@ -1,4 +1,5 @@
 uiLib = uiLib or {}
+uiLib.sound = uiLib.sound or {}
 
 function uiLib.verticalAlign(draws, align)
 	local totalHeight = 0
@@ -70,3 +71,19 @@ function uiLib.alignedButton(label, align, size)
 
 	return imgui.Button(label, size)
 end
+
+function uiLib.sound.click(index)
+	local source = uiLib.sound.clicks[index]
+	if not source then return end
+
+	source:stop()
+	source:play()
+end
+
+hook.Add('AssetsLoaded', 'uiLib', function()
+	uiLib.sound.clicks = {
+		love.audio.newSource( assetloader.get('sound_click1'), 'static' ),
+		love.audio.newSource( assetloader.get('sound_click2'), 'static' ),
+		love.audio.newSource( assetloader.get('sound_click3'), 'static' ),
+	}
+end)

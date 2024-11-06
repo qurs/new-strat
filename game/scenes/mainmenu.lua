@@ -38,6 +38,7 @@ function curScene:UI()
 				local height = 30
 				return height, function()
 					if uiLib.alignedButton('Начать игру', 0.5, {276, height}) then
+						uiLib.sound.click(1)
 						scene.change('start_game')
 					end
 				end
@@ -47,6 +48,7 @@ function curScene:UI()
 				local height = 30
 				return height, function()
 					if uiLib.alignedButton('Сетевая игра', 0.5, {276, height}) then
+						uiLib.sound.click(1)
 						scene.change('multiplayer')
 					end
 				end

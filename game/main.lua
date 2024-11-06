@@ -91,6 +91,14 @@ function love.load()
 				},
 			},
 			{
+				name = 'Sounds',
+				files = {
+					{path = 'assets/sounds/click1.mp3', name = 'sound_click1', type = 'sound'},
+					{path = 'assets/sounds/click2.mp3', name = 'sound_click2', type = 'sound'},
+					{path = 'assets/sounds/click3.mp3', name = 'sound_click3', type = 'sound'},
+				},
+			},
+			{
 				name = 'Provinces',
 				type = 'custom',
 				maxStep = maxStepProvinces,

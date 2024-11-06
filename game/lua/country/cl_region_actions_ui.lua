@@ -53,6 +53,7 @@ hook.Add('DrawUI', 'country.regionActions', function()
 
 		for _, action in ipairs(country.actions.list.region) do
 			if imgui.Button(action.name) and myCountry:GetRegions()[region:GetID()] then
+				uiLib.sound.click(1)
 				action.callback(region)
 			end
 		end

@@ -39,6 +39,7 @@ hook.Add('MouseDown', 'units', function(mx, my, button)
 		if pos then
 			local startX, startY, endX, endY = unpack(pos)
 			if (imgX >= startX and imgX <= endX) and (imgY >= startY and imgY <= endY) then
+				uiLib.sound.click(3)
 				units._selectedUnits[unit] = true
 				return
 			end
@@ -97,6 +98,7 @@ hook.Add('MouseUp', 'units', function(mx, my)
 				or areaPoint4:IsInsideSquare(startPos, endPos)
 
 			if anyPointOfUnitInsideArea or anyPointOfAreaInsideUnit then
+				uiLib.sound.click(3)
 				units._selectedUnits[unit] = true
 			end
 		end

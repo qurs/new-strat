@@ -38,6 +38,8 @@ function curScene:UI()
 
 				return height, function()
 					if uiLib.alignedButton('Создать сервер', 0.5, {width, height}) then
+						uiLib.sound.click(1)
+
 						local name = ffi.string(pointer)
 						if utf8.len(name) < 3 then return notify.show('error', 2, 'Нужно ввести ник! (Хотя бы 3 символа)') end
 
@@ -55,6 +57,8 @@ function curScene:UI()
 
 				return height, function()
 					if uiLib.alignedButton('Присоединиться', 0.5, {width, height}) then
+						uiLib.sound.click(1)
+
 						local name = ffi.string(pointer)
 						if utf8.len(name) < 3 then return notify.show('error', 2, 'Нужно ввести ник! (Хотя бы 3 символа)') end
 
@@ -69,6 +73,7 @@ function curScene:UI()
 				local height = 30
 				return height, function()
 					if uiLib.alignedButton('Назад', 0.5, {276, height}) then
+						uiLib.sound.click(1)
 						scene.change('mainmenu')
 					end
 				end

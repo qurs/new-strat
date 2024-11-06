@@ -46,14 +46,17 @@ function gamecycle.ui()
 		imgui.PushStyleColor_Vec4(imgui.ImGuiCol_ButtonHovered, col)
 		imgui.PushStyleColor_Vec4(imgui.ImGuiCol_ButtonActive, col)
 			if imgui.Button('##01', {16, padH - 7}) then
+				uiLib.sound.click(1)
 				gamecycle.decreaseSpeed()
 			end
 			imgui.SameLine()
 			if imgui.Button('##02', {padW - 32, padH - 7}) then
+				uiLib.sound.click(1)
 				gamecycle.toggle()
 			end
 			imgui.SameLine()
 			if imgui.Button('##03', {16, padH - 7}) then
+				uiLib.sound.click(1)
 				gamecycle.increaseSpeed()
 			end
 		imgui.PopStyleColor(3)
@@ -63,6 +66,7 @@ function gamecycle.ui()
 		imgui.PushStyleColor_Vec4(imgui.ImGuiCol_ButtonHovered, col)
 		imgui.PushStyleColor_Vec4(imgui.ImGuiCol_ButtonActive, col)
 			if imgui.Button('##04', {padW / 4, 7}) then
+				uiLib.sound.click(1)
 				gamecycle.setSpeed(1)
 			end
 			imgui.SameLine()
@@ -73,6 +77,7 @@ function gamecycle.ui()
 		imgui.PushStyleColor_Vec4(imgui.ImGuiCol_ButtonHovered, col)
 		imgui.PushStyleColor_Vec4(imgui.ImGuiCol_ButtonActive, col)
 			if imgui.Button('##05', {padW / 4, 7}) then
+				uiLib.sound.click(1)
 				gamecycle.setSpeed(2)
 			end
 			imgui.SameLine()
@@ -83,6 +88,7 @@ function gamecycle.ui()
 		imgui.PushStyleColor_Vec4(imgui.ImGuiCol_ButtonHovered, col)
 		imgui.PushStyleColor_Vec4(imgui.ImGuiCol_ButtonActive, col)
 			if imgui.Button('##06', {padW / 4, 7}) then
+				uiLib.sound.click(1)
 				gamecycle.setSpeed(3)
 			end
 			imgui.SameLine()
@@ -93,6 +99,7 @@ function gamecycle.ui()
 		imgui.PushStyleColor_Vec4(imgui.ImGuiCol_ButtonHovered, col)
 		imgui.PushStyleColor_Vec4(imgui.ImGuiCol_ButtonActive, col)
 			if imgui.Button('##07', {padW / 4, 7}) then
+				uiLib.sound.click(1)
 				gamecycle.setSpeed(4)
 			end
 		imgui.PopStyleColor(3)

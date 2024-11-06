@@ -38,10 +38,12 @@ hook.Add('DrawUI', 'pauseMenu', function()
 		local style = imgui.GetStyle()
 
 		if imgui.Button('Продолжить игру', {-1, 24}) then
+			uiLib.sound.click(1)
 			pauseMenu.close()
 		end
 
 		if imgui.Button('Выйти в главное меню', {-1, 24}) then
+			uiLib.sound.click(1)
 			game.endGame()
 		end
 	end
