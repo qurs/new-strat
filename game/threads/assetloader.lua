@@ -26,7 +26,7 @@ for _, v in ipairs(files) do
 		love.thread.getChannel('assetloader'):push(ans)
 		goto continue
 	elseif v.type == 'sound' then
-		ans.content = love.sound.newDecoder(v.path)
+		ans.content = love.sound.newSoundData(v.path)
 
 		love.thread.getChannel('assetloader'):push(ans)
 		goto continue
