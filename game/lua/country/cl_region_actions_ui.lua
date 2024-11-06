@@ -24,6 +24,10 @@ hook.Add('DrawUI', 'country.regionActions', function()
 	local region = province:GetRegion()
 	if not region then return end
 
+	local myCountry = game.myCountry
+	if not myCountry then return end
+	if not myCountry:GetRegions()[region:GetID()] then return end
+
 	local w, h = padW, padH
 	local x, y = 0, ScrH() - h
 
@@ -48,7 +52,7 @@ hook.Add('DrawUI', 'country.regionActions', function()
 		imgui.Text( ('Население: %s'):format(populationStr) )
 
 		for _, action in ipairs(country.actions.list.region) do
-			if imgui.Button(action.name) then
+			if imgui.Button(action.name) and myCountry:GetRegions()[region:GetID()] then
 				action.callback(region)
 			end
 		end
@@ -67,6 +71,10 @@ hook.Add('PreDrawUI', 'country.regionActions', function()
 
 	local region = province:GetRegion()
 	if not region then return end
+
+	local myCountry = game.myCountry
+	if not myCountry then return end
+	if not myCountry:GetRegions()[region:GetID()] then return end
 
 	local w, h = padW, padH
 	local x, y = 0, ScrH() - h
