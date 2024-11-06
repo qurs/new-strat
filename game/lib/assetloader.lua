@@ -11,8 +11,8 @@ local curStage = {}
 
 local stages
 
-function assetloader.get(assetName)
-	return assetloader._cache[assetName]
+function assetloader.get(assetName, member)
+	return (member and assetloader._cache[assetName] and assetloader._cache[assetName][member]) or assetloader._cache[assetName]
 end
 
 function assetloader.isLoading()
