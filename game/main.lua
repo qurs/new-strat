@@ -86,6 +86,8 @@ function love.load()
 				files = {
 					{path = 'assets/ui/pause.png', name = 'pause_img', type = 'img'},
 					{path = 'assets/ui/wild_colonization.png', name = 'wild_colonization_icon', type = 'img'},
+					{path = 'assets/ui/knight_sword.png', name = 'knight_sword_icon', type = 'img'},
+					{path = 'assets/ui/knight_sword2.png', name = 'knight_sword2_icon', type = 'img'},
 				},
 			},
 			{
