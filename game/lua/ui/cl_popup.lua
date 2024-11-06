@@ -152,7 +152,7 @@ hook.Add('DrawUI', 'uiLib.popup', function(dt)
 		imgui.End()
 		imgui.PopFont()
 
-		if not pointer[0] then
+		if pointer and not pointer[0] then
 			toRemove[#toRemove + 1] = k
 		end
 	end
