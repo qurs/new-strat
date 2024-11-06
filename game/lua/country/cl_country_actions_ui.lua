@@ -19,6 +19,10 @@ hook.Add('DrawUI', 'country.countryActions', function()
 
 	local c = map._selectedCountry
 	if not c then return end
+	if c == game.myCountry then
+		map._selectedCountry = nil
+		return
+	end
 
 	local w, h = padW, padH
 	local x, y = 0, ScrH() - h
@@ -32,7 +36,7 @@ hook.Add('DrawUI', 'country.countryActions', function()
 	imgui.PushFont(font)
 	if imgui.Begin('country_actions', nil, flags) then
 		for _, action in ipairs(country.actions.list.country) do
-			if imgui.Button(action.name) then
+			if imgui.Button(action.name) and c ~= game.myCountry then
 				action.callback(c)
 			end
 		end
@@ -45,13 +49,17 @@ hook.Add('PreDrawUI', 'country.countryActions', function()
 	if scene.getName() ~= 'map' then return end
 	if mapEditor._editor then return end
 
-	local country = map._selectedCountry
-	if not country then return end
+	local c = map._selectedCountry
+	if not c then return end
+	if c == game.myCountry then
+		map._selectedCountry = nil
+		return
+	end
 
 	local w, h = padW, padH
 	local x, y = 0, ScrH() - h
 
-	textObj:setf(country:GetName(), w - 10, 'left')
+	textObj:setf(c:GetName(), w - 10, 'left')
 
 	local titleH = math.max(16, textObj:getHeight() + 10)
 	local titleY = y - titleH
