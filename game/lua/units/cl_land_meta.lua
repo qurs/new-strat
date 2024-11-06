@@ -227,6 +227,7 @@ function Unit:Move(province)
 		return
 	end
 
+	self.movePath = nil
 	self.movingEndTime = gamecycle._time + ( (1 / self:GetSpeed()) * 24 )
 	self.moveTarget = province
 	self:SetState('moving')
