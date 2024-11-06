@@ -11,7 +11,7 @@ local Unit = units._landUnitMeta
 Unit.__type = 'unit'
 Unit.__index = Unit
 
-function Unit:__init(id, country, startProvince, speed, capability, attack, defence, armor, armorPierce)
+function Unit:__init(id, country, startProvince, speed, capability, attack, defence, armor, armorPierce, icon)
 	self.id = id
 	self.country = country
 	self.speed = math.min(speed, 24)
@@ -22,17 +22,15 @@ function Unit:__init(id, country, startProvince, speed, capability, attack, defe
 	self.armor = armor
 	self.armorPierce = armorPierce
 
+	self.icon = icon or assetloader.get('knight_sword2_icon', 'img')
+
 	self.province = startProvince
 
 	self.state = 'idle'
-	self.text = love.graphics.newText(gui.getFont('units'), self.capability)
+	self.text = love.graphics.newText(gui.getFont('units'))
 
 	country:AddUnit(self)
 	startProvince:AddUnit(self)
-
-	--[[ OPTIONAL FIELDS
-
-	]]
 end
 
 function Unit:__tostring()
@@ -40,6 +38,10 @@ function Unit:__tostring()
 end
 
 -- GETTERS
+
+function Unit:GetType()
+	return 'land_unit'
+end
 
 function Unit:GetID()
 	return self.id
@@ -87,6 +89,11 @@ end
 
 function Unit:GetFight()
 	return self.fight
+end
+
+function Unit:GetIcon()
+	if not self.icon then self.icon = assetloader.get('knight_sword2_icon', 'img') end
+	return self.icon
 end
 
 -- SETTERS
@@ -140,6 +147,10 @@ function Unit:SetState(state)
 
 	self:OnChangeState(old, new)
 	self.state = state
+end
+
+function Unit:SetIcon(icon)
+	self.icon = icon
 end
 
 -- OTHER
@@ -229,6 +240,8 @@ end
 function Unit:Remove()
 	self:GetCountry():RemoveUnit(self)
 	self:GetProvince():RemoveUnit(self)
+
+	if self.text then self.text:release() end
 end
 
 -- Hooks
@@ -296,15 +309,10 @@ function Unit:Draw(i, offset)
 
 	local centerPos = (minPos + maxPos) / 2
 
-	local sx = 0.5
-	local tw, th = text:getWidth() * sx, text:getHeight() * sx
-
-	local w, h = math.max(tw + 10, 64), 18
-
-	text:set(math.floor(self.capability))
-
 	local cx, cy = camera._pos:Unpack()
 	local scale = camera._scale or 1
+
+	local w, h = 32, 32
 
 	local target = self.moveTarget
 	if self:GetState() == 'moving' and target then
@@ -355,13 +363,15 @@ function Unit:Draw(i, offset)
 
 		local unitCount = province.unitsCount
 		if unitCount > 1 then
-			local totalH = unitCount * h + ( (unitCount - 1) * 5 )
+			local spacing = 1
+
+			local totalH = unitCount * h + ( (unitCount - 1) * spacing )
 			y = centerY - totalH / 2
 
 			y = y + (i - 1) * h
 
 			if i > 1 then
-				y = y + (5 * (i - 1))
+				y = y + (spacing * (i - 1))
 			end
 		end
 
@@ -371,15 +381,49 @@ function Unit:Draw(i, offset)
 
 		self.screenPos = {startX, startY, endX, endY}
 
+		local barH = 2
+		local frac = self:GetCapability() / self:GetMaxCapability()
+
+		local iconPadding = 2
+
+		local icon = self:GetIcon()
+		local iconW, iconH = icon:getWidth(), icon:getHeight()
+	
+		local padH = h - (iconPadding + barH) * 2
+		local padW = padH
+	
+		local iconScaleX, iconScaleY = (padW - 2) / iconW, (padH - 2) / iconH
+
+		local padX, padY = offset + x + iconPadding, y + iconPadding
+
+		w = padW + iconPadding * 2
+
 		if units._selectedUnits and units._selectedUnits[self] then
-			love.graphics.setColor(0.6, 0.6, 0.6)
+			love.graphics.setColor(0.45, 0.45, 0.45)
 			love.graphics.rectangle('fill', offset + x - 2, y - 2, w + 4, h + 4)
 		end
 
-		love.graphics.setColor(0.25, 0.25, 0.25)
+		love.graphics.setColor(0.32, 0.32, 0.32)
 		love.graphics.rectangle('fill', offset + x, y, w, h)
 
+		love.graphics.setColor(0.21, 0.21, 0.21)
+		love.graphics.rectangle('fill', padX, padY, padW, padH)
+
 		love.graphics.setColor(1, 1, 1)
-		love.graphics.draw(text, offset + x + (w / 2 - tw / 2), y + (h / 2 - th / 2), 0, sx)
+		love.graphics.draw(icon, offset + x + iconPadding + 1, y + iconPadding + 1, 0, iconScaleX, iconScaleY)
+
+		love.graphics.setColor(0.94, 0.8, 0.27)
+		love.graphics.rectangle('fill', offset + x + 1, y + h - barH - 1, (w - 2) * frac, barH)
+
+		-- text:set(myCount)
+
+		-- local sx = 0.5
+		-- local tw, th = text:getWidth() * sx, text:getHeight() * sx
+
+		-- local textStartX = padX + padW + 2
+		-- local textAreaW = w - 4 - (textStartX - (offset + x))
+
+		-- love.graphics.setColor(1, 1, 1)
+		-- love.graphics.draw(text, textStartX + (textAreaW / 2 - tw / 2), y + ((h - barH - 1) / 2 - th / 2), 0, sx)
 	love.graphics.pop()
 end
