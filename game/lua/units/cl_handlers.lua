@@ -1,6 +1,19 @@
 units = units or {}
 units.handler = units.handler or {}
 
+local walkingSound
+
+local function playWalkingSound()
+	if not walkingSound then return end
+
+	walkingSound:stop()
+	walkingSound:play()
+end
+
+hook.Add('AssetsLoaded', 'units', function()
+	walkingSound = love.audio.newSource( assetloader.get('sound_walking'), 'static' )
+end)
+
 function units.handler.provinceRightClick(prov)
 	if not units._selectedUnits then return false end
 
@@ -11,6 +24,7 @@ function units.handler.provinceRightClick(prov)
 	local unitCountry = firstUnit:GetCountry()
 
 	if provCountry == unitCountry or (provCountry:InWarWith(unitCountry) and not prov:HasAnyUnit()) then
+		playWalkingSound()
 		for unit in pairs(units._selectedUnits) do
 			unit:Move(prov)
 		end
