@@ -320,6 +320,27 @@ function Unit:Draw(i, offset)
 		love.graphics.setLineWidth(1)
 		love.graphics.setColor(1, 1, 1)
 		love.graphics.line(offset + centerPos.x, centerPos.y, offset + endPos.x, endPos.y)
+
+		local path = self.movePath
+		if path then
+			local prev = endPos
+			for _, prov in ipairs(path) do
+				local minPos, maxPos = prov:GetBounds()
+				minPos, maxPos = minPos * ratio, maxPos * ratio
+
+				local endPos = (minPos + maxPos) / 2
+
+				love.graphics.setLineWidth(2)
+				love.graphics.setColor(0, 0, 0)
+				love.graphics.line(offset + prev.x, prev.y, offset + endPos.x, endPos.y)
+
+				love.graphics.setLineWidth(1)
+				love.graphics.setColor(0.6, 0.6, 0.6)
+				love.graphics.line(offset + prev.x, prev.y, offset + endPos.x, endPos.y)
+
+				prev = endPos
+			end
+		end
 	end
 
 	love.graphics.push()
