@@ -69,11 +69,34 @@ hook.Add('MouseUp', 'units', function(mx, my)
 	units._selectedUnits = {}
 
 	local unitList = c:GetUnits()
+
+	local minPos, maxPos = Vector(minX, minY), Vector(maxX, maxY)
+	local areaPoint1 = Vector(minX, minY)
+	local areaPoint2 = Vector(maxX, minY)
+	local areaPoint3 = Vector(maxX, maxY)
+	local areaPoint4 = Vector(minX, maxY)
+
 	for _, unit in ipairs(unitList) do
 		local pos = unit.screenPos
 		if pos then
 			local startX, startY, endX, endY = unpack(pos)
-			if (startX >= minX and endX <= maxX) and (startY >= minY and endY <= maxY) then
+			local startPos, endPos = Vector(startX, startY), Vector(endX, endY)
+			local point1 = Vector(startX, startY)
+			local point2 = Vector(endX, startY)
+			local point3 = Vector(endX, endY)
+			local point4 = Vector(startX, endY)
+
+			local anyPointOfUnitInsideArea = point1:IsInsideSquare(minPos, maxPos)
+				or point2:IsInsideSquare(minPos, maxPos)
+				or point3:IsInsideSquare(minPos, maxPos)
+				or point4:IsInsideSquare(minPos, maxPos)
+			
+			local anyPointOfAreaInsideUnit = areaPoint1:IsInsideSquare(startPos, endPos)
+				or areaPoint2:IsInsideSquare(startPos, endPos)
+				or areaPoint3:IsInsideSquare(startPos, endPos)
+				or areaPoint4:IsInsideSquare(startPos, endPos)
+
+			if anyPointOfUnitInsideArea or anyPointOfAreaInsideUnit then
 				units._selectedUnits[unit] = true
 			end
 		end
