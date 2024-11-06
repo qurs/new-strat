@@ -66,7 +66,7 @@ hook.Add('AssetsLoaded', 'country.actionList', function()
 			
 					region:RemoveProvinces(table.GetKeys(editor._selected))
 			
-					local population = region:GetPopulation() / 2
+					local population = math.floor(region:GetPopulation() / 2)
 					region:AddPopulation(-population)
 			
 					local newRegion = country.newRegion(regionName, capitalName, editor._selected)
