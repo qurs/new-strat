@@ -399,9 +399,29 @@ function Unit:Draw(i, offset)
 
 		w = padW + iconPadding * 2
 
-		if units._selectedUnits and units._selectedUnits[self] then
-			love.graphics.setColor(0.45, 0.45, 0.45)
-			love.graphics.rectangle('fill', offset + x - 2, y - 2, w + 4, h + 4)
+		local outlineSize = 2
+		local state = self:GetState()
+
+		local inFight = state == 'attacking' or state == 'defending'
+		local selected = units._selectedUnits and units._selectedUnits[self]
+
+		local outlineR, outlineG, outlineB = 0.45, 0.45, 0.45
+
+		if selected or inFight then
+			if state == 'attacking' then
+				outlineR, outlineG, outlineB = 1, 0.15, 0.15
+				if selected then
+					outlineR, outlineG, outlineB = 1, 0.4, 0.4
+				end
+			elseif state == 'defending' then
+				outlineR, outlineG, outlineB = 0.2, 0.2, 1
+				if selected then
+					outlineR, outlineG, outlineB = 0.5, 0.5, 1
+				end
+			end
+
+			love.graphics.setColor(outlineR, outlineG, outlineB)
+			love.graphics.rectangle('fill', offset + x - outlineSize, y - outlineSize, w + outlineSize * 2, h + outlineSize * 2)
 		end
 
 		love.graphics.setColor(0.32, 0.32, 0.32)
