@@ -45,6 +45,16 @@ function camera.mouseToWorld(x, y)
 	return (x - ScrW() / 2) / scale + camX, (y - ScrH() / 2) / scale + camY
 end
 
+function camera.worldToScreen(x, y)
+	local pos = camera._pos
+	if not pos then return end
+
+	local cameraX, cameraY = pos:Unpack()
+	local scale = camera._scale or 1
+
+	return ScrW() / 2 + (x - cameraX) * scale, ScrH() / 2 + (y - cameraY) * scale
+end
+
 function camera.push()
 	local pos = camera._pos
 	if not pos then return end
