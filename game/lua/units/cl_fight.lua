@@ -87,3 +87,15 @@ hook.Add('PostDrawOverCountry', 'units.fight', function()
 		fight:PostDraw(ratio)
 	end
 end)
+
+hook.Add('DrawUI', 'units.fight', function()
+	local imgData = map._img
+	if not imgData then return end
+
+	local mapW, mapH = unpack(imgData.size)
+	local ratio = ScrH() / mapH
+
+	for id, fight in pairs(units.fight._map) do
+		fight:DrawUI(ratio)
+	end
+end)

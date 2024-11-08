@@ -1,3 +1,8 @@
+gui.registerFont('fight.window', {
+	font = 'Montserrat-Medium',
+	size = 14,
+})
+
 units = units or {}
 units.fight = units.fight or {}
 units.fight._meta = units.fight._meta or {}
@@ -347,7 +352,18 @@ function Fight:Draw(ratio, drawnProvs)
 	end
 end
 
+local size = 3
+
 function Fight:PostDraw(ratio)
+	local attackers = self:GetAttackers()
+	if not attackers then return end
+
+	local _, firstUnit = next(attackers)
+	if not firstUnit then return end
+
+	local startProv = firstUnit:GetProvince()
+	if not startProv then return end
+
 	local prov = self:GetProvince()
 
 	local minPos, maxPos = prov:GetBounds()
@@ -355,24 +371,227 @@ function Fight:PostDraw(ratio)
 
 	local provCenterPos = (minPos + maxPos) / 2
 
+	minPos, maxPos = startProv:GetBounds()
+	minPos, maxPos = minPos * ratio, maxPos * ratio
+
+	local startProvCenterPos = (minPos + maxPos) / 2
+
+	local pos = (provCenterPos + startProvCenterPos) / 2
+
 	local offsets = {map._centerX, map._minX, map._maxX}
 	for _, offset in ipairs(offsets) do
-		-- balance line
-		local startX = offset + provCenterPos.x - 15
-		local endX = offset + provCenterPos.x + 15
+		-- balance
+		local x = offset + pos.x
+		local y = pos.y
 
-		love.graphics.setLineWidth(2)
 		love.graphics.setColor(0, 0, 0)
-		love.graphics.line(startX, provCenterPos.y, endX, provCenterPos.y)
+		love.graphics.circle('fill', x, y, size + 0.5)
 
-		love.graphics.setLineWidth(1)
 		love.graphics.setColor(0.26, 0.64, 1)
-		love.graphics.line(startX, provCenterPos.y, endX, provCenterPos.y)
+		love.graphics.circle('fill', x, y, size)
 
-		local frac = math.Remap(self.balance, -1, 1, 1, 0)
+		local frac = math.Remap(self:GetBalance(), -1, 1, 1, 0)
 
-		love.graphics.setLineWidth(1)
 		love.graphics.setColor(0.81, 0.17, 0.1)
-		love.graphics.line(startX, provCenterPos.y, startX + (frac * 30), provCenterPos.y)
+		love.graphics.stencil(function()
+			love.graphics.rectangle('fill', x - size, y - size, size * 2 * frac, size * 2)
+		end)
+
+		love.graphics.setStencilTest('greater', 0)
+			love.graphics.circle('fill', x, y, size)
+		love.graphics.setStencilTest()
 	end
+end
+
+function Fight:DrawUI(ratio)
+	local font = gui.getFontImgui('fight.window')
+	if not font then return end
+
+	local attackers = self:GetAttackers()
+	local defenders = self:GetDefenders()
+	if not attackers or not defenders then return end
+
+	local _, firstUnit = next(attackers)
+	if not firstUnit then return end
+
+	local startProv = firstUnit:GetProvince()
+	if not startProv then return end
+
+	local prov = self:GetProvince()
+
+	local minPos, maxPos = prov:GetBounds()
+	minPos, maxPos = minPos * ratio, maxPos * ratio
+
+	local provCenterPos = (minPos + maxPos) / 2
+
+	minPos, maxPos = startProv:GetBounds()
+	minPos, maxPos = minPos * ratio, maxPos * ratio
+
+	local startProvCenterPos = (minPos + maxPos) / 2
+
+	local pos = (provCenterPos + startProvCenterPos) / 2
+
+	local flags = imgui.love.WindowFlags('NoTitleBar', 'NoMove', 'NoResize', 'NoCollapse', 'NoBackground')
+	local popupFlags = imgui.love.WindowFlags('NoResize', 'NoCollapse')
+
+	local scale = camera._scale or 1
+	local w, h = size * 2 * scale, size * 2 * scale
+
+	local popupW, popupH = 550, math.min(ScrH() / 2, 400)
+	local popupX, popupY = ScrW() / 2 - popupW / 2, ScrH() / 2 - popupH / 2
+
+	local id = '##fight_window' .. self:GetID()
+	local function drawPopup()
+		local avail = imgui.GetContentRegionAvail()
+
+		local frac = math.Remap(self:GetBalance(), -1, 1, 1, 0)
+		imgui.ProgressBar(frac, {-1, 16}, '')
+
+		if imgui.BeginChild_Str(id .. 'child1', {avail.x / 2, avail.y - 36}) then
+			if imgui.BeginTable(id .. 'child1_table', 6) then
+				imgui.TableNextRow()
+
+				imgui.TableSetColumnIndex(0)
+				imgui.TextUnformatted('Тип юнита')
+
+				imgui.TableSetColumnIndex(1)
+				imgui.TextUnformatted('Боеспособность')
+
+				imgui.TableSetColumnIndex(2)
+				imgui.TextUnformatted('Атака')
+
+				imgui.TableSetColumnIndex(3)
+				imgui.TextUnformatted('Защита')
+				
+				imgui.TableSetColumnIndex(4)
+				imgui.TextUnformatted('Броня')
+
+				imgui.TableSetColumnIndex(5)
+				imgui.TextUnformatted('Бронепробитие')
+
+				for _, unit in ipairs(attackers) do
+					imgui.TableNextRow()
+
+					imgui.TableSetColumnIndex(0)
+					imgui.TextUnformatted(tostring( unit:GetType() ))
+
+					imgui.TableSetColumnIndex(1)
+					imgui.TextUnformatted(tostring( math.floor(unit:GetCapability()) ))
+
+					imgui.TableSetColumnIndex(2)
+					imgui.TextUnformatted(tostring( unit:GetAttack() ))
+
+					imgui.TableSetColumnIndex(3)
+					imgui.TextUnformatted(tostring( unit:GetDefence() ))
+					
+					imgui.TableSetColumnIndex(4)
+					imgui.TextUnformatted(tostring( unit:GetArmor() ))
+
+					imgui.TableSetColumnIndex(5)
+					imgui.TextUnformatted(tostring( unit:GetArmorPierce() ))
+				end
+
+				imgui.EndTable()
+			end
+
+			imgui.EndChild()
+		end
+
+		imgui.SameLine()
+
+		if imgui.BeginChild_Str(id .. 'child2', {avail.x / 2, avail.y - 36}) then
+			if imgui.BeginTable(id .. 'child1_table', 6) then
+				imgui.TableNextRow()
+
+				imgui.TableSetColumnIndex(0)
+				imgui.TextUnformatted('Тип юнита')
+
+				imgui.TableSetColumnIndex(1)
+				imgui.TextUnformatted('Боеспособность')
+
+				imgui.TableSetColumnIndex(2)
+				imgui.TextUnformatted('Атака')
+
+				imgui.TableSetColumnIndex(3)
+				imgui.TextUnformatted('Защита')
+				
+				imgui.TableSetColumnIndex(4)
+				imgui.TextUnformatted('Броня')
+
+				imgui.TableSetColumnIndex(5)
+				imgui.TextUnformatted('Бронепробитие')
+
+				for _, unit in ipairs(defenders) do
+					imgui.TableNextRow()
+
+					imgui.TableSetColumnIndex(0)
+					imgui.TextUnformatted(tostring( unit:GetType() ))
+
+					imgui.TableSetColumnIndex(1)
+					imgui.TextUnformatted(tostring( math.floor(unit:GetCapability()) ))
+
+					imgui.TableSetColumnIndex(2)
+					imgui.TextUnformatted(tostring( unit:GetAttack() ))
+
+					imgui.TableSetColumnIndex(3)
+					imgui.TextUnformatted(tostring( unit:GetDefence() ))
+					
+					imgui.TableSetColumnIndex(4)
+					imgui.TextUnformatted(tostring( unit:GetArmor() ))
+
+					imgui.TableSetColumnIndex(5)
+					imgui.TextUnformatted(tostring( unit:GetArmorPierce() ))
+				end
+
+				imgui.EndTable()
+			end
+
+			imgui.EndChild()
+		end
+
+		imgui.Separator()
+
+		if imgui.Button('Закрыть', {-1, -1}) then
+			imgui.CloseCurrentPopup()
+		end
+	end
+
+	imgui.PushFont(font)
+
+	imgui.PushStyleVar_Vec2(imgui.ImGuiStyleVar_WindowPadding, {0, 0})
+	imgui.PushStyleVar_Vec2(imgui.ImGuiStyleVar_FramePadding, {0, 0})
+	imgui.PushStyleVar_Vec2(imgui.ImGuiStyleVar_ItemSpacing, {0, 0})
+	imgui.PushStyleVar_Float(imgui.ImGuiStyleVar_WindowBorderSize, 0)
+
+	local offsets = {map._centerX, map._minX, map._maxX}
+	for i, offset in ipairs(offsets) do
+		local x, y = offset + pos.x - size, pos.y - size
+		x, y = camera.worldToScreen(x, y)
+
+		imgui.SetNextWindowPos({x, y})
+		imgui.SetNextWindowSize({w, h})
+
+		if imgui.Begin(id .. i, nil, flags) then
+			imgui.PushStyleColor_Vec4(imgui.ImGuiCol_Button, {0, 0, 0, 0})
+			imgui.PushStyleColor_Vec4(imgui.ImGuiCol_ButtonHovered, {0, 0, 0, 0})
+			imgui.PushStyleColor_Vec4(imgui.ImGuiCol_ButtonActive, {0, 0, 0, 0})
+				if imgui.Button(id .. i, {w, h}) then
+					uiLib.sound.click(1)
+					imgui.OpenPopup_Str(id)
+				end
+			imgui.PopStyleColor(3)
+
+			imgui.SetNextWindowPos({popupX, popupY}, imgui.ImGuiCond_Appearing)
+			imgui.SetNextWindowSize({popupW, popupH})
+
+			if imgui.BeginPopup(id, popupFlags) then
+				drawPopup()
+				imgui.EndPopup()
+			end
+		end
+		imgui.End()
+	end
+
+	imgui.PopStyleVar(4)
+	imgui.PopFont()
 end
