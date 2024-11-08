@@ -225,11 +225,13 @@ function Province:OnClick(button)
 	if button == 1 then
 		if mapEditor._editor then return mapEditor.handler.provinceLeftClick(self) end
 
+		if map._selectedCountry then map._selectedCountry = nil end
 		map._selectedProvince = self
 	elseif button == 2 then
 		if mapEditor._editor then return mapEditor.handler.provinceRightClick(self) end
 		if units.handler.provinceRightClick(self) == true then return end
 
+		if map._selectedProvince then map._selectedProvince = nil end
 		map._selectedCountry = self:GetCountry()
 	elseif button == 4 then
 		local country = country.get(1)
