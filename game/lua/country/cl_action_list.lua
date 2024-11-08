@@ -220,7 +220,7 @@ hook.Add('AssetsLoaded', 'country.actionList', function()
 		if target == game.myCountry then return end
 		if not game.myCountry:InWarWith(target) then return end
 
-		uiLib.popup.query('Предложение мира', nil, {
+		uiLib.popup.query('Предложение мира', {closable = true}, {
 			{
 				type = 'combo',
 				tooltip = 'Предложение',
