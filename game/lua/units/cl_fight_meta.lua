@@ -378,7 +378,7 @@ function Fight:PostDraw(ratio)
 
 	local pos = (provCenterPos + startProvCenterPos) / 2
 
-	local offsets = {m0, map._minX, map._maxX}
+	local offsets = {0, map._minX, map._maxX}
 	for _, offset in ipairs(offsets) do
 		-- balance
 		local x = offset + pos.x
