@@ -217,31 +217,8 @@ hook.Add('AssetsLoaded', 'country.actionList', function()
 		country.declareWar(game.myCountry, target)
 	end)
 
-	country.actions.addCountryAction('Предложить перемирие', function(target)
-		if target == game.myCountry then return end
-		if not game.myCountry:InWarWith(target) then return end
-
-		uiLib.popup.query('Предложение мира', {closable = true}, {
-			{
-				type = 'combo',
-				tooltip = 'Предложение',
-				items = {
-					'Статус-кво',
-					'Текущие границы',
-				},
-				selected = 1,
-			},
-		},
-		function(widgets)
-			local val = widgets[1].selected
-			if val == 2 then
-				-- потом сделать предложение
-				game.myCountry.inWarWith = nil
-				target.inWarWith = nil
-
-				uiLib.popup.showMessage('Перемирие', ('%s принял наше предложение о перемирии с сохранением текущих границ'):format(target:GetName()))
-			end
-		end)
+	country.actions.addCountryAction('Предложить мир', function(target)
+		game.myCountry:MakePeaceOffer(target)
 	end)
 end)
 

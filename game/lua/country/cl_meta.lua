@@ -21,6 +21,8 @@ function Country:__init(id, name, rgb, capitalRegion)
 	self.stability = 50
 	self.units = {}
 
+	self.peaceOfferCooldownList = {}
+
 	self.text = love.graphics.newText(gui.getFont('country.name'), name)
 
 	self.textRatio = self.text:getWidth() / self.text:getHeight()
@@ -205,6 +207,33 @@ end
 
 function Country:InWarWith(other)
 	return self.inWarWith and self.inWarWith:GetID() == other:GetID()
+end
+
+function Country:MakePeaceOffer(target)
+	if target == self then return end
+	if not self:InWarWith(target) then return end
+
+	local targetID = target:GetID()
+	local cd = self.peaceOfferCooldownList[targetID]
+	if cd then
+		if cd > gamecycle._time then
+			return notify.show('error', 2, 'Вы не можете предлагать мир этому государство еще ' .. cd - gamecycle._time .. ' д.')
+		else
+			self.peaceOfferCooldownList[targetID] = nil
+		end
+	end
+
+	-- т.к. это бот просто делаем шанс
+	if love.math.random() < 0.5 then
+		game.myCountry.inWarWith = nil
+		target.inWarWith = nil
+
+		uiLib.popup.showMessage('Мир был принят!', ('%s принял наше предложение о мире с сохранением текущих границ'):format(target:GetName()))
+	else
+		uiLib.popup.showMessage('Мир был отвергнут!', ('%s отверг наше предложение о мире!'):format(target:GetName()))
+
+		self.peaceOfferCooldownList[targetID] = gamecycle._time + 90 -- кд на 90 игровых дней
+	end
 end
 
 -- Hooks
