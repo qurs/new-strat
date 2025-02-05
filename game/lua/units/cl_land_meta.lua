@@ -376,11 +376,10 @@ function Unit:Draw(i, offset)
 			end
 		end
 
-		local screenX, screenY = offset + x + ScrW() / 2 - cx * scale, y + ScrH() / 2 - cy * scale
-		local startX, startY = map.screenToImage(screenX, screenY)
-		local endX, endY = map.screenToImage(screenX + w, screenY + h)
+		local startX, startY = ((x - (cx * scale)) / scale) + cx, ((y - (cy * scale)) / scale) + cy
+		local endX, endY = ((x + w - (cx * scale)) / scale) + cx, ((y + h - (cy * scale)) / scale) + cy
 
-		self.screenPos = {startX, startY, endX, endY}
+		self.worldPos = {startX, startY, endX, endY}
 
 		local barH = 2
 		local frac = self:GetCapability() / self:GetMaxCapability()

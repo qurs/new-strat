@@ -30,15 +30,14 @@ hook.Add('MouseDown', 'units', function(mx, my, button)
 
 	units._selectedUnits = {}
 
-	local imgX, imgY = map.screenToImage(mx, my)
-	local scale = camera._scale or 1
+	local worldX, worldY = camera.screenToWorld(mx, my)
 
 	local unitList = c:GetUnits()
 	for _, unit in ipairs(unitList) do
-		local pos = unit.screenPos
+		local pos = unit.worldPos
 		if pos then
 			local startX, startY, endX, endY = unpack(pos)
-			if (imgX >= startX and imgX <= endX) and (imgY >= startY and imgY <= endY) then
+			if (worldX >= startX and worldX <= endX) and (worldY >= startY and worldY <= endY) then
 				uiLib.sound.click(3)
 				units._selectedUnits[unit] = true
 				return
@@ -50,7 +49,7 @@ hook.Add('MouseDown', 'units', function(mx, my, button)
 		units._selectedUnits = nil
 	end
 
-	units._mouseDown = {imgX, imgY, mx, my}
+	units._mouseDown = {worldX, worldY, mx, my}
 end)
 
 hook.Add('MouseUp', 'units', function(mx, my)
@@ -59,10 +58,10 @@ hook.Add('MouseUp', 'units', function(mx, my)
 	local startX, startY = unpack(units._mouseDown)
 	units._mouseDown = nil
 
-	local imgX, imgY = map.screenToImage(mx, my)
+	local worldX, worldY = camera.screenToWorld(mx, my)
 
-	local minX, minY = math.min(imgX, startX), math.min(imgY, startY)
-	local maxX, maxY = math.max(imgX, startX), math.max(imgY, startY)
+	local minX, minY = math.min(worldX, startX), math.min(worldY, startY)
+	local maxX, maxY = math.max(worldX, startX), math.max(worldY, startY)
 
 	local c = game.myCountry
 	if not c then return end
@@ -78,7 +77,7 @@ hook.Add('MouseUp', 'units', function(mx, my)
 	local areaPoint4 = Vector(minX, maxY)
 
 	for _, unit in ipairs(unitList) do
-		local pos = unit.screenPos
+		local pos = unit.worldPos
 		if pos then
 			local startX, startY, endX, endY = unpack(pos)
 			local startPos, endPos = Vector(startX, startY), Vector(endX, endY)
