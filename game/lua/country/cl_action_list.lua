@@ -145,67 +145,68 @@ hook.Add('AssetsLoaded', 'country.actionList', function()
 		units.create(c, prov, 0.5, 10, 1, 1.5, 0, 0)
 	end)
 
+	local mergeComboSelected = 1
 	country.actions.addRegionAction('Удалить', function(region)
 		local myCountry = game.myCountry
-		local regionsMap = {}
-		local comboItems = {}
 
-		for regID, reg in pairs(myCountry:GetRegions()) do
-			if regID == region:GetID() then goto continue end
-
-			local name = reg:GetName()
-			local index = #comboItems + 1
-
-			comboItems[index] = name
-			regionsMap[index] = regID
-
-			::continue::
+		if imgui.Button('Освободить') then
+			region:Remove()
+			imgui.CloseCurrentPopup()
 		end
 
-		uiLib.popup.query('Удаление региона', {closable = true}, {
-			{
-				type = 'label',
-				text = 'Выберите действие для удаляемого региона',
-			},
-			{
-				type = 'radio',
-				selection = {
-					{
-						tooltip = 'Освободить',
-						val = 1,
-					},
-					{
-						tooltip = 'Слияние с другим регионом',
-						val = 2,
-					},
-				},
-				entry = ffi.new('int[1]'),
-			},
-			{
-				type = 'combo',
-				tooltip = 'С каким регионом выполнить слияние',
-				items = comboItems,
-				selected = 1,
-			},
-		},
-		function(widgets)
-			local radioVal = widgets[2].entry[0]
-			if radioVal == 1 then
-				region:Remove()
-			else
-				local comboSelected = widgets[3].selected
-				local regID = regionsMap[comboSelected]
-				if not regID then return notify.show('error', 2, 'Выбран несуществующий регион!') end
+		if imgui.CollapsingHeader_TreeNodeFlags('Слияние с другим регионом', imgui.ImGuiTreeNodeFlags_None) then
+			local regionsMap = {}
+			local comboItems = {}
+
+			for regID, reg in pairs(myCountry:GetRegions()) do
+				if regID == region:GetID() then goto continue end
+	
+				local name = reg:GetName()
+				local index = #comboItems + 1
+	
+				comboItems[index] = name
+				regionsMap[index] = regID
+	
+				::continue::
+			end
+
+			if imgui.BeginCombo('С каким регионом выполнить слияние', comboItems[mergeComboSelected]) then
+				for i, v in ipairs(comboItems) do
+					local isSelected = i == mergeComboSelected
+					if imgui.Selectable_Bool(v .. ' ##' .. i, isSelected) then
+						mergeComboSelected = i
+					end
+
+					if isSelected then
+						imgui.SetItemDefaultFocus()
+					end
+				end
+				imgui.EndCombo()
+			end
+
+			if imgui.Button('Слияние') then
+				imgui.CloseCurrentPopup()
+
+				local regID = regionsMap[mergeComboSelected]
+				if not regID then
+					notify.show('error', 2, 'Выбран несуществующий регион!')
+					goto continue
+				end
 
 				local targetRegion = myCountry:GetRegions()[regID]
-				if not targetRegion then return notify.show('error', 2, 'Выбран несуществующий регион!') end
+				if not targetRegion then
+					notify.show('error', 2, 'Выбран несуществующий регион!')
+					goto continue
+				end
 
 				local population = region:GetPopulation()
 				targetRegion:AddPopulation(population)
 				region:TransferProvinces(nil, targetRegion)
+
+				::continue::
 			end
-		end)
-	end)
+        end
+	end, true)
 
 	-- Countries
 
