@@ -129,7 +129,8 @@ hook.Add('Think', '_assetloader', function()
 		local content = loadedFile.content
 
 		if loadedFile.type == 'img' then
-			content = {img = love.graphics.newImage(content), data = content}
+			local img = love.graphics.newImage(content)
+			content = {img = img, data = content, imgui_dimensions = imgui and imgui.ImVec2_Float(img:getDimensions())}
 		elseif loadedFile.type == 'array_img' then
 			content = {img = love.graphics.newArrayImage(content), data = content}
 		end

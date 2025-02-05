@@ -88,6 +88,12 @@ function love.load()
 					{path = 'assets/ui/wild_colonization.png', name = 'wild_colonization_icon', type = 'img'},
 					{path = 'assets/ui/knight_sword.png', name = 'knight_sword_icon', type = 'img'},
 					{path = 'assets/ui/knight_sword2.png', name = 'knight_sword2_icon', type = 'img'},
+					{path = 'assets/ui/unit_type.png', name = 'unit_type_icon', type = 'img'},
+					{path = 'assets/ui/unit_capability.png', name = 'unit_capability_icon', type = 'img'},
+					{path = 'assets/ui/unit_attack.png', name = 'unit_attack_icon', type = 'img'},
+					{path = 'assets/ui/unit_defence.png', name = 'unit_defence_icon', type = 'img'},
+					{path = 'assets/ui/unit_armor.png', name = 'unit_armor_icon', type = 'img'},
+					{path = 'assets/ui/unit_armorpierce.png', name = 'unit_armorpierce_icon', type = 'img'},
 				},
 			},
 			{

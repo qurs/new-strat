@@ -1,6 +1,6 @@
 gui.registerFont('fight.window', {
-	font = 'Montserrat-Medium',
-	size = 14,
+	font = 'Montserrat-Regular',
+	size = 12,
 })
 
 units = units or {}
@@ -403,6 +403,78 @@ function Fight:PostDraw(ratio)
 	end
 end
 
+local function drawCenteredTableIcon(iconName)
+	local icon = assetloader.get(iconName)
+	imgui.SetCursorPosX((imgui.GetColumnOffset() + (imgui.GetColumnWidth() / 2)) - icon.imgui_dimensions.x / 2)
+	imgui.Image(icon.img, icon.imgui_dimensions)
+end
+
+local function drawCenteredTableText(val)
+	local text = tostring(val)
+
+	imgui.SetCursorPosX((imgui.GetColumnOffset() + (imgui.GetColumnWidth() / 2)) - imgui.CalcTextSize(text).x / 2)
+	imgui.Text(text)
+end
+
+local function tooltip(text)
+	if imgui.IsItemHovered() then
+		imgui.BeginTooltip()
+			imgui.Text(text)
+		imgui.EndTooltip()
+	end
+ end
+
+local function makeTable(unitsList)
+	imgui.Columns(6)
+
+	drawCenteredTableIcon('unit_type_icon')
+	tooltip('Тип юнита')
+	imgui.NextColumn()
+
+	drawCenteredTableIcon('unit_capability_icon')
+	tooltip('Боеспособность юнита')
+	imgui.NextColumn()
+
+	drawCenteredTableIcon('unit_attack_icon')
+	tooltip('Сила атаки юнита')
+	imgui.NextColumn()
+
+	drawCenteredTableIcon('unit_defence_icon')
+	tooltip('Сила защиты юнита')
+	imgui.NextColumn()
+	
+	drawCenteredTableIcon('unit_armor_icon')
+	tooltip('Сила брони юнита')
+	imgui.NextColumn()
+
+	drawCenteredTableIcon('unit_armorpierce_icon')
+	tooltip('Сила бронепробития юнита')
+
+	imgui.Columns(1)
+	imgui.Separator()
+
+	for _, unit in ipairs(unitsList) do
+		imgui.Columns(6)
+
+		drawCenteredTableText( unit:GetType() )
+		imgui.NextColumn()
+
+		drawCenteredTableText( math.floor(unit:GetCapability()) )
+		imgui.NextColumn()
+
+		drawCenteredTableText( unit:GetAttack() )
+		imgui.NextColumn()
+
+		drawCenteredTableText( unit:GetDefence() )
+		imgui.NextColumn()
+		
+		drawCenteredTableText( unit:GetArmor() )
+		imgui.NextColumn()
+
+		drawCenteredTableText( unit:GetArmorPierce() )
+	end
+end
+
 function Fight:DrawUI(ratio)
 	local font = gui.getFontImgui('fight.window')
 	if not font then return end
@@ -448,51 +520,7 @@ function Fight:DrawUI(ratio)
 		imgui.ProgressBar(frac, {-1, 16}, '')
 
 		if imgui.BeginChild_Str(id .. 'child1', {avail.x / 2, avail.y - 36}) then
-			if imgui.BeginTable(id .. 'child1_table', 6) then
-				imgui.TableNextRow()
-
-				imgui.TableSetColumnIndex(0)
-				imgui.TextUnformatted('Тип юнита')
-
-				imgui.TableSetColumnIndex(1)
-				imgui.TextUnformatted('Боеспособность')
-
-				imgui.TableSetColumnIndex(2)
-				imgui.TextUnformatted('Атака')
-
-				imgui.TableSetColumnIndex(3)
-				imgui.TextUnformatted('Защита')
-				
-				imgui.TableSetColumnIndex(4)
-				imgui.TextUnformatted('Броня')
-
-				imgui.TableSetColumnIndex(5)
-				imgui.TextUnformatted('Бронепробитие')
-
-				for _, unit in ipairs(attackers) do
-					imgui.TableNextRow()
-
-					imgui.TableSetColumnIndex(0)
-					imgui.TextUnformatted(tostring( unit:GetType() ))
-
-					imgui.TableSetColumnIndex(1)
-					imgui.TextUnformatted(tostring( math.floor(unit:GetCapability()) ))
-
-					imgui.TableSetColumnIndex(2)
-					imgui.TextUnformatted(tostring( unit:GetAttack() ))
-
-					imgui.TableSetColumnIndex(3)
-					imgui.TextUnformatted(tostring( unit:GetDefence() ))
-					
-					imgui.TableSetColumnIndex(4)
-					imgui.TextUnformatted(tostring( unit:GetArmor() ))
-
-					imgui.TableSetColumnIndex(5)
-					imgui.TextUnformatted(tostring( unit:GetArmorPierce() ))
-				end
-
-				imgui.EndTable()
-			end
+			makeTable(attackers)
 
 			imgui.EndChild()
 		end
@@ -500,51 +528,7 @@ function Fight:DrawUI(ratio)
 		imgui.SameLine()
 
 		if imgui.BeginChild_Str(id .. 'child2', {avail.x / 2, avail.y - 36}) then
-			if imgui.BeginTable(id .. 'child1_table', 6) then
-				imgui.TableNextRow()
-
-				imgui.TableSetColumnIndex(0)
-				imgui.TextUnformatted('Тип юнита')
-
-				imgui.TableSetColumnIndex(1)
-				imgui.TextUnformatted('Боеспособность')
-
-				imgui.TableSetColumnIndex(2)
-				imgui.TextUnformatted('Атака')
-
-				imgui.TableSetColumnIndex(3)
-				imgui.TextUnformatted('Защита')
-				
-				imgui.TableSetColumnIndex(4)
-				imgui.TextUnformatted('Броня')
-
-				imgui.TableSetColumnIndex(5)
-				imgui.TextUnformatted('Бронепробитие')
-
-				for _, unit in ipairs(defenders) do
-					imgui.TableNextRow()
-
-					imgui.TableSetColumnIndex(0)
-					imgui.TextUnformatted(tostring( unit:GetType() ))
-
-					imgui.TableSetColumnIndex(1)
-					imgui.TextUnformatted(tostring( math.floor(unit:GetCapability()) ))
-
-					imgui.TableSetColumnIndex(2)
-					imgui.TextUnformatted(tostring( unit:GetAttack() ))
-
-					imgui.TableSetColumnIndex(3)
-					imgui.TextUnformatted(tostring( unit:GetDefence() ))
-					
-					imgui.TableSetColumnIndex(4)
-					imgui.TextUnformatted(tostring( unit:GetArmor() ))
-
-					imgui.TableSetColumnIndex(5)
-					imgui.TextUnformatted(tostring( unit:GetArmorPierce() ))
-				end
-
-				imgui.EndTable()
-			end
+			makeTable(defenders)
 
 			imgui.EndChild()
 		end
