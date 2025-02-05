@@ -5,6 +5,13 @@ camera._scale = camera._scale or 1
 camera.minScale = camera.minScale or 1
 camera.maxScale = camera.maxScale or 6.5
 
+function camera.clampPos()
+	local newMapSize = map._newMapSize
+	local size = newMapSize or {ScrW(), ScrH()}
+
+	camera._pos.y = math.Clamp(camera._pos.y, 0, math.max(size[2] - math.ceil(ScrH() / camera._scale), 0))
+end
+
 function camera.getPos()
 	local pos = camera._pos
 	if pos then
@@ -17,11 +24,11 @@ end
 function camera.setPos(pos)
 	camera._pos = pos
 
-	if map._mapSize then
-		local w, h = unpack(map._mapSize.new)
+	if map._newMapSize then
+		local w, h = unpack(map._newMapSize)
 
-		local minX = map._centerX - (w / 2)
-		local maxX = map._centerX + (w * 1.5)
+		local minX = -w
+		local maxX = w
 	
 		if pos.x < minX then
 			camera._pos.x = (camera._pos.x - minX) + maxX
@@ -30,29 +37,25 @@ function camera.setPos(pos)
 		end
 	end
 
-	-- camera._pos.x = math.Clamp(camera._pos.x, minW, maxW)
-	camera._pos.y = math.Clamp(camera._pos.y, 0, ScrH())
+	camera.clampPos()
 end
 
 function camera.move(offset)
 	camera.setPos(camera._pos + offset)
 end
 
-function camera.mouseToWorld(x, y)
-	local scale = camera._scale or 1
-	local camX, camY = camera.getPos()
+function camera.screenToWorld(x, y)
+	local camX, camY = camera._pos:Unpack()
+	local scale = camera._scale
 
-	return (x - ScrW() / 2) / scale + camX, (y - ScrH() / 2) / scale + camY
+	return x / scale + camX, y / scale + camY
 end
 
 function camera.worldToScreen(x, y)
-	local pos = camera._pos
-	if not pos then return end
+	local camX, camY = camera._pos:Unpack()
+	local scale = camera._scale
 
-	local cameraX, cameraY = pos:Unpack()
-	local scale = camera._scale or 1
-
-	return ScrW() / 2 + (x - cameraX) * scale, ScrH() / 2 + (y - cameraY) * scale
+	return (x - camX) * scale, (y - camY) * scale
 end
 
 function camera.push()
@@ -63,7 +66,6 @@ function camera.push()
 
 	love.graphics.push()
 
-	love.graphics.translate(ScrW() / 2, ScrH() / 2)
 	love.graphics.scale(camera._scale or 1)
 	love.graphics.translate(-x, -y)
 end
@@ -79,9 +81,18 @@ function camera.clampScale()
 end
 
 hook.Add('WheelMoved', 'camera', function(x, y)
+	local mx, my = love.mouse.getPosition()
+	local worldX, worldY = camera.screenToWorld(mx, my)
+
 	local force = 0.1 * camera._scale
 
+	local oldScale = camera._scale
+	local newScale = math.Clamp(oldScale + y * force, camera.minScale, camera.maxScale)
+
+	camera.setPos( Vector( worldX - (mx / newScale), worldY - (my / newScale) ) )
+
 	camera._scale = math.Clamp(camera._scale + y * force, camera.minScale, camera.maxScale)
+	camera.clampPos()
 end)
 
 hook.Add('MouseMoved', 'camera', function(x, y, dx, dy, istouch)

@@ -10,23 +10,39 @@ local vector_origin = Vector()
 function map.screenToImage(x, y)
 	if not map._img then return end
 
-	local img = map._img.provinces
-	if not img then return end
+	local imgData = map._img
+	if not imgData then return end
 
-	local mapW, mapH = unpack(img.size)
+	local mapW, mapH = unpack(imgData.size)
 	local ratio = ScrH() / mapH
 
-	local worldX, worldY = camera.mouseToWorld(x, y)
+	local worldX, worldY = camera.screenToWorld(x, y)
 
-	local imgX = math.floor((worldX - ScrW() / 2) / ratio) + mapW / 2
+	local imgX = math.floor(worldX / ratio)
 	local imgY = math.floor(worldY / ratio)
 
-	local w, h = unpack(map._mapSize.orig)
-	if imgX > w then
-		imgX = imgX - w
+	if imgX > mapW then
+		imgX = imgX - mapW
 	elseif imgX < 0 then
-		imgX = imgX + w
+		imgX = imgX + mapW
 	end
+
+	if imgX < 0 or imgX > mapW - 1 or imgY < 0 or imgY > mapH - 1 then return end
+
+	return imgX, imgY
+end
+
+function map.imageToWorld(x, y)
+	if not map._img then return end
+
+	local imgData = map._img
+	if not imgData then return end
+
+	local mapW, mapH = unpack(imgData.size)
+	local ratio = ScrH() / mapH
+
+	local imgX = math.floor(x * ratio)
+	local imgY = math.floor(y * ratio)
 
 	return imgX, imgY
 end
@@ -45,16 +61,11 @@ function map.createCanvas()
 
 	local ratio = ScrH() / mapH
 	local w, h = mapW * ratio, mapH * ratio
-	local x = ScrW() / 2 - w / 2
 
-	map._centerX = x
-	map._minX = x - w
-	map._maxX = x + w
+	map._minX = -w
+	map._maxX = w
 
-	map._mapSize = {
-		orig = {mapW, mapH},
-		new = {w, h},
-	}
+	map._newMapSize = {w, h}
 
 	if map._canvas then map._canvas:release() end
 	map._canvas = love.graphics.newCanvas(w, ScrH())
@@ -62,6 +73,7 @@ function map.createCanvas()
 
 	love.graphics.setCanvas(map._canvas)
 		love.graphics.clear(0, 0, 0, 0)
+
 		love.graphics.setColor(1, 1, 1)
 		love.graphics.draw(mapImg, 0, 0, 0, ratio)
 
@@ -147,7 +159,7 @@ hook.Add('Draw', 'map', function()
 		local ratio = ScrH() / mapH
 
 		love.graphics.setColor(1, 1, 1)
-		love.graphics.draw(mapImg, map._centerX, 0, 0, ratio)
+		love.graphics.draw(mapImg, 0, 0, 0, ratio)
 
 		love.graphics.setColor(1, 1, 1)
 		love.graphics.draw(mapImg, map._minX, 0, 0, ratio)
@@ -158,7 +170,7 @@ hook.Add('Draw', 'map', function()
 	end
 
 	love.graphics.setColor(1, 1, 1)
-	love.graphics.draw(map._canvas, map._centerX)
+	love.graphics.draw(map._canvas)
 
 	love.graphics.setColor(1, 1, 1)
 	love.graphics.draw(map._canvas, map._minX)
@@ -168,11 +180,8 @@ hook.Add('Draw', 'map', function()
 
 	local province = map._selectedProvince
 	if province then
-		love.graphics.push()
-			love.graphics.translate(map._centerX, 0)
-			love.graphics.setColor(1, 1, 1)
-			province:Draw(true)
-		love.graphics.pop()
+		love.graphics.setColor(1, 1, 1)
+		province:Draw(true)
 
 		love.graphics.push()
 			love.graphics.translate(map._minX, 0)
@@ -190,12 +199,12 @@ hook.Add('Draw', 'map', function()
 	hook.Run('PreDrawOverCountry')
 
 	for id, country in pairs(country._countries) do
-		country:DrawName(map._centerX)
+		country:DrawName(0)
 		country:DrawName(map._minX)
 		country:DrawName(map._maxX)
 
 		for id, region in pairs(country:GetRegions()) do
-			region:DrawCapital(map._centerX)
+			region:DrawCapital(0)
 			region:DrawCapital(map._minX)
 			region:DrawCapital(map._maxX)
 		end
@@ -207,7 +216,7 @@ hook.Add('Draw', 'map', function()
 			local id = prov:GetID()
 			provIndexes[id] = (provIndexes[id] or 0) + 1
 
-			unit:Draw(provIndexes[id], map._centerX)
+			unit:Draw(provIndexes[id], 0)
 			unit:Draw(provIndexes[id], map._minX)
 			unit:Draw(provIndexes[id], map._maxX)
 		end
@@ -217,7 +226,7 @@ hook.Add('Draw', 'map', function()
 
 	if map.debugRecursiveMap then
 		love.graphics.setColor(1, 1, 1, 0.8)
-		love.graphics.rectangle('fill', map._centerX, 0, map._canvas:getWidth(), map._canvas:getHeight())
+		love.graphics.rectangle('fill', 0, 0, map._canvas:getWidth(), map._canvas:getHeight())
 	
 		love.graphics.setColor(0, 0, 1, 0.5)
 		love.graphics.rectangle('fill', map._minX, 0, map._canvas:getWidth(), map._canvas:getHeight())

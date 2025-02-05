@@ -318,7 +318,7 @@ function Fight:CycleStep()
 end
 
 function Fight:Draw(ratio, drawnProvs)
-	local offsets = {map._centerX, map._minX, map._maxX}
+	local offsets = {0, map._minX, map._maxX}
 	local prov = self:GetProvince()
 
 	local minPos, maxPos = prov:GetBounds()
@@ -378,7 +378,7 @@ function Fight:PostDraw(ratio)
 
 	local pos = (provCenterPos + startProvCenterPos) / 2
 
-	local offsets = {map._centerX, map._minX, map._maxX}
+	local offsets = {m0, map._minX, map._maxX}
 	for _, offset in ipairs(offsets) do
 		-- balance
 		local x = offset + pos.x
@@ -547,7 +547,7 @@ function Fight:DrawUI(ratio)
 	imgui.PushStyleVar_Vec2(imgui.ImGuiStyleVar_ItemSpacing, {0, 0})
 	imgui.PushStyleVar_Float(imgui.ImGuiStyleVar_WindowBorderSize, 0)
 
-	local offsets = {map._centerX, map._minX, map._maxX}
+	local offsets = {0, map._minX, map._maxX}
 	for i, offset in ipairs(offsets) do
 		local x, y = offset + pos.x - size, pos.y - size
 		x, y = camera.worldToScreen(x, y)

@@ -279,11 +279,8 @@ local function drawBlockedProvince(editor, id, prov)
 	local settings = editor.settings
 	local r, g, b = unpack(settings.blockedRegionCol or {0.2, 0.2, 0.2})
 
-	love.graphics.push()
-		love.graphics.translate(map._centerX, 0)
-		love.graphics.setColor(r, g, b)
-		prov:Draw()
-	love.graphics.pop()
+	love.graphics.setColor(r, g, b)
+	prov:Draw()
 
 	love.graphics.push()
 		love.graphics.translate(map._minX, 0)
@@ -333,11 +330,8 @@ local function drawProvince(editor, id, prov)
 
 	local r, g, b = unpack(col)
 
-	love.graphics.push()
-		love.graphics.translate(map._centerX, 0)
-		love.graphics.setColor(r, g, b)
-		prov:Draw()
-	love.graphics.pop()
+	love.graphics.setColor(r, g, b)
+	prov:Draw()
 
 	love.graphics.push()
 		love.graphics.translate(map._minX, 0)
