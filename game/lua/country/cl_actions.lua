@@ -5,9 +5,10 @@ country.actions.list = country.actions.list or {}
 country.actions.list.region = country.actions.list.region or {}
 country.actions.list.country = country.actions.list.country or {}
 
-function country.actions.addRegionAction(name, callback)
+function country.actions.addRegionAction(name, callback, isContextMenu)
 	table.insert(country.actions.list.region, {
 		name = name,
+		isContextMenu = isContextMenu,
 		callback = callback,
 	})
 end

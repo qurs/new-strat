@@ -52,9 +52,21 @@ hook.Add('DrawUI', 'country.regionActions', function()
 		imgui.Text( ('Население: %s'):format(populationStr) )
 
 		for _, action in ipairs(country.actions.list.region) do
+			if action.isContextMenu then
+				if imgui.BeginPopupContextItem(action.name) then
+					action.callback(region)
+					imgui.EndPopup()
+				end
+			end
+
 			if imgui.Button(action.name) and myCountry:GetRegions()[region:GetID()] then
 				uiLib.sound.click(1)
-				action.callback(region)
+
+				if action.isContextMenu then
+					imgui.OpenPopup_Str(action.name)
+				else
+					action.callback(region)
+				end
 			end
 		end
 	end
