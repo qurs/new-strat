@@ -104,6 +104,8 @@ local btnW, btnH = 128, 28
 ]]
 
 function mapEditor.open(settings, callback)
+	if game.isSpectating() then return end
+
 	map._selectedProvince = nil
 
 	gamecycle._blocked = true

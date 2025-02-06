@@ -234,8 +234,10 @@ function Province:OnClick(button)
 		if map._selectedProvince then map._selectedProvince = nil end
 		map._selectedCountry = self:GetCountry()
 	elseif button == 4 then
-		local country = country.get(1)
-		local reg = country:GetRegions()[1]
+		if game.isSpectating() then return end
+
+		local c = game.myCountry
+		local reg = c:GetRegions()[1]
 	
 		self:ChangeRegion(reg)
 	end

@@ -15,6 +15,7 @@ hook.Add('AssetsLoaded', 'units', function()
 end)
 
 function units.handler.provinceRightClick(prov)
+	if game.isSpectating() then return end
 	if not units._selectedUnits then return false end
 
 	local provCountry = prov:GetCountry()

@@ -14,6 +14,7 @@ hook.Add('AssetsLoaded', 'country.countryActions', function()
 end)
 
 hook.Add('DrawUI', 'country.countryActions', function()
+	if game.isSpectating() then return end
 	if scene.getName() ~= 'map' then return end
 	if mapEditor._editor then return end
 
@@ -47,6 +48,7 @@ hook.Add('DrawUI', 'country.countryActions', function()
 end)
 
 hook.Add('PreDrawUI', 'country.countryActions', function()
+	if game.isSpectating() then return end
 	if scene.getName() ~= 'map' then return end
 	if mapEditor._editor then return end
 

@@ -14,6 +14,7 @@ hook.Add('AssetsLoaded', 'country.regionActions', function()
 end)
 
 hook.Add('DrawUI', 'country.regionActions', function()
+	if game.isSpectating() then return end
 	if scene.getName() ~= 'map' then return end
 	if mapEditor._editor then return end
 	if map._selectedCountry then return end

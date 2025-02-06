@@ -179,6 +179,7 @@ hook.Add('PostDrawUI', 'radialMenu', function()
 end)
 
 hook.Add('MouseDown', 'radialMenu', function(mouseX, mouseY, button)
+	if game.isSpectating() then return end
 	if not radialMenu._opened then return end
 	if button ~= 1 then return end
 

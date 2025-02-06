@@ -138,10 +138,17 @@ function Country:Destroy(reason)
 
 		gamecycle.event.ui.showWindow(reason, {
 			{
+				text = 'Наблюдать',
+				callback = function()
+					gamecycle._blocked = nil
+					game.spectatorMode()
+				end,
+			},
+			{
 				text = 'Закончить игру',
 				callback = function()
 					game.endGame()
-				end
+				end,
 			},
 		})
 	end

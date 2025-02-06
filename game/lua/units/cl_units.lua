@@ -22,6 +22,7 @@ hook.Add('gamecycle.step', 'units', function(dt)
 end)
 
 hook.Add('MouseDown', 'units', function(mx, my, button)
+	if game.isSpectating() then return end
 	if button ~= 1 then return end
 	if scene.getName() ~= 'map' then return end
 
@@ -53,6 +54,7 @@ hook.Add('MouseDown', 'units', function(mx, my, button)
 end)
 
 hook.Add('MouseUp', 'units', function(mx, my)
+	if game.isSpectating() then return end
 	if not units._mouseDown then return end
 
 	local startX, startY = unpack(units._mouseDown)
