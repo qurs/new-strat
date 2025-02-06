@@ -6,13 +6,18 @@ local Player = player._meta
 Player.__type = 'player'
 Player.__index = Player
 
-function Player:__init(ip, port, peer, name)
+function Player:__init(ip, port, peer, name, isHost)
 	self.ip = ip
 	self.port = port
 	self.peer = peer
 	self.name = name
 
-	self.host = ip .. ':' .. port
+	self.isHost = isHost
+	self.hostname = ip .. ':' .. port
+end
+
+function Player:IsHost()
+	return self.isHost
 end
 
 function Player:GetIP()
@@ -23,8 +28,8 @@ function Player:GetPort()
 	return self.port
 end
 
-function Player:GetHost()
-	return self.host
+function Player:GetHostname()
+	return self.hostname
 end
 
 function Player:GetPeer()
@@ -35,12 +40,21 @@ function Player:GetName()
 	return self.name
 end
 
-function Player:Send(data)
+function Player:Send(name, ...)
+	local data = {...}
+
+	if self:IsHost() then return end
+
 	local peer = self:GetPeer()
-	peer:send(data)
+	peer:send(json.encode {
+		name = name,
+		data = data,
+	})
 end
 
 function Player:Disconnect(reason)
+	if self:IsHost() then return end
+
 	local peer = self:GetPeer()
 
 	peer:send(json.encode {

@@ -1,44 +1,53 @@
 net = net or {}
 net.server = net.server or {}
+net.server._receives = net.server._receives or {}
+
+function net.server.Receive(name, callback)
+	net.server._receives[name] = callback
+end
 
 function net.server.OpenServer(port)
 	if net.server.host then return notify.show('error', 3, 'Невозможно создать сервер: уже создан!') end
-	net.server.host = enet.host_create('0.0.0.0:' .. port)
+
+	net.port = port
+	net.server.host = enet.host_create('*:' .. port)
 end
 
-local _receives = {}
-
-function net.server.Receive(name, callback)
-	_receives[name] = callback
-end
-
-function net.server.Send(receivers, name, data)
+function net.server.CloseServer()
 	if not net.server.host then return end
 
-	local dataToSend = {}
-	dataToSend.name = name
-	dataToSend.data = data
+	net.port = nil
 
-	local dataToSend = json.encode(dataToSend)
+	net.server.host:destroy()
+	net.server.host = nil
+
+	player._list = {}
+	player._map = {}
+	player._nameMap = {}
+
+	collectgarbage()
+end
+
+function net.server.Send(receivers, name, ...)
+	if not net.server.host then return end
 
 	if type(receivers) == 'table' then
 		for _, client in ipairs(receivers) do
-			client:Send(dataToSend)
+			client:Send(name, ...)
 		end
 	else
-		receivers:Send(dataToSend)
+		receivers:Send(name, ...)
 	end
 end
 
-function net.server.Broadcast(name, data)
+function net.server.Broadcast(name, ...)
 	if not net.server.host then return end
 
 	local dataToSend = {}
 	dataToSend.name = name
-	dataToSend.data = data
+	dataToSend.data = {...}
 
 	local dataToSend = json.encode(dataToSend)
-
 	net.server.host:broadcast(dataToSend)
 end
 
@@ -55,6 +64,15 @@ function net.server.Validate(peer, ip, port, validateData)
 		peer:send(json.encode {
 			name = '_disconnect',
 			data = 'This host already connected!',
+		})
+		peer:disconnect_later()
+		return
+	end
+
+	if player.GetByName(validateData.nickname) then
+		peer:send(json.encode {
+			name = '_disconnect',
+			data = 'Игрок с таким именем уже есть!',
 		})
 		peer:disconnect_later()
 		return
@@ -86,16 +104,16 @@ hook.Add('Think', 'net.server', function()
 		
 		local name = info.name
 		if name == '_validate' then
-			return net.server.Validate(peer, ip, port, info.data)
+			return net.server.Validate(peer, ip, port, unpack(info.data or {}))
 		end
 
-		local func = _receives[name]
+		local func = net.server._receives[name]
 		if not func then return end
 
 		local ply = player.Get(ip, port)
 		if not ply then return end
 
-		func(ply, info.data)
+		func(ply, unpack(info.data or {}))
 	elseif event.type == 'connect' then
 		local ply = player.Get(ip, port)
 		if ply then
