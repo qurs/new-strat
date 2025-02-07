@@ -472,6 +472,9 @@ local function makeTable(unitsList)
 		imgui.NextColumn()
 
 		drawCenteredTableText( unit:GetArmorPierce() )
+
+		imgui.Columns(1)
+		imgui.Separator()
 	end
 end
 
