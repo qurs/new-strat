@@ -107,6 +107,36 @@ function map.getProvinceByScreenPos(x, y)
 	return map.getProvinceByPos(imgX, imgY)
 end
 
+function map.unload(bDontCallGC)
+	map._loaded = nil
+
+	if map._canvas then map._canvas:release() end
+
+	if map._generatedProvincesData then map._generatedProvincesData:release() end
+	if map._generatedMapData then map._generatedMapData:release() end
+
+	if map._img and map._img.img then map._img.img:release() end
+	if map._img and map._img.provinces and map._img.provinces.img then map._img.provinces.img:release() end
+
+	map._img = nil
+	map._canvas = nil
+	map._generatedProvincesData = nil
+	map._generatedMapData = nil
+	map._newMapSize = nil
+	map._minX = nil
+	map._maxX = nil
+
+	map._selectedProvince = nil
+	map._selectedCountry = nil
+
+	map._provinces = {}
+	map._provincesMap = {}
+	country._provinces = {}
+
+	if bDontCallGC then return end
+	collectgarbage()
+end
+
 function map.load(generatedProvincesData, generatedMapData)
 	camera.setPos(vector_origin)
 

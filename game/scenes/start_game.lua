@@ -8,6 +8,7 @@ local countryEntry = {
 }
 
 local loaded = false
+local loadingStarted = false
 
 local hintText, loadingText
 local buttonW, buttonH = 128, 32
@@ -30,7 +31,6 @@ local generatedMapData, generatedProvincesData
 local function provinceLoadHandler(result)
 	if result.type == 'sea' then return end -- пока что не обрабатываем воду
 
-	map = map or {}
 	map._provinces = map._provinces or {}
 	map._provincesMap = map._provincesMap or {}
 
@@ -68,10 +68,13 @@ local function finishLoading()
 	end
 
 	map.load(generatedProvincesData, generatedMapData)
+	loadingStarted = false
 	loaded = true
 end
 
 local function generateMap()
+	loadingStarted = true
+
 	mapGen.newGenerator()
 		:SetSize(4096, 2048)
 		:SetRemoveLakes(true)
@@ -94,11 +97,29 @@ local function generateMap()
 				end
 
 				currentProvStep = 0
-				love.thread.newThread('threads/load_provinces.lua'):start(self.csvPath, generatedProvincesData)
+				love.thread.newThread('threads/load_provinces.lua'):start('mapgenerator/provinces.csv', generatedProvincesData)
 			end)
 			:Generate()
 	end)
 	:Generate()
+end
+
+local function loadGeneratedMap()
+	if not love.filesystem.getInfo('mapgenerator/map.png') or not love.filesystem.getInfo('mapgenerator/province_map.png') or not love.filesystem.getInfo('mapgenerator/provinces.csv') then
+		return notify.show('error', 2, 'Не найдено сгенерированных карт!')
+	end
+
+	generatedMapData = love.image.newImageData('mapgenerator/map.png')
+	generatedProvincesData = love.image.newImageData('mapgenerator/province_map.png')
+
+	for line in love.filesystem.lines('mapgenerator/provinces.csv') do
+		maxStepProvinces = maxStepProvinces + 1
+	end
+
+	currentProvStep = 0
+	love.thread.newThread('threads/load_provinces.lua'):start('mapgenerator/provinces.csv', generatedProvincesData)
+
+	loadingStarted = true
 end
 
 function curScene:Initialize()
@@ -107,11 +128,10 @@ function curScene:Initialize()
 
 	loadingText = love.graphics.newText(gui.getFont('start_game'))
 	loadingText:setf('Подождите, идет генерация карты...', ScrW(), 'center')
-
-	generateMap()
 end
 
 function curScene:Think(dt)
+	if not loadingStarted then return end
 	if loaded then return end
 	if not currentProvStep then return end
 
@@ -145,6 +165,8 @@ end
 
 function curScene:PreDrawUI()
 	if not loaded then
+		if not loadingStarted then return end
+
 		local progressBarW, progressBarH = 256, 16
 		local th = loadingText:getHeight()
 
@@ -187,7 +209,56 @@ function curScene:PreDrawUI()
 end
 
 function curScene:UI()
-	if not loaded then return end
+	if not loaded then
+		if loadingStarted then return end
+
+		local font = gui.getFontImgui('mainmenu')
+		local flags = imgui.love.WindowFlags('NoTitleBar', 'NoBackground', 'NoMove', 'NoResize', 'NoCollapse')
+
+		imgui.SetNextWindowPos({0, 0})
+		imgui.SetNextWindowSize({ScrW(), ScrH()})
+
+		imgui.PushFont(font)
+		if imgui.Begin('pre_start_game', nil, flags) then
+			local style = imgui.GetStyle()
+
+			uiLib.verticalAlign({
+				function()
+					local height = 30
+					return height, function()
+						if uiLib.alignedButton('Загрузить ранее сгенерированный мир', 0.5, {350, height}) then
+							uiLib.sound.click(1)
+							loadGeneratedMap()
+						end
+					end
+				end,
+
+				function()
+					local height = 30
+					return height, function()
+						if uiLib.alignedButton('Сгенерировать новый мир', 0.5, {350, height}) then
+							uiLib.sound.click(1)
+							generateMap()
+						end
+					end
+				end,
+
+				function()
+					local height = 30
+					return height, function()
+						if uiLib.alignedButton('Назад', 0.5, {350, height}) then
+							uiLib.sound.click(1)
+							scene.change('mainmenu')
+						end
+					end
+				end,
+			}, 0.5)
+		end
+		imgui.End()
+		imgui.PopFont()
+
+		return
+	end
 
 	local font = gui.getFontImgui('start_game')
 	local hintFont = gui.getFontImgui('start_game_hint')
@@ -216,6 +287,7 @@ function curScene:UI()
 			if imgui.Button('Назад', {buttonW, buttonH}) then
 				uiLib.sound.click(1)
 				scene.change('mainmenu')
+				map.unload()
 			end
 
 			imgui.SameLine()
