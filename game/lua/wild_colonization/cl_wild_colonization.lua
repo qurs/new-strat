@@ -3,7 +3,10 @@ wildColonization = wildColonization or {}
 wildColonization.cooldown = 30 * 24 -- 30 игровых дней
 wildColonization.colonizationTime = {15, 45} -- от 15 до 45 игровых дней
 
-hook.Add('Initialize', 'wildColonization', function()
+hook.Add('AssetsLoaded', 'wildColonization', function()
+	local startSound = love.audio.newSource( assetloader.get('sound_colonization_start'), 'static' )
+	startSound:setVolume(0.4)
+
 	gamecycle.event.registerEvent('wild_colonization', function(prov)
 		if not prov then return end
 
@@ -135,6 +138,9 @@ hook.Add('Initialize', 'wildColonization', function()
 
 			wildColonization._blocked = true
 			gamecycle.event.startDelayedEvent('wild_colonization', days * 24, {name = 'Колонизация'}, prov)
+
+			startSound:stop()
+			startSound:play()
 
 			mapEditor.close()
 		end)
