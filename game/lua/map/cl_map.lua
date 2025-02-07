@@ -84,7 +84,7 @@ function map.createCanvas()
 end
 
 function map.getProvinceByPos(x, y)
-	local data = assetloader.get('map_provinces').data
+	local data = map._generatedProvincesData
 
 	local ok, r, g, b = pcall(data.getPixel, data, x, y)
 	if not ok or not r then return end
@@ -107,34 +107,41 @@ function map.getProvinceByScreenPos(x, y)
 	return map.getProvinceByPos(imgX, imgY)
 end
 
-hook.Add('AssetsLoaded', 'map', function()
+function map.load(generatedProvincesData, generatedMapData)
 	camera.setPos(vector_origin)
 
-	local provincesImg = assetloader.get('map_provinces').img
+	map._generatedProvincesData = generatedProvincesData
+	map._generatedMapData = generatedMapData
+
+	local provincesImg = love.graphics.newImage(generatedProvincesData)
 	provincesImg:setFilter('nearest', 'nearest')
 
-	local img = assetloader.get('map').img
-	local w, h = img:getWidth(), img:getHeight()
+	local mapImg = love.graphics.newImage(generatedMapData)
+	local w, h = mapImg:getWidth(), mapImg:getHeight()
 
 	local pw, ph = provincesImg:getWidth(), provincesImg:getHeight()
 
 	map._img = {
-		img = img,
+		img = mapImg,
 		size = {w, h},
 		provinces = {
 			img = provincesImg,
 			size = {pw, ph},
 		},
 	}
-	
+
+	map._loaded = true
+
 	for _, province in ipairs(map._provinces) do
 		util.queuePrioritizedPreDrawMethodCall(province, 'CreateCanvas', 1)
 	end
 
 	util.queuePrioritizedPreDrawFunctionCall(map.createCanvas, 99)
-end)
+end
 
 hook.Add('WindowResized', 'map', function()
+	if not map._loaded then return end
+
 	for _, province in ipairs(map._provinces) do
 		util.queuePrioritizedPreDrawMethodCall(province, 'CreateCanvas', 1)
 	end
@@ -149,6 +156,8 @@ hook.Add('WindowResized', 'map', function()
 end)
 
 hook.Add('Draw', 'map', function()
+	if not map._loaded then return end
+
 	if scene.getName() ~= 'map' and scene.getName() ~= 'start_game' then return end
 	if mapEditor._editor then
 		local imgData = map._img
@@ -237,6 +246,8 @@ hook.Add('Draw', 'map', function()
 end)
 
 hook.Add('DrawUI', 'map', function()
+	if not map._loaded then return end
+
 	if scene.getName() ~= 'map' and scene.getName() ~= 'start_game' then return end
 	if not map.debugProvinces then return end
 
@@ -270,6 +281,8 @@ hook.Add('DrawUI', 'map', function()
 end)
 
 hook.Add('MouseDown', 'map', function(x, y, button)
+	if not map._loaded then return end
+
 	if scene.getName() ~= 'map' and scene.getName() ~= 'start_game' then return end
 	if button == 3 then return end
 	if not map._provincesMap then return end
@@ -292,6 +305,8 @@ hook.Add('MouseDown', 'map', function(x, y, button)
 end)
 
 hook.Add('KeyDown', 'map', function(button)
+	if not map._loaded then return end
+
 	if scene.getName() ~= 'map' and scene.getName() ~= 'start_game' then return end
 	if button == 'escape' and (map._selectedProvince or map._selectedCountry or units._selectedUnits) then
 		if map._selectedProvince then map._selectedProvince = nil end

@@ -4,6 +4,8 @@ mapGen._meta = mapGen._meta or {}
 local MapGenerator = mapGen._meta
 MapGenerator.__index = MapGenerator
 
+local fn = function() end
+
 function MapGenerator:init()
 	self.path = 'mapgenerator/map.png'
 	self.width = 1920
@@ -15,6 +17,13 @@ function MapGenerator:init()
 	self.minLakeSize = 256
 	self.freq = 0.0015
 	self.octave = 5
+
+	self.callback = fn
+end
+
+function MapGenerator:SetCallback(callback)
+	self.callback = callback
+	return self
 end
 
 function MapGenerator:SetSavePath(path)
@@ -63,137 +72,13 @@ function MapGenerator:SetOctave(octave)
 	return self
 end
 
-local function dist(w, h, x, y)
-	local nx = 2 * x / w - 1
-	local ny = 2 * y / h - 1
-	return 1 - (1 - nx^2) * (1 - ny^2)
-end
-
-local function pixelMap(w, h, baseX, baseY, freq, octave, x, y, r, g, b, a)
-	local noise = love.math.noise(baseX + freq * x, baseY + freq * y)
-	local sum = 1
-
-	for i = 1, octave do
-		noise = noise + 1 / (2^i) * love.math.noise(baseX + freq * (2^i) * x, baseY + freq * (2^i) * y)
-		sum = sum + 1 / (2^i)
-	end
-
-	noise = noise / sum
-
-	local d = dist(w, h, x, y)
-	local e = noise
-
-	if d > 0.5 then
-		e = Lerp(0.5, noise, 1 - d)
-	end
-
-	if e < 0.5 then
-		return 0, 0, 0, 1
-	else
-		return 1, 1, 1, 1
-	end
-end
-
-local function floodFill(imgData, w, h, startX, startY, cache, targetR, targetG, targetB)
-	local visited = {}
-
-	if cache[startX] and cache[startX][startY] then
-		return unpack(cache[startX][startY])
-	end
-
-	local stack = {}
-	local points = {}
-	local size = 0
-
-	table.insert(stack, {startX, startY})
-
-    while #stack > 0 do
-		local point = table.remove(stack)
-		local x, y = unpack(point)
-
-		if x < 0 or x > (w - 1) or y < 0 or y > (h - 1) or (visited[x] and visited[x][y]) then
-			goto continue
-		end
-
-		visited[x] = visited[x] or {}
-		visited[x][y] = true
-
-		local r, g, b = imgData:getPixel(x, y)
-		if r ~= targetR and g ~= targetG and b ~= targetB then
-			goto continue
-		end
-
-		size = size + 1
-		points[#points + 1] = {x, y}
-
-		table.insert(stack, {x + 1, y})
-		table.insert(stack, {x - 1, y})
-		table.insert(stack, {x, y + 1})
-		table.insert(stack, {x, y - 1})
-
-		::continue::
-    end
-
-	for _, point in ipairs(points) do
-		local x, y = unpack(point)
-		cache[x] = cache[x] or {}
-		cache[x][y] = {size, visited}
-	end
-
-	return size, visited
-end
-
 function MapGenerator:Generate()
-	local baseX = 1337 * love.math.random()
-	local baseY = 1337 * love.math.random()
+	if mapGen._isGenerating then return end
 
-	local path = self.path
+	mapGen._generationProgress = 0
+	mapGen._isGenerating = self
 
-	local removeLakes = self.removeLakes
-	local minIslandSize = self.minIslandSize
-	local minLakeSize = self.minLakeSize
-	local freq = self.freq
-	local octave = self.octave
-
-	local w, h = self.width, self.height
-	local imgData = love.image.newImageData(w, h)
-
-	imgData:mapPixel(function(x, y, r, g, b, a)
-		return pixelMap(w, h, baseX, baseY, freq, octave, x, y, r, g, b, a)
-	end)
-
-	local cache = {}
-
-	-- remove little islands
-	imgData:mapPixel(function(x, y, r, g, b, a)
-		if r == 0 then return r, g, b, a end
-
-		local size = floodFill(imgData, w, h, x, y, cache, 1, 1, 1)
-		if size < minIslandSize then
-			return 0, 0, 0, 1
-		end
-
-		return r, g, b, a
-	end)
-
-	cache = {}
-
-	-- remove little lakes
-	imgData:mapPixel(function(x, y, r, g, b, a)
-		if r == 1 then return r, g, b, a end
-
-		local size, visited = floodFill(imgData, w, h, x, y, cache, 0, 0, 0)
-		if (removeLakes and (not visited[0] or not visited[0][0])) or (not removeLakes and size < minLakeSize) then
-			return 1, 1, 1, 1
-		end
-
-		return r, g, b, a
-	end)
-
-	local data = imgData:encode('png')
-	love.filesystem.write(path, data)
-
-	return true
+	love.thread.newThread('threads/map_generation.lua'):start(self.removeLakes, self.minIslandSize, self.minLakeSize, self.freq, self.octave, self.width, self.height)
 end
 
 function mapGen.newGenerator()
@@ -204,3 +89,38 @@ function mapGen.newGenerator()
 
 	return meta
 end
+
+function mapGen.getProgress()
+	return mapGen._generationProgress or 0
+end
+
+hook.Add('Think', 'mapGen', function()
+	local meta = mapGen._isGenerating
+	if not meta then return end
+
+	do
+		local channel = love.thread.getChannel('map_generator')
+		if channel then
+			local imgData = channel:pop()
+			if imgData then
+				local data = imgData:encode('png')
+				love.filesystem.write(meta.path, data)
+	
+				meta.callback(meta)
+				mapGen._isGenerating = nil
+
+				return
+			end
+		end
+	end
+
+	do
+		local channel = love.thread.getChannel('map_generator_progress')
+		if channel then
+			local progress = channel:pop()
+			if progress then
+				mapGen._generationProgress = progress
+			end
+		end
+	end
+end)
