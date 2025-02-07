@@ -1,4 +1,67 @@
 mapGen = mapGen or {}
+mapGen._meta = mapGen._meta or {}
+
+local MapGenerator = mapGen._meta
+MapGenerator.__index = MapGenerator
+
+function MapGenerator:init()
+	self.path = 'mapgenerator/map.png'
+	self.width = 1920
+	self.height = 1080
+
+	self.removeLakes = false
+
+	self.minIslandSize = 128
+	self.minLakeSize = 256
+	self.freq = 0.0015
+	self.octave = 5
+end
+
+function MapGenerator:SetSavePath(path)
+	self.path = path
+	return self
+end
+
+function MapGenerator:SetSize(w, h)
+	self.width = w
+	self.height = h
+	return self
+end
+
+function MapGenerator:SetWidth(w)
+	self.width = w
+	return self
+end
+
+function MapGenerator:SetHeight(h)
+	self.height = h
+	return self
+end
+
+function MapGenerator:SetRemoveLakes(b)
+	self.removeLakes = b
+	return self
+end
+
+function MapGenerator:SetMinIslandSize(size)
+	self.minIslandSize = size
+	return self
+end
+
+function MapGenerator:SetMinLakeSize(size)
+	self.minLakeSize = size
+	return self
+end
+
+function MapGenerator:SetFreq(freq)
+	self.freq = freq
+	return self
+end
+
+function MapGenerator:SetOctave(octave)
+	self.octave = octave
+	return self
+end
 
 local function dist(w, h, x, y)
 	local nx = 2 * x / w - 1
@@ -31,9 +94,11 @@ local function pixelMap(w, h, baseX, baseY, freq, octave, x, y, r, g, b, a)
 	end
 end
 
-local function floodFill(imgData, w, h, startX, startY, visited, cache, targetR, targetG, targetB)
+local function floodFill(imgData, w, h, startX, startY, cache, targetR, targetG, targetB)
+	local visited = {}
+
 	if cache[startX] and cache[startX][startY] then
-		return cache[startX][startY]
+		return unpack(cache[startX][startY])
 	end
 
 	local stack = {}
@@ -72,33 +137,38 @@ local function floodFill(imgData, w, h, startX, startY, visited, cache, targetR,
 	for _, point in ipairs(points) do
 		local x, y = unpack(point)
 		cache[x] = cache[x] or {}
-		cache[x][y] = size
+		cache[x][y] = {size, visited}
 	end
 
-	return size
+	return size, visited
 end
 
-function mapGen.generateLand(path, w, h, freq, octave, minIslandSize, minLakeSize)
+function MapGenerator:Generate()
 	local baseX = 1337 * love.math.random()
 	local baseY = 1337 * love.math.random()
 
-	minIslandSize = minIslandSize or 64
-	minLakeSize = minLakeSize or 256
-	freq = freq or 0.0015
-	octave = octave or 5
+	local path = self.path
 
+	local removeLakes = self.removeLakes
+	local minIslandSize = self.minIslandSize
+	local minLakeSize = self.minLakeSize
+	local freq = self.freq
+	local octave = self.octave
+
+	local w, h = self.width, self.height
 	local imgData = love.image.newImageData(w, h)
 
 	imgData:mapPixel(function(x, y, r, g, b, a)
 		return pixelMap(w, h, baseX, baseY, freq, octave, x, y, r, g, b, a)
 	end)
 
-	local visited = {}
 	local cache = {}
 
 	-- remove little islands
 	imgData:mapPixel(function(x, y, r, g, b, a)
-		local size = floodFill(imgData, w, h, x, y, visited, cache, 1, 1, 1)
+		if r == 0 then return r, g, b, a end
+
+		local size = floodFill(imgData, w, h, x, y, cache, 1, 1, 1)
 		if size < minIslandSize then
 			return 0, 0, 0, 1
 		end
@@ -106,13 +176,14 @@ function mapGen.generateLand(path, w, h, freq, octave, minIslandSize, minLakeSiz
 		return r, g, b, a
 	end)
 
-	visited = {}
 	cache = {}
 
 	-- remove little lakes
 	imgData:mapPixel(function(x, y, r, g, b, a)
-		local size = floodFill(imgData, w, h, x, y, visited, cache, 0, 0, 0)
-		if size < minLakeSize then
+		if r == 1 then return r, g, b, a end
+
+		local size, visited = floodFill(imgData, w, h, x, y, cache, 0, 0, 0)
+		if (removeLakes and (not visited[0] or not visited[0][0])) or (not removeLakes and size < minLakeSize) then
 			return 1, 1, 1, 1
 		end
 
@@ -121,9 +192,15 @@ function mapGen.generateLand(path, w, h, freq, octave, minIslandSize, minLakeSiz
 
 	local data = imgData:encode('png')
 	love.filesystem.write(path, data)
+
+	return true
 end
 
-hook.Add('Initialize', 'asd', function()
-	mapGen.generateLand('test.png', 1920, 1080)
-	-- mapGen.generateProvs(love.image.newImageData('test.png'), 1002, 2)
-end)
+function mapGen.newGenerator()
+	love.filesystem.createDirectory('mapgenerator')
+
+	local meta = setmetatable({}, mapGen._meta)
+	meta:init()
+
+	return meta
+end

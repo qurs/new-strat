@@ -14,6 +14,8 @@ for line in love.filesystem.lines(path) do
 	local id = tonumber(data[1])
 	local r, g, b = tonumber(data[2]), tonumber(data[3]), tonumber(data[4])
 	local colorID = ('%s,%s,%s'):format(r, g, b)
+	local type = data[5]
+	local isCoastal = data[6] and tobool(data[6]) or false
 
 	local pixels = {}
 	local pixelsMap = {}
@@ -49,5 +51,7 @@ for line in love.filesystem.lines(path) do
 		pixelsMap = pixelsMap,
 		minPos = {minX, minY},
 		maxPos = {maxX, maxY},
+		type = type,
+		isCoastal = isCoastal,
 	})
 end
