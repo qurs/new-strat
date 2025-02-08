@@ -28,6 +28,7 @@ function mapEditor.handler.provinceLeftClick(prov)
 
 	if settings.singleSelect then
 		editor._selected = id
+		mapEditor.createSelectedCanvas()
 		return
 	end
 
@@ -40,6 +41,8 @@ function mapEditor.handler.provinceLeftClick(prov)
 	else
 		editor._selected[id] = prov
 	end
+
+	mapEditor.createSelectedCanvas()
 end
 
 function mapEditor.handler.provinceRightClick(prov)
@@ -69,9 +72,12 @@ function mapEditor.handler.provinceRightClick(prov)
 
 	if settings.singleSelect then
 		editor._selected2 = id
+		mapEditor.createSelectedCanvas()
 		return
 	end
 
 	if not editor._selected[id] then editor._selected[id] = prov end
 	editor._selected2 = id
+
+	mapEditor.createSelectedCanvas()
 end

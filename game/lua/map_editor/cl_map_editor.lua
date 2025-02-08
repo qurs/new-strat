@@ -116,6 +116,8 @@ function mapEditor.open(settings, callback)
 		callback = callback,
 		_selected = {},
 	}
+
+	mapEditor.createCanvas()
 end
 
 function mapEditor.close()
@@ -283,18 +285,6 @@ local function drawBlockedProvince(editor, id, prov)
 
 	love.graphics.setColor(r, g, b)
 	prov:Draw()
-
-	love.graphics.push()
-		love.graphics.translate(map._minX, 0)
-		love.graphics.setColor(r, g, b)
-		prov:Draw()
-	love.graphics.pop()
-
-	love.graphics.push()
-		love.graphics.translate(map._maxX, 0)
-		love.graphics.setColor(r, g, b)
-		prov:Draw()
-	love.graphics.pop()
 end
 
 local function drawBlockedRegion(editor, regID, reg)
@@ -332,26 +322,203 @@ local function drawProvince(editor, id, prov)
 
 	local r, g, b = unpack(col)
 
-	love.graphics.setColor(r, g, b)
-	prov:Draw()
+	local provCanvas = prov.canvas
+	local provW, provH = provCanvas:getDimensions()
 
-	love.graphics.push()
-		love.graphics.translate(map._minX, 0)
+	local shader = shaders.get('outline_mul')
+	shader:send('coordStep', {1 / provW, 1 / provH})
+	shader:send('size', 1)
+	shader:send('mul', 0.9)
+
+	love.graphics.setShader(shader)
 		love.graphics.setColor(r, g, b)
 		prov:Draw()
-	love.graphics.pop()
-
-	love.graphics.push()
-		love.graphics.translate(map._maxX, 0)
-		love.graphics.setColor(r, g, b)
-		prov:Draw()
-	love.graphics.pop()
+	love.graphics.setShader()
 end
 
 local function drawRegion(editor, regID, reg)
-	for id, province in pairs(reg:GetProvinces()) do
-		drawProvince(editor, id, province)
+	editor._regionCanvases = editor._regionCanvases or {}
+
+	local canvas = editor._regionCanvases[regID]
+	if not canvas then
+		editor._regionCanvases[regID] = love.graphics.newCanvas(map._newMapSize[1], ScrH())
+		canvas = editor._regionCanvases[regID]
+
+		canvas:renderTo(function()
+			for id, province in pairs(reg:GetProvinces()) do
+				drawProvince(editor, id, province)
+			end
+		end)
 	end
+
+	local w, h = canvas:getDimensions()
+
+	local shader = shaders.get('outline_mul')
+	shader:send('coordStep', {1 / w, 1 / h})
+	shader:send('size', 2)
+	shader:send('mul', 0.65)
+	
+	love.graphics.setShader(shader)
+		love.graphics.setColor(1, 1, 1)
+		love.graphics.draw(canvas)
+	love.graphics.setShader()
+end
+
+function mapEditor.createCanvas()
+	local editor = mapEditor._editor
+	if not editor then return end
+
+	local settings = editor.settings
+
+	local renderBlockTargets = settings.renderBlockTargets
+	local renderTarget, renderExclude = mapEditor.getTarget()
+
+	local renderType = settings.renderType or 'region'
+
+	if not editor._canvas then editor._canvas = love.graphics.newCanvas(map._newMapSize[1], ScrH()) end
+	editor._canvas:setFilter('linear', 'nearest')
+
+	editor._canvas:renderTo(function()
+		love.graphics.clear(0, 0, 0, 0)
+
+		if renderTarget then
+			for _, id in ipairs(renderTarget) do
+				if renderType == 'region' then
+					local reg = country.getRegion(id)
+					if not reg then goto continue end
+		
+					if renderBlockTargets and renderBlockTargets[id] then
+						drawBlockedRegion(editor, id, reg)
+						goto continue
+					end
+		
+					drawRegion(editor, id, reg)
+				elseif renderType == 'province' then
+					local prov = country.getProvince(id)
+					if not prov then goto continue end
+		
+					if renderBlockTargets and renderBlockTargets[id] then
+						drawBlockedProvince(editor, id, prov)
+						goto continue
+					end
+		
+					drawProvince(editor, id, prov)
+				end
+				
+				::continue::
+			end
+		elseif renderExclude then
+			if renderType == 'region' then
+				for id, reg in pairs(country._regions) do
+					if renderExclude[id] then goto continue end
+	
+					if renderBlockTargets and renderBlockTargets[id] then
+						drawBlockedRegion(editor, id, reg)
+						goto continue
+					end
+	
+					drawRegion(editor, id, reg)
+	
+					::continue::
+				end
+			elseif renderType == 'province' then
+				for id, prov in pairs(country._provinces) do
+					if renderExclude[id] then goto continue end
+	
+					if renderBlockTargets and renderBlockTargets[id] then
+						drawBlockedProvince(editor, id, prov)
+						goto continue
+					end
+	
+					drawProvince(editor, id, prov)
+	
+					::continue::
+				end
+			end
+		end
+	end)
+end
+
+function mapEditor.createSelectedCanvas()
+	local editor = mapEditor._editor
+	if not editor then return end
+
+	local settings = editor.settings
+
+	local renderBlockTargets = settings.renderBlockTargets
+	local renderTarget, renderExclude = mapEditor.getTarget()
+
+	local renderType = settings.renderType or 'region'
+
+	local single = settings.singleSelect
+
+	local selected = {}
+	local selected2 = editor._selected2
+	if single then
+		selected[editor._selected] = true
+	else
+		selected = editor._selected
+	end
+
+	if not editor._selectedCanvas then editor._selectedCanvas = love.graphics.newCanvas(map._newMapSize[1], ScrH()) end
+	editor._selectedCanvas:setFilter('linear', 'nearest')
+
+	editor._selectedCanvas:renderTo(function()
+		love.graphics.clear(0, 0, 0, 0)
+
+		if renderTarget then
+			for _, id in ipairs(renderTarget) do
+				if not selected[id] and editor._selected2 ~= id then goto continue end
+	
+				if renderType == 'region' then
+					local reg = country.getRegion(id)
+					if not reg then goto continue end
+					if renderBlockTargets and renderBlockTargets[id] then goto continue end
+		
+					drawRegion(editor, id, reg)
+				elseif renderType == 'province' then
+					local prov = country.getProvince(id)
+					if not prov then goto continue end
+					if renderBlockTargets and renderBlockTargets[id] then goto continue end
+		
+					drawProvince(editor, id, prov)
+				end
+	
+				::continue::
+			end
+	
+		elseif renderExclude then
+			if renderType == 'region' then
+				for id, reg in pairs(country._regions) do
+					if renderExclude[id] then goto continue end
+					if not selected[id] and editor._selected2 ~= id then goto continue end
+	
+					if renderBlockTargets and renderBlockTargets[id] then
+						drawBlockedRegion(editor, id, reg)
+						goto continue
+					end
+	
+					drawRegion(editor, id, reg)
+	
+					::continue::
+				end
+			elseif renderType == 'province' then
+				for id, prov in pairs(country._provinces) do
+					if renderExclude[id] then goto continue end
+					if not selected[id] and editor._selected2 ~= id then goto continue end
+	
+					if renderBlockTargets and renderBlockTargets[id] then
+						drawBlockedProvince(editor, id, prov)
+						goto continue
+					end
+	
+					drawProvince(editor, id, prov)
+	
+					::continue::
+				end
+			end
+		end
+	end)
 end
 
 hook.Add('Draw', 'mapEditor', function()
@@ -365,59 +532,27 @@ hook.Add('Draw', 'mapEditor', function()
 
 	local renderType = settings.renderType or 'region'
 
-	if renderTarget then
-		for _, id in ipairs(renderTarget) do
-			if renderType == 'region' then
-				local reg = country.getRegion(id)
-				if not reg then goto continue end
-	
-				if renderBlockTargets and renderBlockTargets[id] then
-					drawBlockedRegion(editor, id, reg)
-					goto continue
-				end
-	
-				drawRegion(editor, id, reg)
-			elseif renderType == 'province' then
-				local prov = country.getProvince(id)
-				if not prov then goto continue end
-	
-				if renderBlockTargets and renderBlockTargets[id] then
-					drawBlockedProvince(editor, id, prov)
-					goto continue
-				end
-	
-				drawProvince(editor, id, prov)
-			end
-			
-			::continue::
-		end
-	elseif renderExclude then
-		if renderType == 'region' then
-			for regID, reg in pairs(country._regions) do
-				if renderExclude[regID] then goto continue end
+	love.graphics.setColor(1, 1, 1)
+	love.graphics.draw(editor._canvas)
 
-				if renderBlockTargets and renderBlockTargets[regID] then
-					drawBlockedRegion(editor, regID, reg)
-					goto continue
-				end
+	if editor._selectedCanvas then
+		love.graphics.setColor(1, 1, 1)
+		love.graphics.draw(editor._selectedCanvas)
+	end
 
-				drawRegion(editor, regID, reg)
+	love.graphics.setColor(1, 1, 1)
+	love.graphics.draw(editor._canvas, map._minX)
 
-				::continue::
-			end
-		elseif renderType == 'province' then
-			for provID, prov in pairs(country._provinces) do
-				if renderExclude[provID] then goto continue end
+	if editor._selectedCanvas then
+		love.graphics.setColor(1, 1, 1)
+		love.graphics.draw(editor._selectedCanvas, map._minX)
+	end
 
-				if renderBlockTargets and renderBlockTargets[provID] then
-					drawBlockedProvince(editor, provID, prov)
-					goto continue
-				end
+	love.graphics.setColor(1, 1, 1)
+	love.graphics.draw(editor._canvas, map._maxX)
 
-				drawProvince(editor, provID, prov)
-
-				::continue::
-			end
-		end
+	if editor._selectedCanvas then
+		love.graphics.setColor(1, 1, 1)
+		love.graphics.draw(editor._selectedCanvas, map._maxX)
 	end
 end)
