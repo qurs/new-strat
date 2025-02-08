@@ -7,6 +7,9 @@ hook.Add('AssetsLoaded', 'wildColonization', function()
 	local startSound = love.audio.newSource( assetloader.get('sound_colonization_start'), 'static' )
 	startSound:setVolume(0.4)
 
+	local successSound = love.audio.newSource( assetloader.get('sound_colonization_end'), 'static' )
+	local failSound = love.audio.newSource( assetloader.get('sound_colonization_fail'), 'static' )
+
 	gamecycle.event.registerEvent('wild_colonization', function(prov)
 		if not prov then return end
 
@@ -26,6 +29,9 @@ hook.Add('AssetsLoaded', 'wildColonization', function()
 			comboItems[index] = name
 			regionsMap[index] = regID
 		end
+
+		successSound:stop()
+		successSound:play()
 
 		gamecycle.event.ui.showWindow('В ходе разведки территории не было обнаружено местных жителей, соответственно территория достается нам даром!', {
 			{

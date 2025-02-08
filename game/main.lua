@@ -47,6 +47,8 @@ function love.load()
 					{path = 'assets/sounds/click3.mp3', name = 'sound_click3', type = 'sound'},
 					{path = 'assets/sounds/walking.mp3', name = 'sound_walking', type = 'sound'},
 					{path = 'assets/sounds/colonization_start.mp3', name = 'sound_colonization_start', type = 'sound'},
+					{path = 'assets/sounds/colonization_end.mp3', name = 'sound_colonization_end', type = 'sound'},
+					{path = 'assets/sounds/colonization_fail.mp3', name = 'sound_colonization_fail', type = 'sound'},
 				},
 			},
 		},
