@@ -202,14 +202,14 @@ function Province:Draw(outlined)
 	local canvas = self.canvas
 	if not canvas then return end
 
-	local w, h = canvas:getWidth(), canvas:getHeight()
-
-	local shader = shaders.get('outline_mul')
-	shader:send('coordStep', {1 / w, 1 / h})
-	shader:send('size', 2)
-	shader:send('mul', 0.65)
-
 	if outlined then
+		local w, h = canvas:getWidth(), canvas:getHeight()
+
+		local shader = shaders.get('outline_mul')
+		shader:send('coordStep', {1 / w, 1 / h})
+		shader:send('size', 2)
+		shader:send('mul', 0.65)
+
 		love.graphics.setShader(shader)
 	end
 
