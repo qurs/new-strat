@@ -81,6 +81,8 @@ function map.createCanvas()
 			country:Draw()
 		end
 	love.graphics.setCanvas()
+
+	hook.Run('MapCanvasCreated')
 end
 
 function map.getProvinceByPos(x, y)

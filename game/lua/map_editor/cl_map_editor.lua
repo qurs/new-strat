@@ -375,7 +375,9 @@ function mapEditor.createCanvas()
 
 	local renderType = settings.renderType or 'region'
 
-	if not editor._canvas then editor._canvas = love.graphics.newCanvas(map._newMapSize[1], ScrH()) end
+	if editor._canvas then editor._canvas:release() end
+
+	editor._canvas = love.graphics.newCanvas(map._newMapSize[1], ScrH())
 	editor._canvas:setFilter('linear', 'nearest')
 
 	editor._canvas:renderTo(function()
@@ -460,7 +462,9 @@ function mapEditor.createSelectedCanvas()
 		selected = editor._selected
 	end
 
-	if not editor._selectedCanvas then editor._selectedCanvas = love.graphics.newCanvas(map._newMapSize[1], ScrH()) end
+	if editor._selectedCanvas then editor._selectedCanvas:release() end
+
+	editor._selectedCanvas = love.graphics.newCanvas(map._newMapSize[1], ScrH())
 	editor._selectedCanvas:setFilter('linear', 'nearest')
 
 	editor._selectedCanvas:renderTo(function()
@@ -520,6 +524,13 @@ function mapEditor.createSelectedCanvas()
 		end
 	end)
 end
+
+hook.Add('MapCanvasCreated', 'mapEditor', function()
+	if not mapEditor._editor then return end
+
+	mapEditor.createCanvas()
+	mapEditor.createSelectedCanvas()
+end)
 
 hook.Add('Draw', 'mapEditor', function()
 	local editor = mapEditor._editor
