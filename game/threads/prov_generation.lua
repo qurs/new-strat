@@ -1,6 +1,5 @@
 require('love.image')
 require('love.math')
-require('love.timer')
 
 local ffi = require('ffi')
 
@@ -16,42 +15,58 @@ local inputDataPointer = ffi.cast('uint8_t*', inputData:getFFIPointer())
 local currentStep = 0
 local maxSteps = 8 + (lloydIterations * 2)
 
-local function getColorKey(r, g, b)
-	return ('%s;%s;%s'):format(r, g, b)
-end
+local progressChannel = love.thread.getChannel('prov_generator_progress')
 
+local function getColorKey(r, g, b)
+	return r * 65536 + g * 256 + b
+end
+  
 local function getColorFromKey(key)
-	local rStr, gStr, bStr = key:match('^(%d+);(%d+);(%d+)$')
-	return tonumber(rStr), tonumber(gStr), tonumber(bStr)
+	local r = math.floor(key / 65536)
+	local g = math.floor((key % 65536) / 256)
+	local b = key % 256
+	return r, g, b
 end
 
 local function updateProgress()
-	love.thread.getChannel('prov_generator_progress'):push(currentStep / maxSteps)
+	progressChannel:push(currentStep / maxSteps)
+end
+
+local function getIndexByPosition(x, y)
+	return (y * width + x) * 4
+end
+
+local function getPixel(pointer, x, y)
+	local i = getIndexByPosition(x, y)
+	return pointer[i], pointer[i + 1], pointer[i + 2], pointer[i + 3]
+end
+
+local function setPixel(pointer, x, y, r, g, b, a)
+	local i = getIndexByPosition(x, y)
+	pointer[i] = r
+	pointer[i + 1] = g
+	pointer[i + 2] = b
+	if a then pointer[i + 3] = a end
 end
 
 local function iterateOverPixels(pointer, callback)
-	local lastUpdate = 0
 	local max = (4 * pixelCount) - 1
 
-	for i = 0, max, 4 do
-		local r, g, b, a = pointer[i], pointer[i + 1], pointer[i + 2], pointer[i + 3]
-
-		local pos = i / 4
-		local x = pos % width
-		local y = math.floor(pos / width)
-
-		local newR, newG, newB, newA = callback(x, y, r, g, b, a)
-		if newR then
-			pointer[i] = newR
-			pointer[i + 1] = newG
-			pointer[i + 2] = newB
-			pointer[i + 3] = newA
+	for y = 0, height - 1 do
+		for x = 0, width - 1 do
+			local i = getIndexByPosition(x, y)
+			local r, g, b, a = pointer[i], pointer[i + 1], pointer[i + 2], pointer[i + 3]
+	
+			local newR, newG, newB, newA = callback(x, y, r, g, b, a)
+			if newR then
+				pointer[i] = newR
+				pointer[i + 1] = newG
+				pointer[i + 2] = newB
+				pointer[i + 3] = newA
+			end
 		end
 
-		if love.timer.getTime() - lastUpdate > 1 then
-			lastUpdate = love.timer.getTime()
-			love.thread.getChannel('prov_generator_progress'):push((currentStep + (i / max)) / maxSteps)
-		end
+		progressChannel:push((currentStep + (getIndexByPosition(width - 1, y) / max)) / maxSteps)
 	end
 
 	currentStep = currentStep + 1
@@ -59,51 +74,72 @@ local function iterateOverPixels(pointer, callback)
 end
 
 -- Flood fill (4-смежность) для выделения связной компоненты, начинающейся с (x, y)
-local function floodFill(x, y, origR, origG, origB, width, height, imageData, visited)
-	local stack = {{x = x, y = y}}
+local function floodFill(x, y, origR, origG, origB, width, height, imageDataPointer, visited)
 	local compPixels = {}
 	local compKey = getColorKey(origR, origG, origB)
-	while #stack > 0 do
-		local pos = table.remove(stack)
+	
+	local stack = {}
+	local stackSize = 0
+
+	local function push(px, py)
+		stackSize = stackSize + 1
+		stack[stackSize] = {x = px, y = py}
+	end
+
+	local function pop()
+		local pos = stack[stackSize]
+		stack[stackSize] = nil
+		stackSize = stackSize - 1
+		return pos
+	end
+
+	push(x, y)
+
+	while stackSize > 0 do
+		local pos = pop()
 		local px, py = pos.x, pos.y
+
 		if px >= 0 and px < width and py >= 0 and py < height then
 			local idx = px + py * width + 1
-			if not visited[idx] then
-				local r, g, b, a = imageData:getPixel(px, py)
-				if getColorKey(love.math.colorToBytes(r, g, b)) == compKey then
-					visited[idx] = true
-					table.insert(compPixels, {x = px, y = py})
-					table.insert(stack, {x = px + 1, y = py})
-					table.insert(stack, {x = px - 1, y = py})
-					table.insert(stack, {x = px, y = py + 1})
-					table.insert(stack, {x = px, y = py - 1})
+			if visited[idx] == 0 then
+				local r, g, b, a = getPixel(imageDataPointer, px, py)
+				if getColorKey(r, g, b) == compKey then
+					visited[idx] = 1
+					compPixels[#compPixels + 1] = {x = px, y = py}
+
+					-- Добавляем соседей (4-смежность) в стек.
+					push(px + 1, py)
+					push(px - 1, py)
+					push(px, py + 1)
+					push(px, py - 1)
 				end
 			end
 		end
 	end
+
 	return { key = compKey, pixels = compPixels, size = #compPixels }
 end
 
 -- Функция устранения анклавов: для каждого цвета оставляем основную (наибольшую) компоненту,
 -- а остальные (анклавы) переопределяем на основе голосования среди соседей.
-local function removeEnclaves(imageData, imageDataPointer, origImageData)
-	local width, height = imageData:getDimensions()
-	local visited = {}
+local function removeEnclaves(imageDataPointer, origImageDataPointer)
+	local visited = ffi.new('uint8_t[?]', pixelCount)
 
 	-- Собираем компоненты для каждого цвета
 	local compsByColor = {}  -- [colorKey] = { main = comp, extras = { comp1, comp2, ... } }
 	iterateOverPixels(imageDataPointer, function(x, y, r, g, b, a)
 		local idx = x + y * width + 1
-		if not visited[idx] then
-			local comp = floodFill(x, y, r, g, b, width, height, imageData, visited)
+		if visited[idx] == 0 then
+			local comp = floodFill(x, y, r, g, b, width, height, imageDataPointer, visited)
 			if not compsByColor[comp.key] then
 				compsByColor[comp.key] = { main = comp, extras = {} }
 			else
+				local extras = compsByColor[comp.key].extras
 				if comp.size > compsByColor[comp.key].main.size then
-					table.insert(compsByColor[comp.key].extras, compsByColor[comp.key].main)
+					extras[#extras + 1] = compsByColor[comp.key].main
 					compsByColor[comp.key].main = comp
 				else
-					table.insert(compsByColor[comp.key].extras, comp)
+					extras[#extras + 1] = comp
 				end
 			end
 		end
@@ -113,14 +149,14 @@ local function removeEnclaves(imageData, imageDataPointer, origImageData)
 	for _, group in pairs(compsByColor) do
 		for _, comp in ipairs(group.extras) do
 			local neighborVotes = {}  -- голоса за цвета соседей
-			local inComp = {}
+			local inComp = ffi.new('uint8_t[?]', pixelCount)
 			for _, pos in ipairs(comp.pixels) do
 				local idx = pos.x + pos.y * width + 1
-				inComp[idx] = true
+				inComp[idx] = 1
 			end
 			for _, pos in ipairs(comp.pixels) do
 				local x, y = pos.x, pos.y
-				local origR = origImageData:getPixel(x, y)
+				local origR = getPixel(origImageDataPointer, x, y)
 				local neighbors = {
 					{x = x + 1, y = y},
 					{x = x - 1, y = y},
@@ -130,12 +166,12 @@ local function removeEnclaves(imageData, imageDataPointer, origImageData)
 				for _, n in ipairs(neighbors) do
 					if n.x >= 0 and n.x < width and n.y >= 0 and n.y < height then
 						local nIdx = n.x + n.y * width + 1
-						if not inComp[nIdx] then
-							local origNeighborR = origImageData:getPixel(n.x, n.y)
+						if inComp[nIdx] == 0 then
+							local origNeighborR = getPixel(origImageDataPointer, n.x, n.y)
 							
 							if origR == origNeighborR then
-								local nr, ng, nb, na = imageData:getPixel(n.x, n.y)
-								local nKey = getColorKey(love.math.colorToBytes(nr, ng, nb))
+								local nr, ng, nb, na = getPixel(imageDataPointer, n.x, n.y)
+								local nKey = getColorKey(nr, ng, nb)
 								neighborVotes[nKey] = (neighborVotes[nKey] or 0) + 1
 							end
 						end
@@ -150,9 +186,9 @@ local function removeEnclaves(imageData, imageDataPointer, origImageData)
 				end
 			end
 			if bestKey then
-				local newR, newG, newB = love.math.colorFromBytes(getColorFromKey(bestKey))
+				local newR, newG, newB = getColorFromKey(bestKey)
 				for _, pos in ipairs(comp.pixels) do
-					imageData:setPixel(pos.x, pos.y, newR, newG, newB, 1)
+					setPixel(imageDataPointer, pos.x, pos.y, newR, newG, newB, 255)
 				end
 			end
 		end
@@ -212,9 +248,9 @@ local function start()
 	while #landSeeds < nLandProvinces do
 		local x = love.math.random(0, width - 1)
 		local y = love.math.random(0, height - 1)
-		local r, g, b, a = inputData:getPixel(x, y)
-		if r == 1 then
-			table.insert(landSeeds, {
+		local r = getPixel(inputDataPointer, x, y)
+		if r == 255 then
+			landSeeds[#landSeeds + 1] = {
 				x = x,
 				y = y,
 				color = {
@@ -222,7 +258,7 @@ local function start()
 					love.math.random(20, 255),
 					love.math.random(20, 255),
 				}
-			})
+			}
 		end
 	end
 
@@ -234,9 +270,9 @@ local function start()
 	while #oceanSeeds < nOceanProvinces do
 		local x = love.math.random(0, width - 1)
 		local y = love.math.random(0, height - 1)
-		local r, g, b, a = inputData:getPixel(x, y)
+		local r = getPixel(inputDataPointer, x, y)
 		if r == 0 then
-			table.insert(oceanSeeds, {
+			oceanSeeds[#oceanSeeds + 1] = {
 				x = x,
 				y = y,
 				color = {
@@ -244,7 +280,7 @@ local function start()
 					love.math.random(20, 255),
 					love.math.random(20, 255),
 				}
-			})
+			}
 		end
 	end
 
@@ -266,13 +302,13 @@ local function start()
 	local newImageDataPointer = ffi.cast('uint8_t*', newImageData:getFFIPointer())
 
 	iterateOverPixels(newImageDataPointer, function(x, y, r, g, b, a)
-		local origR = inputData:getPixel(x, y)
-		if origR == 1 then
+		local origR = getPixel(inputDataPointer, x, y)
+		if origR == 255 then
 			local bestIndex, bestDist = 1, math.huge
 			for i, seed in ipairs(landSeeds) do
 				local dx = x - seed.x
 				local dy = y - seed.y
-				local dist = dx ^ 2 + dy ^ 2
+				local dist = dx * dx + dy * dy
 				if dist < bestDist then
 					bestDist = dist
 					bestIndex = i
@@ -285,7 +321,7 @@ local function start()
 			for i, seed in ipairs(oceanSeeds) do
 				local dx = x - seed.x
 				local dy = y - seed.y
-				local dist = dx ^ 2 + dy ^ 2
+				local dist = dx * dx + dy * dy
 				if dist < bestDist then
 					bestDist = dist
 					bestIndex = i
@@ -296,7 +332,7 @@ local function start()
 		end
 	end)
 
-	removeEnclaves(newImageData, newImageDataPointer, inputData)
+	removeEnclaves(newImageDataPointer, inputDataPointer)
 
 	currentStep = currentStep + 1
 	updateProgress()
@@ -308,7 +344,7 @@ local function start()
 		local curProv = provinces[curCol]
 
 		if not curProv then
-			local origR = inputData:getPixel(x, y)
+			local origR = getPixel(inputDataPointer, x, y)
 			local provType = origR == 0 and 'sea' or 'land'
 
 			provinces[curCol] = {
@@ -331,7 +367,7 @@ local function start()
 			local x, y = unpack(point)
 			if x < 0 or x > width - 1 or y < 0 or y > height - 1 then goto continue end
 
-			local col = getColorKey( love.math.colorToBytes(newImageData:getPixel(x, y)) )
+			local col = getColorKey( getPixel(newImageDataPointer, x, y) )
 			local neighborType = provinces[col] and provinces[col].type
 			if neighborType == 'sea' then
 				curProv.isCoastal = true
@@ -346,7 +382,8 @@ local function start()
 	local csv = ''
 	for rgb, province in pairs(provinces) do
 		id = id + 1
-		csv = csv .. ('%s;%s;%s;%s\n'):format(id, rgb, province.type, province.isCoastal)
+		local r, g, b = getColorFromKey(rgb)
+		csv = csv .. ('%s;%s;%s;%s;%s;%s\n'):format(id, r, g, b, province.type, province.isCoastal)
 	end
 
 	love.thread.getChannel('prov_generator'):push({

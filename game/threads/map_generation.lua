@@ -12,33 +12,39 @@ local pixelCount = w * h
 local currentStep = 0
 local maxSteps = 3
 
+local progressChannel = love.thread.getChannel('map_generator_progress')
+
 local function updateProgress()
-	love.thread.getChannel('map_generator_progress'):push(currentStep / maxSteps)
+	progressChannel:push(currentStep / maxSteps)
+end
+
+local function getIndexByPosition(x, y)
+	return (y * w + x) * 4
+end
+
+local function getPixel(pointer, x, y)
+	local i = getIndexByPosition(x, y)
+	return pointer[i], pointer[i + 1], pointer[i + 2], pointer[i + 3]
 end
 
 local function iterateOverPixels(pointer, callback)
-	local lastUpdate = 0
 	local max = (4 * pixelCount) - 1
 
-	for i = 0, max, 4 do
-		local r, g, b, a = pointer[i], pointer[i + 1], pointer[i + 2], pointer[i + 3]
-
-		local pos = i / 4
-		local x = pos % w
-		local y = math.floor(pos / w)
-
-		local newR, newG, newB, newA = callback(x, y, r, g, b, a)
-		if newR then
-			pointer[i] = newR
-			pointer[i + 1] = newG
-			pointer[i + 2] = newB
-			pointer[i + 3] = newA
+	for y = 0, h - 1 do
+		for x = 0, w - 1 do
+			local i = getIndexByPosition(x, y)
+			local r, g, b, a = pointer[i], pointer[i + 1], pointer[i + 2], pointer[i + 3]
+	
+			local newR, newG, newB, newA = callback(x, y, r, g, b, a)
+			if newR then
+				pointer[i] = newR
+				pointer[i + 1] = newG
+				pointer[i + 2] = newB
+				pointer[i + 3] = newA
+			end
 		end
 
-		if love.timer.getTime() - lastUpdate > 1 then
-			lastUpdate = love.timer.getTime()
-			love.thread.getChannel('map_generator_progress'):push((currentStep + (i / max)) / maxSteps)
-		end
+		progressChannel:push((currentStep + (getIndexByPosition(w - 1, y) / max)) / maxSteps)
 	end
 
 	currentStep = currentStep + 1
@@ -57,19 +63,30 @@ end
 local function dist(w, h, x, y)
 	local nx = 2 * x / w - 1
 	local ny = 2 * y / h - 1
-	return 1 - (1 - nx^2) * (1 - ny^2)
+	return 1 - (1 - nx * nx) * (1 - ny * ny)
+end
+
+local octaveFreqs = {}
+local octaveWeights = {}
+local totalWeight = 1
+
+for i = 1, octave do
+	octaveFreqs[i] = freq * (2^i)
+
+	local weight = 1 / (2^i)
+	octaveWeights[i] = weight
+
+	totalWeight = totalWeight + weight
 end
 
 local function pixelMap(w, h, baseX, baseY, freq, octave, x, y, r, g, b, a)
 	local noise = love.math.noise(baseX + freq * x, baseY + freq * y)
-	local sum = 1
 
 	for i = 1, octave do
-		noise = noise + 1 / (2^i) * love.math.noise(baseX + freq * (2^i) * x, baseY + freq * (2^i) * y)
-		sum = sum + 1 / (2^i)
+		noise = noise + octaveWeights[i] * love.math.noise(baseX + octaveFreqs[i] * x, baseY + octaveFreqs[i] * y)
 	end
 
-	noise = noise / sum
+	noise = noise / totalWeight
 
 	local d = dist(w, h, x, y)
 	local e = noise
@@ -85,44 +102,56 @@ local function pixelMap(w, h, baseX, baseY, freq, octave, x, y, r, g, b, a)
 	end
 end
 
-local function floodFill(imgData, w, h, startX, startY, cache, targetR, targetG, targetB)
+local function floodFill(imgDataPointer, w, h, startX, startY, cache, targetCol)
 	local visited = {}
 
 	if cache[startX] and cache[startX][startY] then
 		return unpack(cache[startX][startY])
 	end
 
-	local stack = {}
 	local points = {}
 	local size = 0
 
-	table.insert(stack, {startX, startY})
+	local stack = {}
+    local stackSize = 0
 
-    while #stack > 0 do
-		local point = table.remove(stack)
-		local x, y = unpack(point)
+    local function push(x, y)
+        stackSize = stackSize + 1
+        stack[stackSize] = x
+        stackSize = stackSize + 1
+        stack[stackSize] = y
+    end
 
-		if x < 0 or x > (w - 1) or y < 0 or y > (h - 1) or (visited[x] and visited[x][y]) then
-			goto continue
-		end
+    local function pop()
+        local y = stack[stackSize]
+        stack[stackSize] = nil
+        stackSize = stackSize - 1
+        local x = stack[stackSize]
+        stack[stackSize] = nil
+        stackSize = stackSize - 1
+        return x, y
+    end
 
-		visited[x] = visited[x] or {}
-		visited[x][y] = true
+    push(startX, startY)
 
-		local r, g, b = imgData:getPixel(x, y)
-		if r ~= targetR and g ~= targetG and b ~= targetB then
-			goto continue
-		end
+    while stackSize > 0 do
+        local x, y = pop()
+        if x >= 0 and x < w and y >= 0 and y < h then
+            local idx = x + y * w  -- 0-индексация для FFI-массива
+            if not visited[idx] then
+                visited[idx] = true
+                local r = getPixel(imgDataPointer, x, y)
+                if r == targetCol then
+                    size = size + 1
+                    points[#points + 1] = {x, y}
 
-		size = size + 1
-		points[#points + 1] = {x, y}
-
-		table.insert(stack, {x + 1, y})
-		table.insert(stack, {x - 1, y})
-		table.insert(stack, {x, y + 1})
-		table.insert(stack, {x, y - 1})
-
-		::continue::
+                    push(x + 1, y)
+                    push(x - 1, y)
+                    push(x, y + 1)
+                    push(x, y - 1)
+                end
+            end
+        end
     end
 
 	for _, point in ipairs(points) do
@@ -151,7 +180,7 @@ local function start()
 	iterateOverPixels(pointer, function(x, y, r, g, b, a)
 		if r == 0 then return end
 
-		local size = floodFill(imgData, w, h, x, y, cache, 1, 1, 1)
+		local size = floodFill(pointer, w, h, x, y, cache, 255)
 		if size < minIslandSize then
 			return 0, 0, 0, 255
 		end
@@ -163,8 +192,9 @@ local function start()
 	iterateOverPixels(pointer, function(x, y, r, g, b, a)
 		if r == 255 then return end
 
-		local size, visited = floodFill(imgData, w, h, x, y, cache, 0, 0, 0)
-		if (removeLakes and (not visited[0] or not visited[0][0])) or (not removeLakes and size < minLakeSize) then
+		local size, visited = floodFill(pointer, w, h, x, y, cache, 0)
+		local idx = x + y * w + 1
+		if (removeLakes and not visited[1]) or (not removeLakes and size < minLakeSize) then
 			return 255, 255, 255, 255
 		end
 	end)

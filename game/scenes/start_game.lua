@@ -28,6 +28,13 @@ local currentProvStep
 
 local generatedMapData, generatedProvincesData
 
+local function getColorFromKey(key)
+	local r = math.floor(key / 65536)
+	local g = math.floor((key % 65536) / 256)
+	local b = key % 256
+	return r, g, b
+end
+
 local function provinceLoadHandler(result)
 	if result.type == 'sea' then return end -- пока что не обрабатываем воду
 
@@ -36,11 +43,12 @@ local function provinceLoadHandler(result)
 
 	-- local id = result.id
 	local id = #map._provinces + 1
+	local colorID = ('%s,%s,%s'):format(getColorFromKey(result.colorID))
 
 	local meta = country.newProvince(id, {
 			rgb255 = result.rgb255,
 			rgb = { love.math.colorFromBytes(unpack(result.rgb255)) },
-			colorID = result.colorID,
+			colorID = colorID,
 		},
 		result.pixels,
 		result.pixelsMap,
@@ -51,15 +59,15 @@ local function provinceLoadHandler(result)
 	meta._temp_neighbors = result.neighbors
 
 	map._provinces[id] = meta
-	map._provincesMap[result.colorID] = id
+	map._provincesMap[colorID] = id
 end
 
 local function finishLoading()
-	print('prov loaded!')
-
 	for i, province in ipairs(map._provinces) do
 		local tbl = {}
-		for colorID in pairs(province._temp_neighbors) do
+		for id in pairs(province._temp_neighbors) do
+			local r, g, b = getColorFromKey(id)
+			local colorID = ('%s,%s,%s'):format(r, g, b)
 			tbl[#tbl + 1] = map._provinces[ map._provincesMap[colorID] ]
 		end
 
@@ -87,8 +95,6 @@ local function generateMap()
 			:SetOceanSize(40000)
 			:SetLloydIterations(2)
 			:SetCallback(function(self)
-				print('Province map generated!')
-
 				generatedMapData = love.image.newImageData('mapgenerator/map.png')
 				generatedProvincesData = love.image.newImageData('mapgenerator/province_map.png')
 			
