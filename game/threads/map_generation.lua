@@ -35,7 +35,7 @@ local function iterateOverPixels(pointer, callback)
 			pointer[i + 3] = newA
 		end
 
-		if love.timer.getTime() - lastUpdate > 0.25 then
+		if love.timer.getTime() - lastUpdate > 1 then
 			lastUpdate = love.timer.getTime()
 			love.thread.getChannel('map_generator_progress'):push((currentStep + (i / max)) / maxSteps)
 		end

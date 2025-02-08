@@ -83,9 +83,9 @@ local function generateMap()
 		print('Map generated!')
 
 		provinceMapGen.newGenerator()
-			:SetLandSize(3500)
+			:SetLandSize(5000)
 			:SetOceanSize(40000)
-			:SetLloydIterations(3)
+			:SetLloydIterations(2)
 			:SetCallback(function(self)
 				print('Province map generated!')
 
