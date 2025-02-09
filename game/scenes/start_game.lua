@@ -105,7 +105,7 @@ local function generateMap()
 				currentProvStep = 0
 				love.thread.newThread('threads/load_provinces.lua'):start('mapgenerator/provinces.csv', generatedProvincesData)
 			end)
-			:Generate()
+		:Generate()
 	end)
 	:Generate()
 end
