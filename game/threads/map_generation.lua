@@ -90,7 +90,7 @@ local function pixelMap(w, h, baseX, baseY, freq, octave, x, y, r, g, b, a)
 
 	noise = noise / totalWeight
 
-	local d = dist(w, h, x, y)
+	local d = dist(w, h, x, y) -- дистанция от точки к центру
 	local e = noise
 
 	if d > 0.5 then
