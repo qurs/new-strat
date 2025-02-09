@@ -68,15 +68,15 @@ local function dist(w, h, x, y)
 	return 1 - (1 - nx * nx) * (1 - ny * ny)
 end
 
-local octaveFreqs = {}
-local octaveWeights = {}
+local octaveFreqs = ffi.new('float[?]', octave)
+local octaveWeights = ffi.new('float[?]', octave)
 local totalWeight = 1
 
 for i = 1, octave do
-	octaveFreqs[i] = freq * (2^i)
+	octaveFreqs[i - 1] = freq * (2^i)
 
 	local weight = 1 / (2^i)
-	octaveWeights[i] = weight
+	octaveWeights[i - 1] = weight
 
 	totalWeight = totalWeight + weight
 end
@@ -85,7 +85,7 @@ local function pixelMap(w, h, baseX, baseY, freq, octave, x, y, r, g, b, a)
 	local noise = love.math.noise(baseX + freq * x, baseY + freq * y)
 
 	for i = 1, octave do
-		noise = noise + octaveWeights[i] * love.math.noise(baseX + octaveFreqs[i] * x, baseY + octaveFreqs[i] * y)
+		noise = noise + octaveWeights[i - 1] * love.math.noise(baseX + octaveFreqs[i - 1] * x, baseY + octaveFreqs[i - 1] * y)
 	end
 
 	noise = noise / totalWeight
@@ -115,46 +115,46 @@ local function floodFill(imgDataPointer, w, h, startX, startY, cache, targetCol)
 	local size = 0
 
 	local stack = {}
-    local stackSize = 0
+	local stackSize = 0
 
-    local function push(x, y)
-        stackSize = stackSize + 1
-        stack[stackSize] = x
-        stackSize = stackSize + 1
-        stack[stackSize] = y
-    end
+	local function push(x, y)
+		stackSize = stackSize + 1
+		stack[stackSize] = x
+		stackSize = stackSize + 1
+		stack[stackSize] = y
+	end
 
-    local function pop()
-        local y = stack[stackSize]
-        stack[stackSize] = nil
-        stackSize = stackSize - 1
-        local x = stack[stackSize]
-        stack[stackSize] = nil
-        stackSize = stackSize - 1
-        return x, y
-    end
+	local function pop()
+		local y = stack[stackSize]
+		stack[stackSize] = nil
+		stackSize = stackSize - 1
+		local x = stack[stackSize]
+		stack[stackSize] = nil
+		stackSize = stackSize - 1
+		return x, y
+	end
 
-    push(startX, startY)
+	push(startX, startY)
 
-    while stackSize > 0 do
-        local x, y = pop()
-        if x >= 0 and x < w and y >= 0 and y < h then
-            local idx = x + y * w  -- 0-индексация для FFI-массива
-            if not visited[idx] then
-                visited[idx] = true
-                local r = getPixel(imgDataPointer, x, y)
-                if r == targetCol then
-                    size = size + 1
-                    points[#points + 1] = {x, y}
+	while stackSize > 0 do
+		local x, y = pop()
+		if x >= 0 and x < w and y >= 0 and y < h then
+			local idx = x + y * w  -- 0-индексация для FFI-массива
+			if not visited[idx] then
+				visited[idx] = true
+				local r = getPixel(imgDataPointer, x, y)
+				if r == targetCol then
+					size = size + 1
+					points[#points + 1] = {x, y}
 
-                    push(x + 1, y)
-                    push(x - 1, y)
-                    push(x, y + 1)
-                    push(x, y - 1)
-                end
-            end
-        end
-    end
+					push(x + 1, y)
+					push(x - 1, y)
+					push(x, y + 1)
+					push(x, y - 1)
+				end
+			end
+		end
+	end
 
 	for _, point in ipairs(points) do
 		local x, y = unpack(point)
@@ -195,8 +195,8 @@ local function start()
 		if r == 255 then return end
 
 		local size, visited = floodFill(pointer, w, h, x, y, cache, 0)
-		local idx = x + y * w + 1
-		if (removeLakes and not visited[1]) or (not removeLakes and size < minLakeSize) then
+		local idx = x + y * w
+		if (removeLakes and not visited[0]) or (not removeLakes and size < minLakeSize) then
 			return 255, 255, 255, 255
 		end
 	end)
