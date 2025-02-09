@@ -106,8 +106,8 @@ hook.Add('Think', 'mapGen', function()
 				local data = imgData:encode('png')
 				love.filesystem.write(meta.path, data)
 	
-				meta.callback(meta)
 				mapGen._isGenerating = nil
+				meta.callback(meta)
 
 				return
 			end

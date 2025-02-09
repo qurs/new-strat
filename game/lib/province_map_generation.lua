@@ -88,8 +88,8 @@ hook.Add('Think', 'provGen', function()
 				love.filesystem.write(meta.path, data)
 				love.filesystem.write(meta.csvPath, result.csv)
 	
-				meta.callback(meta)
 				provinceMapGen._isGenerating = nil
+				meta.callback(meta)
 
 				return
 			end
