@@ -31,8 +31,9 @@ local function iterateOverPixels(pointer, callback)
 	local max = (4 * pixelCount) - 1
 
 	for y = 0, h - 1 do
+		local rowOffset = y * w * 4
 		for x = 0, w - 1 do
-			local i = getIndexByPosition(x, y)
+			local i = rowOffset + x * 4
 			local r, g, b, a = pointer[i], pointer[i + 1], pointer[i + 2], pointer[i + 3]
 	
 			local newR, newG, newB, newA = callback(x, y, r, g, b, a)
@@ -44,7 +45,8 @@ local function iterateOverPixels(pointer, callback)
 			end
 		end
 
-		progressChannel:push((currentStep + (getIndexByPosition(w - 1, y) / max)) / maxSteps)
+		local i = rowOffset + (w - 1) * 4
+		progressChannel:push((currentStep + (i / max)) / maxSteps)
 	end
 
 	currentStep = currentStep + 1
