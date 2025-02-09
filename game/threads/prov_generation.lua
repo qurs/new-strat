@@ -3,6 +3,37 @@ require('love.math')
 
 local ffi = require('ffi')
 
+ffi.cdef [[
+	typedef struct {
+		int sumX;
+		int sumY;
+		int count;
+	} accum_t;
+]]
+
+ffi.cdef [[
+	typedef struct {
+		int x;
+		int y;
+	} point_t;
+]]
+
+ffi.cdef [[
+	typedef struct {
+		int r;
+		int g;
+		int b;
+	} color_t;
+]]
+
+ffi.cdef [[
+	typedef struct {
+		int x;
+		int y;
+		color_t color;
+	} seed_t;
+]]
+
 local args = {...}
 
 local inputData, avgProvinceLandSize, avgProvinceOceanSize, lloydIterations = unpack(args)
@@ -58,7 +89,7 @@ local function iterateOverPixels(pointer, callback)
 			local i = rowOffset + x * 4
 			local r, g, b, a = pointer[i], pointer[i + 1], pointer[i + 2], pointer[i + 3]
 	
-			local newR, newG, newB, newA = callback(x, y, r, g, b, a)
+			local newR, newG, newB, newA = callback(x, y, r, g, b, a, i)
 			if newR then
 				pointer[i] = newR
 				pointer[i + 1] = newG
@@ -76,8 +107,8 @@ local function iterateOverPixels(pointer, callback)
 end
 
 -- Flood fill (4-смежность) для выделения связной компоненты, начинающейся с (x, y)
-local function floodFill(x, y, origR, origG, origB, width, height, imageDataPointer, visited)
-	local compPixels = {}
+local function floodFill(x, y, origR, origG, origB, width, height, imageDataPointer, visited, compPixels, firstIndex)
+	local compPixelsSize = 0
 	local compKey = getColorKey(origR, origG, origB)
 	
 	local stack = {}
@@ -107,7 +138,10 @@ local function floodFill(x, y, origR, origG, origB, width, height, imageDataPoin
 				local r, g, b, a = getPixel(imageDataPointer, px, py)
 				if getColorKey(r, g, b) == compKey then
 					visited[idx] = 1
-					compPixels[#compPixels + 1] = {x = px, y = py}
+
+					compPixels[firstIndex + compPixelsSize].x = px
+					compPixels[firstIndex + compPixelsSize].y = py
+					compPixelsSize = compPixelsSize + 1
 
 					-- Добавляем соседей (4-смежность) в стек.
 					push(px + 1, py)
@@ -119,20 +153,26 @@ local function floodFill(x, y, origR, origG, origB, width, height, imageDataPoin
 		end
 	end
 
-	return { key = compKey, pixels = compPixels, size = #compPixels }
+	return { key = compKey, size = compPixelsSize, firstIndex = firstIndex }
 end
 
 -- Функция устранения анклавов: для каждого цвета оставляем основную (наибольшую) компоненту,
 -- а остальные (анклавы) переопределяем на основе голосования среди соседей.
 local function removeEnclaves(imageDataPointer, origImageDataPointer)
 	local visited = ffi.new('uint8_t[?]', pixelCount)
+	local compPixels = ffi.new('point_t[?]', pixelCount)
+
+	local firstIndex = 0
 
 	-- Собираем компоненты для каждого цвета
 	local compsByColor = {}  -- [colorKey] = { main = comp, extras = { comp1, comp2, ... } }
+
 	iterateOverPixels(imageDataPointer, function(x, y, r, g, b, a)
 		local idx = x + y * width + 1
 		if visited[idx] == 0 then
-			local comp = floodFill(x, y, r, g, b, width, height, imageDataPointer, visited)
+			local comp = floodFill(x, y, r, g, b, width, height, imageDataPointer, visited, compPixels, firstIndex)
+			firstIndex = firstIndex + comp.size
+
 			if not compsByColor[comp.key] then
 				compsByColor[comp.key] = { main = comp, extras = {} }
 			else
@@ -152,11 +192,13 @@ local function removeEnclaves(imageDataPointer, origImageDataPointer)
 		for _, comp in ipairs(group.extras) do
 			local neighborVotes = {}  -- голоса за цвета соседей
 			local inComp = ffi.new('uint8_t[?]', pixelCount)
-			for _, pos in ipairs(comp.pixels) do
+			for i = comp.firstIndex, comp.firstIndex + comp.size - 1 do
+				local pos = compPixels[i]
 				local idx = pos.x + pos.y * width + 1
 				inComp[idx] = 1
 			end
-			for _, pos in ipairs(comp.pixels) do
+			for i = comp.firstIndex, comp.firstIndex + comp.size - 1 do
+				local pos = compPixels[i]
 				local x, y = pos.x, pos.y
 				local origR = getPixel(origImageDataPointer, x, y)
 				local neighbors = {
@@ -189,7 +231,8 @@ local function removeEnclaves(imageDataPointer, origImageDataPointer)
 			end
 			if bestKey then
 				local newR, newG, newB = getColorFromKey(bestKey)
-				for _, pos in ipairs(comp.pixels) do
+				for i = comp.firstIndex, comp.firstIndex + comp.size - 1 do
+					local pos = compPixels[i]
 					setPixel(imageDataPointer, pos.x, pos.y, newR, newG, newB, 255)
 				end
 			end
@@ -198,16 +241,15 @@ local function removeEnclaves(imageDataPointer, origImageDataPointer)
 end
 
 -- Функция одной итерации Ллойда для перераспределения семян
-local function lloydIteration(inputDataPointer, seeds, regionTest)
-	local accumulators = {}
-	for i = 1, #seeds do
-		accumulators[i] = { sumX = 0, sumY = 0, count = 0 }
-	end
+local function lloydIteration(inputDataPointer, landSeeds, landSeedsSize, oceanSeeds, oceanSeedsSize, regionTestLand)
+	local landAccums = ffi.new('accum_t[?]', landSeedsSize)
+	local oceanAccums = ffi.new('accum_t[?]', oceanSeedsSize)
 
 	iterateOverPixels(inputDataPointer, function(x, y, r, g, b, a)
-		if regionTest(x, y, r, g, b) then
+		if regionTestLand(x, y, r, g, b) then -- суша
 			local bestIndex, bestDist = 1, math.huge
-			for i, seed in ipairs(seeds) do
+			for i = 0, landSeedsSize - 1 do
+				local seed = landSeeds[i]
 				local dx = x - seed.x
 				local dy = y - seed.y
 				local dist = dx * dx + dy * dy
@@ -216,16 +258,42 @@ local function lloydIteration(inputDataPointer, seeds, regionTest)
 					bestIndex = i
 				end
 			end
-			accumulators[bestIndex].sumX = accumulators[bestIndex].sumX + x
-			accumulators[bestIndex].sumY = accumulators[bestIndex].sumY + y
-			accumulators[bestIndex].count = accumulators[bestIndex].count + 1
+
+			landAccums[bestIndex].sumX = landAccums[bestIndex].sumX + x
+			landAccums[bestIndex].sumY = landAccums[bestIndex].sumY + y
+			landAccums[bestIndex].count = landAccums[bestIndex].count + 1
+		else -- океан
+			local bestIndex, bestDist = 1, math.huge
+			for i = 0, oceanSeedsSize - 1 do
+				local seed = oceanSeeds[i]
+				local dx = x - seed.x
+				local dy = y - seed.y
+				local dist = dx * dx + dy * dy
+				if dist < bestDist then
+					bestDist = dist
+					bestIndex = i
+				end
+			end
+
+			oceanAccums[bestIndex].sumX = oceanAccums[bestIndex].sumX + x
+			oceanAccums[bestIndex].sumY = oceanAccums[bestIndex].sumY + y
+			oceanAccums[bestIndex].count = oceanAccums[bestIndex].count + 1
 		end
 	end)
 
-	for i, seed in ipairs(seeds) do
-		if accumulators[i].count > 0 then
-			seed.x = accumulators[i].sumX / accumulators[i].count
-			seed.y = accumulators[i].sumY / accumulators[i].count
+	for i = 0, landSeedsSize - 1 do
+		local seed = landSeeds[i]
+		if landAccums[i].count > 0 then
+			seed.x = math.floor(landAccums[i].sumX / landAccums[i].count)
+			seed.y = math.floor(landAccums[i].sumY / landAccums[i].count)
+		end
+	end
+
+	for i = 0, oceanSeedsSize - 1 do
+		local seed = oceanSeeds[i]
+		if oceanAccums[i].count > 0 then
+			seed.x = math.floor(oceanAccums[i].sumX / oceanAccums[i].count)
+			seed.y = math.floor(oceanAccums[i].sumY / oceanAccums[i].count)
 		end
 	end
 end
@@ -245,22 +313,19 @@ local function start()
 	local nOceanProvinces = math.max(1, math.floor(totalOcean / avgProvinceOceanSize))
 
 	-- Генерация семян для провинций на суше
-	local landSeeds = {}
+	local landSeeds = ffi.new('seed_t[?]', nLandProvinces)
+	local landSeedsSize = 0
 
-	while #landSeeds < nLandProvinces do
+	while landSeedsSize < nLandProvinces do
 		local x = love.math.random(0, width - 1)
 		local y = love.math.random(0, height - 1)
 		local r = getPixel(inputDataPointer, x, y)
 		if r == 255 then
-			landSeeds[#landSeeds + 1] = {
-				x = x,
-				y = y,
-				color = {
-					love.math.random(20, 255),
-					love.math.random(20, 255),
-					love.math.random(20, 255),
-				}
-			}
+			landSeeds[landSeedsSize].x = x
+			landSeeds[landSeedsSize].y = y
+			landSeeds[landSeedsSize].color = ffi.new('color_t', {love.math.random(20, 255), love.math.random(20, 255), love.math.random(20, 255)})
+
+			landSeedsSize = landSeedsSize + 1
 		end
 	end
 
@@ -268,21 +333,19 @@ local function start()
 	updateProgress()
 
 	-- Генерация семян для провинций в океане
-	local oceanSeeds = {}
-	while #oceanSeeds < nOceanProvinces do
+	local oceanSeeds = ffi.new('seed_t[?]', nOceanProvinces)
+	local oceanSeedsSize = 0
+
+	while oceanSeedsSize < nOceanProvinces do
 		local x = love.math.random(0, width - 1)
 		local y = love.math.random(0, height - 1)
 		local r = getPixel(inputDataPointer, x, y)
 		if r == 0 then
-			oceanSeeds[#oceanSeeds + 1] = {
-				x = x,
-				y = y,
-				color = {
-					love.math.random(20, 255),
-					love.math.random(20, 255),
-					love.math.random(20, 255),
-				}
-			}
+			oceanSeeds[oceanSeedsSize].x = x
+			oceanSeeds[oceanSeedsSize].y = y
+			oceanSeeds[oceanSeedsSize].color = ffi.new('color_t', {love.math.random(20, 255), love.math.random(20, 255), love.math.random(20, 255)})
+
+			oceanSeedsSize = oceanSeedsSize + 1
 		end
 	end
 
@@ -290,24 +353,20 @@ local function start()
 	updateProgress()
 
 	for i = 1, lloydIterations do
-		lloydIteration(inputDataPointer, landSeeds, function(x, y, r, g, b)
+		lloydIteration(inputDataPointer, landSeeds, landSeedsSize, oceanSeeds, oceanSeedsSize, function(x, y, r, g, b)
 			return r == 255
-		end)
-	end
-	for i = 1, lloydIterations do
-		lloydIteration(inputDataPointer, oceanSeeds, function(x, y, r, g, b)
-			return r == 0
 		end)
 	end
 
 	local newImageData = love.image.newImageData(width, height)
 	local newImageDataPointer = ffi.cast('uint8_t*', newImageData:getFFIPointer())
 
-	iterateOverPixels(newImageDataPointer, function(x, y, r, g, b, a)
-		local origR = getPixel(inputDataPointer, x, y)
+	iterateOverPixels(newImageDataPointer, function(x, y, r, g, b, a, i)
+		local origR = inputDataPointer[i]
 		if origR == 255 then
 			local bestIndex, bestDist = 1, math.huge
-			for i, seed in ipairs(landSeeds) do
+			for i = 0, landSeedsSize - 1 do
+				local seed = landSeeds[i]
 				local dx = x - seed.x
 				local dy = y - seed.y
 				local dist = dx * dx + dy * dy
@@ -317,10 +376,11 @@ local function start()
 				end
 			end
 			local col = landSeeds[bestIndex].color
-			return col[1], col[2], col[3], 255
+			return col.r, col.g, col.b, 255
 		else
 			local bestIndex, bestDist = 1, math.huge
-			for i, seed in ipairs(oceanSeeds) do
+			for i = 0, oceanSeedsSize - 1 do
+				local seed = oceanSeeds[i]
 				local dx = x - seed.x
 				local dy = y - seed.y
 				local dist = dx * dx + dy * dy
@@ -330,7 +390,7 @@ local function start()
 				end
 			end
 			local col = oceanSeeds[bestIndex].color
-			return col[1], col[2], col[3], 255
+			return col.r, col.g, col.b, 255
 		end
 	end)
 
@@ -341,12 +401,12 @@ local function start()
 
 	local provinces = {}
 
-	iterateOverPixels(newImageDataPointer, function(x, y, r, g, b, a)
+	iterateOverPixels(newImageDataPointer, function(x, y, r, g, b, a, i)
 		local curCol = getColorKey(r, g, b)
 		local curProv = provinces[curCol]
 
 		if not curProv then
-			local origR = getPixel(inputDataPointer, x, y)
+			local origR = inputDataPointer[i]
 			local provType = origR == 0 and 'sea' or 'land'
 
 			provinces[curCol] = {
