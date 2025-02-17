@@ -1,8 +1,7 @@
 provinceMapGen = provinceMapGen or {}
 provinceMapGen._meta = provinceMapGen._meta or {}
 
-local ProvinceMapGenerator = provinceMapGen._meta
-ProvinceMapGenerator.__index = ProvinceMapGenerator
+ProvinceMapGenerator = class('ProvinceMapGenerator')
 
 local fn = function() end
 
@@ -65,10 +64,7 @@ end
 function provinceMapGen.newGenerator()
 	love.filesystem.createDirectory('mapgenerator')
 
-	local meta = setmetatable({}, provinceMapGen._meta)
-	meta:init()
-
-	return meta
+	return ProvinceMapGenerator()
 end
 
 function provinceMapGen.getProgress()

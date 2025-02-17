@@ -17,19 +17,18 @@ function player.client.GetLocalPlayer()
 end
 
 function player.client.New(name, isLocal)
-	local meta = setmetatable({}, player.client._meta)
-	meta:__init(name, isLocal)
+	local ply = ClientPlayer(name, isLocal)
 
 	if isLocal then
-		player.client._localPlayer = meta
+		player.client._localPlayer = ply
 	end
 
-	player.client._map[name] = meta
+	player.client._map[name] = ply
 
-	player.client._list[#player.client._list + 1] = meta
+	player.client._list[#player.client._list + 1] = ply
 
-	print('created new player', meta:GetName())
-	return meta
+	print('created new player', ply:GetName())
+	return ply
 end
 
 function player.client.Remove(ply)

@@ -4,14 +4,10 @@ gui.registerFont('units', {
 })
 
 units = units or {}
-units._landUnitMeta = units._landUnitMeta or {}
 
-local Unit = units._landUnitMeta
+Unit = class('Unit')
 
-Unit.__type = 'unit'
-Unit.__index = Unit
-
-function Unit:__init(id, country, startProvince, speed, capability, attack, defence, armor, armorPierce, icon)
+function Unit:init(id, country, startProvince, speed, capability, attack, defence, armor, armorPierce, icon)
 	self.id = id
 	self.country = country
 	self.speed = math.min(speed, 24)

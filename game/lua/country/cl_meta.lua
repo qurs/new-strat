@@ -4,14 +4,10 @@ gui.registerFont('country.name', {
 })
 
 country = country or {}
-country._countryMeta = country._countryMeta or {}
 
-local Country = country._countryMeta
+Country = class('Country')
 
-Country.__type = 'country'
-Country.__index = Country
-
-function Country:__init(id, name, rgb, capitalRegion)
+function Country:init(id, name, rgb, capitalRegion)
 	self.id = id
 	self.name = name
 	self.clr = rgb

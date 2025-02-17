@@ -1,12 +1,6 @@
-player = player or {}
+ServerPlayer = class('ServerPlayer')
 
-player._meta = player._meta or {}
-local Player = player._meta
-
-Player.__type = 'player'
-Player.__index = Player
-
-function Player:__init(ip, port, peer, name, isHost)
+function ServerPlayer:init(ip, port, peer, name, isHost)
 	self.ip = ip
 	self.port = port
 	self.peer = peer
@@ -16,31 +10,31 @@ function Player:__init(ip, port, peer, name, isHost)
 	self.hostname = ip .. ':' .. port
 end
 
-function Player:IsHost()
+function ServerPlayer:IsHost()
 	return self.isHost
 end
 
-function Player:GetIP()
+function ServerPlayer:GetIP()
 	return self.ip
 end
 
-function Player:GetPort()
+function ServerPlayer:GetPort()
 	return self.port
 end
 
-function Player:GetHostname()
+function ServerPlayer:GetHostname()
 	return self.hostname
 end
 
-function Player:GetPeer()
+function ServerPlayer:GetPeer()
 	return self.peer
 end
 
-function Player:GetName()
+function ServerPlayer:GetName()
 	return self.name
 end
 
-function Player:Send(name, ...)
+function ServerPlayer:Send(name, ...)
 	local data = {...}
 
 	if self:IsHost() then return end
@@ -52,7 +46,7 @@ function Player:Send(name, ...)
 	})
 end
 
-function Player:Disconnect(reason)
+function ServerPlayer:Disconnect(reason)
 	if self:IsHost() then return end
 
 	local peer = self:GetPeer()

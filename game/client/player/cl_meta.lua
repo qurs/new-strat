@@ -1,21 +1,14 @@
-player = player or {}
-player.client = player.client or {}
+ClientPlayer = class('ClientPlayer')
 
-player.client._meta = player.client._meta or {}
-local Player = player.client._meta
-
-Player.__type = 'player'
-Player.__index = Player
-
-function Player:__init(name, isLocal)
+function ClientPlayer:init(name, isLocal)
 	self.name = name
 	self.isLocal = isLocal
 end
 
-function Player:GetName()
+function ClientPlayer:GetName()
 	return self.name
 end
 
-function Player:IsLocal()
+function ClientPlayer:IsLocal()
 	return self.isLocal
 end

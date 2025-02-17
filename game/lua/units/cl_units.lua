@@ -4,8 +4,7 @@ units.lastLandID = units.lastLandID or 0
 function units.create(...)
 	local id = units.lastLandID + 1
 
-	local meta = setmetatable({}, units._landUnitMeta)
-	meta:__init(id, ...)
+	local meta = Unit(id, ...)
 
 	units.lastLandID = units.lastLandID + 1
 

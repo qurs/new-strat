@@ -12,6 +12,8 @@ enet = require('enet')
 imgui = require('cimgui')
 ffi = require('ffi')
 
+class = require('30log')
+
 VERSION = require('version')
 
 function love.load()

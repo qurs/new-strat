@@ -1,8 +1,6 @@
 mapGen = mapGen or {}
-mapGen._meta = mapGen._meta or {}
 
-local MapGenerator = mapGen._meta
-MapGenerator.__index = MapGenerator
+MapGenerator = class('MapGenerator')
 
 local fn = function() end
 
@@ -84,10 +82,7 @@ end
 function mapGen.newGenerator()
 	love.filesystem.createDirectory('mapgenerator')
 
-	local meta = setmetatable({}, mapGen._meta)
-	meta:init()
-
-	return meta
+	return MapGenerator()
 end
 
 function mapGen.getProgress()

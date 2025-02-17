@@ -1,12 +1,6 @@
-country = country or {}
-country._provinceMeta = country._provinceMeta or {}
+Province = class('Province')
 
-local Province = country._provinceMeta
-
-Province.__type = 'province'
-Province.__index = Province
-
-function Province:__init(id, clr, pixels, pixelsMap, minPos, maxPos)
+function Province:init(id, clr, pixels, pixelsMap, minPos, maxPos)
 	self.id = id
 	self.clr = clr
 
@@ -181,9 +175,9 @@ function Province:CreateCanvas()
 
 	local r, g, b = 1, 1, 1
 
-	local country = self:GetCountry()
-	if country then
-		r, g, b = country:GetColor()
+	local myCountry = self:GetCountry()
+	if myCountry then
+		r, g, b = myCountry:GetColor()
 	end
 
 	if self.canvas then self.canvas:release() end

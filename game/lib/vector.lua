@@ -1,145 +1,143 @@
-vector = vector or {}
+Vector = class('Vector')
 
-vector._meta = vector._meta or {}
-local meta = vector._meta
+function Vector:init(x, y)
+	self[1] = x or 0
+	self[2] = y or 0
+end
 
-meta.__isvector = true
-
-function meta.__index(tbl, key)
+function Vector.__index(self, key)
 	if key == 'x' then
-		return tbl[1]
+		return rawget(self, 1)
 	end
 
 	if key == 'y' then
-		return tbl[2]
+		return rawget(self, 2)
 	end
 
-	return meta[key]
+	return Vector[key]
 end
 
-function meta.__newindex(tbl, key, val)
+function Vector.__newindex(self, key, val)
 	if key == 'x' or key == 1 then
-		tbl[1] = val
+		rawset(self, 1, val)
 	end
 
 	if key == 'y' or key == 2 then
-		tbl[2] = val
+		rawset(self, 2, val)
 	end
 end
 
-function meta:__eq(other)
-	if other.__isvector then
+function Vector:__eq(other)
+	if other:instanceOf(Vector) then
 		return self[1] == other[1] and self[2] == other[2]
 	end
 
 	return false
 end
 
-function meta:__add(other)
+function Vector:__add(other)
 	local first, second = self, other
-	local pos
+	local x, y
 
 	if type(first) == 'number' then
-		pos = {second.x + first, second.y + first}
+		x, y = second.x + first, second.y + first
 	elseif type(second) == 'number' then
-		pos = {first.x + second, first.y + second}
-	elseif first.__isvector and second.__isvector then
-		pos = {first.x + second.x, first.y + second.y}
+		x, y = first.x + second, first.y + second
+	elseif first:instanceOf(Vector) and second:instanceOf(Vector) then
+		x, y = first.x + second.x, first.y + second.y
 	end
 
-	if not pos then return error(('Попытка сложить %s + %s'):format(first, second)) end
+	if not x then return error(('Попытка сложить %s + %s'):format(first, second)) end
 
-	return setmetatable(pos, vector._meta)
+	return Vector(x, y)
 end
 
-function meta:__sub(other)
+function Vector:__sub(other)
 	local first, second = self, other
-	local pos
+	local x, y
 
 	if type(first) == 'number' then
-		pos = {second.x - first, second.y - first}
+		x, y = second.x - first, second.y - first
 	elseif type(second) == 'number' then
-		pos = {first.x - second, first.y - second}
-	elseif first.__isvector and second.__isvector then
-		pos = {first.x - second.x, first.y - second.y}
+		x, y = first.x - second, first.y - second
+	elseif first:instanceOf(Vector) and second:instanceOf(Vector) then
+		x, y = first.x - second.x, first.y - second.y
 	end
 
-	if not pos then return error(('Попытка вычесть %s - %s'):format(first, second)) end
+	if not x then return error(('Попытка вычесть %s - %s'):format(first, second)) end
 
-	return setmetatable(pos, vector._meta)
+	return Vector(x, y)
 end
 
-function meta:__mul(other)
+function Vector:__mul(other)
 	local first, second = self, other
-	local pos
+	local x, y
 
 	if type(first) == 'number' then
-		pos = {second.x * first, second.y * first}
+		x, y = second.x * first, second.y * first
 	elseif type(second) == 'number' then
-		pos = {first.x * second, first.y * second}
-	elseif first.__isvector and second.__isvector then
-		pos = {first.x * second.x, first.y * second.y}
+		x, y = first.x * second, first.y * second
+	elseif first:instanceOf(Vector) and second:instanceOf(Vector) then
+		x, y = first.x * second.x, first.y * second.y
 	end
 
-	if not pos then return error(('Попытка умножить %s * %s'):format(first, second)) end
+	if not x then return error(('Попытка умножить %s * %s'):format(first, second)) end
 
-	return setmetatable(pos, vector._meta)
+	return Vector(x, y)
 end
 
-function meta:__div(other)
+function Vector:__div(other)
 	local first, second = self, other
-	local pos
+	local x, y
 
 	if type(first) == 'number' then
-		pos = {second.x / first, second.y / first}
+		x, y = second.x / first, second.y / first
 	elseif type(second) == 'number' then
-		pos = {first.x / second, first.y / second}
-	elseif first.__isvector and second.__isvector then
-		pos = {first.x / second.x, first.y / second.y}
+		x, y = first.x / second, first.y / second
+	elseif first:instanceOf(Vector) and second:instanceOf(Vector) then
+		x, y = first.x / second.x, first.y / second.y
 	end
 
-	if not pos then return error(('Попытка поделить %s / %s'):format(first, second)) end
+	if not x then return error(('Попытка поделить %s / %s'):format(first, second)) end
 
-	return setmetatable(pos, vector._meta)
+	return Vector(x, y)
 end
 
-function meta:__unm()
-	self.x = -self.x
-	self.y = -self.y
-	return self
+function Vector:__unm()
+	return Vector(-self.x, -self.y)
 end
 
-function meta:__tostring()
+function Vector:__tostring()
 	return ('Vector[%s, %s]'):format(self:Unpack())
 end
 
-function meta:Unpack()
-	return self[1], self[2]
+function Vector:Unpack()
+	return self.x, self.y
 end
 
-function meta:Length()
+function Vector:Length()
 	return math.sqrt( self:LengthSqr() )
 end
 
-function meta:LengthSqr()
-	return self[1]^2 + self[2]^2
+function Vector:LengthSqr()
+	return self.x * self.x + self.y * self.y
 end
 
-function meta:DistanceSqr(other)
+function Vector:DistanceSqr(other)
 	local xd = other.x - self.x
 	local yd = other.y - self.y
-	return xd^2 + yd^2
+	return xd * xd + yd * yd
 end
 
-function meta:Distance(other)
+function Vector:Distance(other)
 	return math.sqrt( self:DistanceSqr(other) )
 end
 
-function meta:Angle(other)
+function Vector:Angle(other)
 	return math.atan2(other.y - self.y, other.x - self.x)
 end
 
-function meta:Clamp(min, max)
+function Vector:Clamp(min, max)
 	if self.x < min.x then self.x = min.x end
 	if self.x > max.x then self.x = max.x end
 
@@ -149,7 +147,7 @@ function meta:Clamp(min, max)
 	return self
 end
 
-function meta:Rotate(ang)
+function Vector:Rotate(ang)
 	local cos, sin = math.cos(ang), math.sin(ang)
 	local matrix = { {cos, -sin}, {sin, cos} }
 
@@ -161,25 +159,16 @@ function meta:Rotate(ang)
 	return self
 end
 
-function meta:Rotated(ang)
+function Vector:Rotated(ang)
 	local cos, sin = math.cos(ang), math.sin(ang)
 	local matrix = { {cos, -sin}, {sin, cos} }
 
 	local x, y = self.x, self.y
-	local pos = {matrix[1][1] * x + matrix[1][2] * y, matrix[2][1] * x + matrix[2][2] * y}
+	local newX, newY = matrix[1][1] * x + matrix[1][2] * y, matrix[2][1] * x + matrix[2][2] * y
 
-	return setmetatable(pos, vector._meta)
+	return Vector(newX, newY)
 end
 
-function meta:IsInsideSquare(minPos, maxPos)
+function Vector:IsInsideSquare(minPos, maxPos)
 	return math.HasSquarePoint(minPos, maxPos, self)
-end
-
-function Vector(x, y)
-	local pos = {x or 0, y or 0}
-
-	return setmetatable({
-		x or 0,
-		y or 0,
-	}, meta)
 end

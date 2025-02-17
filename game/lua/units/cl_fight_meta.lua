@@ -5,14 +5,10 @@ gui.registerFont('fight.window', {
 
 units = units or {}
 units.fight = units.fight or {}
-units.fight._meta = units.fight._meta or {}
 
-local Fight = units.fight._meta
+Fight = class('Fight')
 
-Fight.__type = 'fight'
-Fight.__index = Fight
-
-function Fight:__init(province, attackers, defenders)
+function Fight:init(province, attackers, defenders)
 	self.id = province:GetID()
 
 	self.startTime = gamecycle._time

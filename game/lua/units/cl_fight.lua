@@ -32,21 +32,19 @@ function units.calculateCapabilityLost(attack, defence, pierce, armor)
 end
 
 function units.fight.create(...)
-	local meta = setmetatable({}, units.fight._meta)
-	meta:__init(...)
-
+	local meta = Fight(...)
 	units.fight._map[meta:GetID()] = meta
 
 	return meta
 end
 
 function units.fight.remove(fightOrID)
-	local id = (type(fightOrID) == 'fight' and fightOrID:GetID()) or fightOrID
+	local id = (instanceOf(fightOrID, Fight) and fightOrID:GetID()) or fightOrID
 	units.fight._map[id] = nil
 end
 
 function units.fight.getFight(provOrID)
-	local id = (type(provOrID) == 'province' and provOrID:GetID()) or provOrID
+	local id = (instanceOf(provOrID, Province) and provOrID:GetID()) or provOrID
 	return units.fight._map[id]
 end
 

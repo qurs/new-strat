@@ -32,8 +32,7 @@ function player.New(ip, port, peer, name)
 		peer = net.server.host
 	end
 
-	local meta = setmetatable({}, player._meta)
-	meta:__init(ip, port, peer, name, isHost)
+	local meta = ServerPlayer(ip, port, peer, name, isHost)
 
 	if isHost then
 		player._hostPlayer = meta

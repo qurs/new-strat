@@ -4,17 +4,13 @@ gui.registerFont('region.capitalName', {
 })
 
 country = country or {}
-country._regionMeta = country._regionMeta or {}
 
-local Region = country._regionMeta
+Region = class('Region')
 
-Region.__type = 'region'
-Region.__index = Region
-
-function Region:__init(id, name, capitalName, provinces)
-	if not id then return print( ('Ошибка при создании региона %s! Не хватает свойства: id'):format(id) ) end
-	if not name then return print( ('Ошибка при создании региона %s! Не хватает свойства: name'):format(id) ) end
-	if not capitalName then return print( ('Ошибка при создании региона %s! Не хватает свойства: capitalName'):format(id) ) end
+function Region:init(id, name, capitalName, provinces)
+	if not id then return error( ('Ошибка при создании региона %s! Не хватает свойства: id'):format(id) ) end
+	if not name then return error( ('Ошибка при создании региона %s! Не хватает свойства: name'):format(id) ) end
+	if not capitalName then return error( ('Ошибка при создании региона %s! Не хватает свойства: capitalName'):format(id) ) end
 
 	self.id = id
 	self.name = name
