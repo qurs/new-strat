@@ -54,8 +54,9 @@ function RGBFromNum(num)
 end
 
 function instanceOf(obj, class)
-	if type(obj) == 'number' or type(obj) == 'string' then return false end
-	if not obj.instanceOf then return false end
+	if type(obj) == 'table' and obj.instanceOf then
+		return obj:instanceOf(class)
+	end
 
-	return obj:instanceOf(class)
+	return false
 end
